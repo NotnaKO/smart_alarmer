@@ -3,6 +3,7 @@ package com.example.smartalarmer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartalarmer.puzzle.*
 
-enum class PuzzleType { MATH, TYPING, MEMORY }
+enum class PuzzleType { MATH, TYPING, MEMORY, SHAKE }
 
 @Composable
 fun AlarmDismissScreen(
@@ -23,6 +24,7 @@ fun AlarmDismissScreen(
     mathProvider: MathPuzzleProvider = MathEngine,
     typingProvider: TypingPuzzleProvider = TypingEngine,
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
+    shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(androidx.compose.ui.platform.LocalContext.current)
 ) {
     val puzzles = remember {
         puzzlesList.split(",")
@@ -78,6 +80,10 @@ fun AlarmDismissScreen(
                 PuzzleType.MEMORY -> MemoryPuzzleView(
                     onComplete = { currentTaskIndex++ },
                     memoryProvider = memoryProvider,
+                )
+                PuzzleType.SHAKE -> ShakePuzzleView(
+                    onComplete = { currentTaskIndex++ },
+                    shakeProvider = shakeProvider
                 )
             }
         }
@@ -253,4 +259,73 @@ fun MemoryPuzzleView(
               }
           }
       }
+}
+
+@Composable
+fun ShakePuzzleView(
+    onComplete: () -> Unit,
+    shakeProvider: ShakeSensorProvider
+) {
+    var shakeCount by remember { mutableStateOf(30) }
+    val targetShakes = 30
+
+    DisposableEffect(key1 = shakeProvider) {
+        var lastUpdate = System.currentTimeMillis()
+        var lastX = 0f
+        var lastY = 0f
+        var lastZ = 0f
+
+        shakeProvider.register { x, y, z ->
+            val curTime = System.currentTimeMillis()
+            // Only check every 100ms
+            if ((curTime - lastUpdate) > 100) {
+                val diffTime = (curTime - lastUpdate)
+                lastUpdate = curTime
+
+                val speed = Math.abs(x + y + z - lastX - lastY - lastZ) / diffTime * 10000
+
+                if (speed > 800) { // Shake detected
+                    if (shakeCount > 0) {
+                        shakeCount--
+                        if (shakeCount == 0) {
+                            onComplete()
+                        }
+                    }
+                }
+                lastX = x
+                lastY = y
+                lastZ = z
+            }
+        }
+
+        onDispose {
+            shakeProvider.unregister()
+        }
+    }
+
+    Column(
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth().padding(16.dp)
+    ) {
+        Text(
+            text = "Shake the device!",
+            color = Color.White,
+            fontSize = 24.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Shakes remaining: $shakeCount",
+            color = Color.LightGray,
+            fontSize = 18.sp
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        LinearProgressIndicator(
+            progress = { (targetShakes - shakeCount).toFloat() / targetShakes },
+            modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
+            color = Color(0xFF10B981),
+            trackColor = Color(0x33FFFFFF)
+        )
+    }
 }
