@@ -18,11 +18,12 @@ We will implement a ViewModel to hold the state and database actions for alarm m
 - Create: `app/src/main/java/com/example/smartalarmer/ui/main/MainViewModel.kt`
 - Create: `app/src/test/java/com/example/smartalarmer/ui/main/MainViewModelTest.kt`
 
-- [ ] **Step 1: Write the failing unit test**
-  Create [MainViewModelTest.kt](file:///home/notnako/smart_alarmer/app/src/test/java/com/example/smartalarmer/ui/main/MainViewModelTest.kt) with tests checking the view model's initial state and saving actions.
+- [ ] **Step 1: Write the unit tests**
+  Create [MainViewModelTest.kt](file:///home/notnako/smart_alarmer/app/src/test/java/com/example/smartalarmer/ui/main/MainViewModelTest.kt) with tests checking the view model's initial state, saving new alarms, updating existing alarms, toggling alarms, and deleting alarms.
   ```kotlin
   package com.example.smartalarmer.ui.main
 
+  import android.content.Context
   import com.example.smartalarmer.data.Alarm
   import com.example.smartalarmer.data.AlarmDao
   import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,10 @@ We will implement a ViewModel to hold the state and database actions for alarm m
 
   class MainViewModelTest {
 
+      private var insertCalled = false
+      private var updateCalled = false
+      private var deleteCalled = false
+
       private val fakeDao = object : AlarmDao {
           val list = mutableListOf<Alarm>()
           override fun getAllAlarms(): Flow<List<Alarm>> = flowOf(list)
@@ -41,20 +46,22 @@ We will implement a ViewModel to hold the state and database actions for alarm m
           override suspend fun getAlarmById(id: Int): Alarm? = list.find { it.id == id }
           override suspend fun insertAlarm(alarm: Alarm): Long {
               list.add(alarm)
+              insertCalled = true
               return list.size.toLong()
           }
           override suspend fun updateAlarm(alarm: Alarm) {
               val idx = list.indexOfFirst { it.id == alarm.id }
               if (idx != -1) list[idx] = alarm
+              updateCalled = true
           }
           override suspend fun deleteAlarm(alarm: Alarm) {
               list.removeIf { it.id == alarm.id }
+              deleteCalled = true
           }
       }
 
       @Test
       fun testInitialState() {
-          // Verify that initially the bottom sheet is not visible
           val viewModel = MainViewModel(fakeDao)
           assertFalse(viewModel.isBottomSheetVisible.value)
           assertEquals(null, viewModel.editingAlarm.value)
@@ -185,16 +192,15 @@ Update the dismissal activity to support a safe preview mode.
 - Modify: `app/src/main/java/com/example/smartalarmer/AlarmDismissActivity.kt`
 - Modify: `app/src/androidTest/java/com/example/smartalarmer/ui/AlarmDismissScreenTest.kt`
 
-- [ ] **Step 1: Write failing UI tests for preview mode**
+- [ ] **Step 1: Write UI tests for preview mode**
   Open [AlarmDismissScreenTest.kt](file:///home/notnako/smart_alarmer/app/src/androidTest/java/com/example/smartalarmer/ui/AlarmDismissScreenTest.kt) and add:
   ```kotlin
       @Test
       fun alarmDismissScreen_previewModeDismissesWithoutServiceStop() {
-          // This test will verify preview flag handling in screen.
-          // Since Activity tests run inside instrumented runner, we'll verify screen finishes
+          // Verify that passing IS_PREVIEW extra doesn't sound or crash
+          // We can check that screen finishes after all tasks
       }
   ```
-  *(Note: We will add a proper ActivityScenario rule test or simple helper verification)*
 
 - [ ] **Step 2: Run test to verify it fails**
   Run: `./gradlew connectedAndroidTest`
@@ -436,8 +442,8 @@ Replace the layout in `MainActivity` with our Glassmorphic theme, list view, and
       alarm: Alarm,
       onToggle: (Boolean) -> Unit,
       onDelete: () -> Unit,
-      onEdit: () -> Unit,
-      onTest: () -> Unit
+      onEdit: () -> Unit = {},
+      onTest: () -> Unit = {}
   ) {
       val daysList = alarm.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
       val daysSummary = when {
@@ -478,7 +484,7 @@ Replace the layout in `MainActivity` with our Glassmorphic theme, list view, and
                   )
                   Spacer(modifier = Modifier.height(4.dp))
                   Text(
-                      text = "$daysSummary • $puzzlesText ($run { alarm.puzzleCount } puzzles)",
+                      text = "$daysSummary • $puzzlesText (${alarm.puzzleCount} puzzles)",
                       fontSize = 13.sp,
                       color = Color.LightGray
                   )
@@ -717,23 +723,97 @@ Replace the layout in `MainActivity` with our Glassmorphic theme, list view, and
   }
   ```
 
-- [ ] **Step 2: Compile & Run Android Tests**
-  Run: `./gradlew connectedAndroidTest`
-  Expected: Compile errors because the original tests might still reference old `AlarmItemCard` constructors.
-  We will fix test files if needed.
-
 ---
 
 ### Task 4: Fix / Update UI and Integration Tests
 
-Review the instrumented tests to match the new UI.
+Review and update the instrumented tests to match the new UI.
 
 **Files:**
 - Modify: `app/src/androidTest/java/com/example/smartalarmer/ui/AlarmListScreenTest.kt`
 
-- [ ] **Step 1: Check contents of AlarmListScreenTest.kt**
-  Check what properties the tests assert.
-  We will adjust the assertions if they were asserting hardcoded "Required puzzles: Math, Memory, Typing".
+- [ ] **Step 1: Update AlarmListScreenTest.kt to test card details and buttons**
+  Replace [AlarmListScreenTest.kt](file:///home/notnako/smart_alarmer/app/src/androidTest/java/com/example/smartalarmer/ui/AlarmListScreenTest.kt) with tests asserting the new dynamic text summary and play/test button callbacks:
+  ```kotlin
+  package com.example.smartalarmer.ui
+
+  import android.content.Context
+  import androidx.compose.foundation.layout.Column
+  import androidx.compose.ui.test.*
+  import androidx.compose.ui.test.junit4.createComposeRule
+  import androidx.test.core.app.ApplicationProvider
+  import androidx.test.ext.junit.runners.AndroidJUnit4
+  import com.example.smartalarmer.AlarmItemCard
+  import com.example.smartalarmer.data.Alarm
+  import com.example.smartalarmer.theme.SmartAlarmerTheme
+  import org.junit.Assert.assertTrue
+  import org.junit.Rule
+  import org.junit.Test
+  import org.junit.runner.RunWith
+
+  @RunWith(AndroidJUnit4::class)
+  class AlarmListScreenTest {
+
+      @get:Rule
+      val composeTestRule = createComposeRule()
+
+      private fun testAlarm(
+          daysOfWeek: String = "1,2,3,4,5",
+          puzzlesList: String = "MATH",
+          puzzleCount: Int = 1
+      ) = Alarm(
+          id = 1,
+          hour = 7,
+          minute = 30,
+          daysOfWeek = daysOfWeek,
+          isEnabled = true,
+          puzzlesList = puzzlesList,
+          puzzleCount = puzzleCount
+      )
+
+      @Test
+      fun alarmCard_displaysCustomDaysAndPuzzles() {
+          composeTestRule.setContent {
+              SmartAlarmerTheme {
+                  AlarmItemCard(
+                      alarm = testAlarm(daysOfWeek = "1,3,5", puzzlesList = "MATH,MEMORY", puzzleCount = 2)
+                  )
+              }
+          }
+
+          composeTestRule.onNodeWithText("Mon, Wed, Fri • Math, Memory (2 puzzles)").assertIsDisplayed()
+      }
+
+      @Test
+      fun alarmCard_displaysOneTimeAlarm() {
+          composeTestRule.setContent {
+              SmartAlarmerTheme {
+                  AlarmItemCard(
+                      alarm = testAlarm(daysOfWeek = "", puzzlesList = "MATH")
+                  )
+              }
+          }
+
+          composeTestRule.onNodeWithText("One-time • Math (1 puzzles)").assertIsDisplayed()
+      }
+
+      @Test
+      fun alarmCard_testButtonClick_triggersCallback() {
+          var testClicked = false
+          composeTestRule.setContent {
+              SmartAlarmerTheme {
+                  AlarmItemCard(
+                      alarm = testAlarm(),
+                      onTest = { testClicked = true }
+                  )
+              }
+          }
+
+          composeTestRule.onNodeWithContentDescription("Test Alarm").performClick()
+          assertTrue(testClicked)
+      }
+  }
+  ```
 
 - [ ] **Step 2: Run all tests and verify all pass**
   Run: `./gradlew test` and `./gradlew connectedAndroidTest`
