@@ -202,7 +202,15 @@ fun MemoryPuzzleView(
     onComplete: () -> Unit,
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
 ) {
-    val sequence = remember { memoryProvider.generateSequence(4) }
+    val sequence = remember {
+        val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
+        val length = when (difficulty) {
+            Difficulty.EASY -> 3
+            Difficulty.MEDIUM -> 5
+            Difficulty.HARD -> 7
+        }
+        memoryProvider.generateSequence(length)
+    }
     LaunchedEffect(sequence) {
         android.util.Log.d("TEST_DEBUG", "Memory Sequence: ${sequence.joinToString(", ")}")
     }
