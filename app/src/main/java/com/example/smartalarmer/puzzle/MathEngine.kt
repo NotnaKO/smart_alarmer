@@ -3,8 +3,8 @@ package com.example.smartalarmer.puzzle
 enum class Difficulty { EASY, MEDIUM, HARD }
 data class MathPuzzle(val equation: String, val answer: Int, val difficulty: Difficulty)
 
-object MathEngine {
-    fun generate(difficulty: Difficulty): MathPuzzle {
+object MathEngine : MathPuzzleProvider {
+    override fun generate(difficulty: Difficulty): MathPuzzle {
         return when (difficulty) {
             Difficulty.EASY -> {
                 val a = (10..99).random()

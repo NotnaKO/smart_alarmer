@@ -19,7 +19,10 @@ enum class PuzzleType { MATH, TYPING, MEMORY }
 fun AlarmDismissScreen(
     puzzlesList: String,
     puzzleCount: Int,
-    onDismissComplete: () -> Unit
+    onDismissComplete: () -> Unit,
+    mathProvider: MathPuzzleProvider = MathEngine,
+    typingProvider: TypingPuzzleProvider = TypingEngine,
+    memoryProvider: MemoryPuzzleProvider = MemoryEngine,
 ) {
     val puzzles = remember {
         puzzlesList.split(",")
@@ -64,17 +67,29 @@ fun AlarmDismissScreen(
         // Active Puzzle View
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
             when (currentPuzzle) {
-                PuzzleType.MATH -> MathPuzzleView(onComplete = { currentTaskIndex++ })
-                PuzzleType.TYPING -> TypingPuzzleView(onComplete = { currentTaskIndex++ })
-                PuzzleType.MEMORY -> MemoryPuzzleView(onComplete = { currentTaskIndex++ })
+                PuzzleType.MATH -> MathPuzzleView(
+                    onComplete = { currentTaskIndex++ },
+                    mathProvider = mathProvider,
+                )
+                PuzzleType.TYPING -> TypingPuzzleView(
+                    onComplete = { currentTaskIndex++ },
+                    typingProvider = typingProvider,
+                )
+                PuzzleType.MEMORY -> MemoryPuzzleView(
+                    onComplete = { currentTaskIndex++ },
+                    memoryProvider = memoryProvider,
+                )
             }
         }
     }
 }
 
 @Composable
-fun MathPuzzleView(onComplete: () -> Unit) {
-    val puzzle = remember { MathEngine.generate(Difficulty.MEDIUM) }
+fun MathPuzzleView(
+    onComplete: () -> Unit,
+    mathProvider: MathPuzzleProvider = MathEngine,
+) {
+    val puzzle = remember { mathProvider.generate(Difficulty.MEDIUM) }
     LaunchedEffect(puzzle) {
         android.util.Log.d("TEST_DEBUG", "Math Puzzle: ${puzzle.equation} = ${puzzle.answer}")
     }
@@ -133,8 +148,11 @@ fun MathPuzzleView(onComplete: () -> Unit) {
 }
 
 @Composable
-fun TypingPuzzleView(onComplete: () -> Unit) {
-    val targetQuote = remember { TypingEngine.getRandomQuote() }
+fun TypingPuzzleView(
+    onComplete: () -> Unit,
+    typingProvider: TypingPuzzleProvider = TypingEngine,
+) {
+    val targetQuote = remember { typingProvider.getRandomQuote() }
     LaunchedEffect(targetQuote) {
         android.util.Log.d("TEST_DEBUG", "Typing Quote: $targetQuote")
     }
@@ -159,7 +177,7 @@ fun TypingPuzzleView(onComplete: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                if (TypingEngine.isMatch(targetQuote, input)) {
+                if (typingProvider.isMatch(targetQuote, input)) {
                     onComplete()
                 }
             },
@@ -171,8 +189,11 @@ fun TypingPuzzleView(onComplete: () -> Unit) {
 }
 
 @Composable
-fun MemoryPuzzleView(onComplete: () -> Unit) {
-    val sequence = remember { MemoryEngine.generateSequence(4) }
+fun MemoryPuzzleView(
+    onComplete: () -> Unit,
+    memoryProvider: MemoryPuzzleProvider = MemoryEngine,
+) {
+    val sequence = remember { memoryProvider.generateSequence(4) }
     LaunchedEffect(sequence) {
         android.util.Log.d("TEST_DEBUG", "Memory Sequence: ${sequence.joinToString(", ")}")
     }
@@ -209,7 +230,7 @@ fun MemoryPuzzleView(onComplete: () -> Unit) {
                             onClick = {
                                 if (!isShowingSequence) {
                                     userInputs.add(index)
-                                    val isValid = MemoryEngine.verifyStep(sequence, userInputs)
+                                    val isValid = memoryProvider.verifyStep(sequence, userInputs)
                                     if (!isValid) {
                                         userInputs.clear()
                                         isShowingSequence = true
