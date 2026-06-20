@@ -22,7 +22,6 @@ echo "2. Building the debug APK..."
 
 echo "3. Deploying and launching the app..."
 android run \
-  --activity=com.example.smartalarmer.MainActivity \
   --apks=app/build/outputs/apk/debug/app-debug.apk
 
 echo "=========================================="
