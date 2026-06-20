@@ -195,13 +195,22 @@ class MainActivity : ComponentActivity() {
                       color = Color.LightGray
                   )
               }
-
               Row(verticalAlignment = Alignment.CenterVertically) {
-                  IconButton(
+                  OutlinedButton(
                       onClick = onTest,
-                      colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFF10B981))
+                      modifier = Modifier.padding(end = 8.dp),
+                      colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF10B981)),
+                      border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                      shape = RoundedCornerShape(12.dp),
+                      contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                   ) {
-                      Icon(Icons.Filled.PlayArrow, contentDescription = "Test Alarm")
+                      Icon(
+                          imageVector = Icons.Filled.PlayArrow,
+                          contentDescription = "Test Alarm",
+                          modifier = Modifier.size(16.dp)
+                      )
+                      Spacer(modifier = Modifier.width(4.dp))
+                      Text("Test", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                   }
 
                   Switch(
