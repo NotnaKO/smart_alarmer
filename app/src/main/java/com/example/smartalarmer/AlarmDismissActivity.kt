@@ -17,22 +17,28 @@ class AlarmDismissActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Show on lock screen
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-        } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                        or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                        or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-            )
+        val isPreview = intent.getBooleanExtra("IS_PREVIEW", false)
+
+        if (!isPreview) {
+            // Show on lock screen
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                setShowWhenLocked(true)
+                setTurnScreenOn(true)
+            } else {
+                @Suppress("DEPRECATION")
+                window.addFlags(
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                            or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                            or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                )
+            }
         }
 
-        // Disable back button
+        // Disable back button on real alarm, finish on preview
         onBackPressedDispatcher.addCallback(this) {
-            // Ignore back button
+            if (isPreview) {
+                finish()
+            }
         }
 
         val puzzlesList = intent.getStringExtra("PUZZLES_LIST") ?: "MATH"
@@ -45,7 +51,9 @@ class AlarmDismissActivity : ComponentActivity() {
                         puzzlesList = puzzlesList,
                         puzzleCount = puzzleCount,
                         onDismissComplete = {
-                            stopService(Intent(this, AlarmService::class.java))
+                            if (!isPreview) {
+                                stopService(Intent(this, AlarmService::class.java))
+                            }
                             finish()
                         }
                     )
