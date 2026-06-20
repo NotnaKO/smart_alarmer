@@ -8,12 +8,15 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 
 ### Key Features
 
-- **Three puzzle types**: Math equations, typing challenges, and memory pattern games
-- **Recurring alarms**: ISO-8601 day-of-week scheduling (Monday = 1 through Sunday = 7)
-- **Boot persistence**: Alarms reschedule automatically when the device restarts
-- **Volume lock**: The alarm stream is forced to maximum every second while active
-- **Full-screen overlay**: The puzzle screen appears over the lock screen with back-button disabled
-- **Room database**: Persistent alarm storage with reactive Flow-based UI updates
+- **Three puzzle types**: Math equations, typing challenges, and memory pattern games.
+- **Customizable Alarm Configuration**: A slide-up `ModalBottomSheet` lets you configure specific repeat weekdays, choose which puzzle types to show, and set the puzzle count.
+- **Modern Glassmorphic Dark Theme**: Premium styling featuring semi-transparent overlays, glowing accents, and smooth feedback animations.
+- **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
+- **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
+- **Boot persistence**: Alarms reschedule automatically when the device restarts.
+- **Volume lock**: The alarm stream is forced to maximum every second while active.
+- **Full-screen overlay**: The puzzle screen appears over the lock screen with back-button disabled for real alarms.
+- **Room database**: Persistent alarm storage with reactive Flow-based UI updates.
 
 ---
 
@@ -22,7 +25,13 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        MainActivity                         │
-│          (Compose UI: alarm list, FAB, TimePicker)          │
+│   (Compose UI: settings, Glassmorphic cards, EditSheet)      │
+└────────────────────────┬────────────────────────────────────┘
+                         │ observes StateFlow
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       MainViewModel                         │
+│            (Coordinates UI state and DB operations)          │
 └────────────────────────┬────────────────────────────────────┘
                          │ insert/update/delete
                          ▼
@@ -56,15 +65,17 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 │  → foreground notification with full-screen intent           │
 │  → starts MediaPlayer (alarm tone, looping)                  │
 │  → locks volume to max every 1 second                        │
+│  │  (skipped during Preview Mode)                            │
 │  → launches AlarmDismissActivity directly                    │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                  AlarmDismissActivity                         │
-│  showWhenLocked + turnScreenOn + back-button disabled        │
+│  If real alarm: showWhenLocked, turnScreenOn, back disabled │
+│  If preview mode: safe backdrop, back button allowed        │
 │  → hosts AlarmDismissScreen (Compose)                        │
-│  → onDismissComplete → stopService + finish()                │
+│  → onDismissComplete → finish() (+ stopService if real)      │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -99,9 +110,17 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `AlarmScheduler.kt` | Calculates the next trigger time and registers exact alarms via `AlarmManager`. The core calculation logic is in `calculateNextTriggerTime()`, which is pure and unit-testable. |
 | `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Starts the foreground `AlarmService` and automatically reschedules recurring alarms for the next active day. Disables one-time alarms. |
 | `AlarmService.kt` | Foreground service that plays the alarm tone at max volume, locks the volume stream, shows a notification with full-screen intent, and launches the dismiss overlay. |
-| `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI. Disables the back button. On completion, stops `AlarmService` and finishes itself. |
+| `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI. Handles normal alarm security locks or safe `IS_PREVIEW` test executions. |
 | `AlarmDismissScreen.kt` | Compose screen that orchestrates puzzle progression (Task 1 of N → Task N of N). Delegates to individual puzzle views. |
 | `BootReceiver.kt` | Listens for `ACTION_BOOT_COMPLETED` and reschedules all enabled alarms from the Room database. Uses `goAsync()` for safe coroutine work in a receiver. |
+
+### UI & Architecture Layer
+
+| File | Purpose |
+|------|---------|
+| `ui/main/MainViewModel.kt` | Houses state logic, databases connections, sheet state, and alarm scheduler hooks. Decoupled from the Activity lifecycle. |
+| `MainActivity.kt` | Displays the Glassmorphic alarm settings dashboard and hosts the slide-up `AlarmEditSheet` bottom drawer editor. |
+| `theme/` | Material 3 dark theme configuration. |
 
 ### Data Layer
 
@@ -119,13 +138,6 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `puzzle/MathEngine.kt` | Generates arithmetic puzzles at Easy (add/subtract), Medium (multiply + add), and Hard (solve for x) difficulty levels. Implements `MathPuzzleProvider`. |
 | `puzzle/TypingEngine.kt` | Provides random motivational quotes and case-sensitive matching. Implements `TypingPuzzleProvider`. |
 | `puzzle/MemoryEngine.kt` | Generates random sequences of grid indices (0–8) and validates step-by-step user input. Implements `MemoryPuzzleProvider`. |
-
-### UI
-
-| File | Purpose |
-|------|---------|
-| `MainActivity.kt` | Settings screen: displays alarm list via `LazyColumn`, FAB opens `TimePickerDialog`, toggle/delete controls per alarm. |
-| `theme/` | Material 3 dark theme configuration. |
 
 ---
 
@@ -174,20 +186,21 @@ Declared in `AndroidManifest.xml`:
 ## Build & Run
 
 ```bash
-# Compile
-./gradlew compileDebugKotlin
+# Launch emulator, build, install, and run on emulator (using launcher script)
+./run_app.sh
 
 # Run unit tests (JVM)
-./gradlew testDebugUnitTest
+./gradlew test
 
-# Run instrumented tests (requires emulator or device)
+# Run instrumented UI tests (requires emulator or device)
 ./gradlew connectedAndroidTest
 
-# Build and install debug APK
-./gradlew installDebug
+# Build debug APK
+./gradlew assembleDebug
 ```
 
-**Requirements:** JDK 17, Android SDK 36, Gradle 9.1
+After building, the APK file can be retrieved at:
+`app/build/outputs/apk/debug/app-debug.apk`
 
 ---
 
@@ -197,14 +210,14 @@ Declared in `AndroidManifest.xml`:
 
 ```
         ┌───────────────────────┐
-        │  Emulator E2E Tests   │  ← Manual via ADB
+        │  Emulator E2E Tests   │  ← Manual via ADB / script
         │  (integration)        │
         ├───────────────────────┤
         │  Instrumented Tests   │  ← connectedAndroidTest
-        │  (Room, on-device)    │
+        │  (Room, on-device UI) │
         ├───────────────────────┤
-        │    JVM Unit Tests     │  ← testDebugUnitTest
-        │  (engines, scheduler) │
+        │    JVM Unit Tests     │  ← test task
+        │  (engines, ViewModel) │
         └───────────────────────┘
 ```
 
@@ -217,91 +230,19 @@ These run on the host JVM with no Android framework required.
 | `MathEngineTest` | Verifies puzzle generation at all three difficulty levels: correct difficulty field, operator presence, and answer range. |
 | `TypingEngineTest` | Tests exact string matching (including whitespace trimming) and non-empty quote generation. |
 | `MemoryEngineTest` | Tests sequence generation (correct length, valid indices 0–8) and step-by-step verification (correct prefix, wrong prefix, overflow). |
-| `AlarmSchedulerTest` | Tests `calculateNextTriggerTime()` against a mock `Calendar` for 6 scenarios: one-time future, one-time past, recurring same-day future, recurring same-day past (skip to next active day), recurring different day, and weekly rollover when the only active day has passed. |
+| `AlarmSchedulerTest` | Tests `calculateNextTriggerTime()` against a mock `Calendar` for scheduling combinations. |
+| `MainViewModelTest` | Verifies view model state flow, bottom sheet visibility switches, and database save/toggle/delete hooks. |
 
-The `AlarmSchedulerTest` was made possible by extracting the date calculation logic from `AlarmScheduler.schedule()` into a pure function `calculateNextTriggerTime(alarm, now)` that accepts an injectable `Calendar` for the current time.
-
-### 2. Instrumented Tests (`app/src/androidTest/`)
+### 2. Instrumented UI & Integration Tests (`app/src/androidTest/`)
 
 These run on a real device or emulator and require the Android runtime.
 
 | Test Class | What It Covers |
 |------------|---------------|
-| `AlarmDatabaseTest` | Creates an in-memory Room database, inserts alarms, reads them back via `getAllAlarms()` Flow, and filters enabled-only alarms via `getEnabledAlarms()`. Validates CRUD operations and query correctness. |
-
-### 3. Emulator End-to-End Verification
-
-Full integration testing was performed manually on an Android 16 emulator (`emulator-5554`). The process is documented below because it demonstrates several non-obvious platform behaviors.
-
-#### Setup
-```bash
-# Grant exact alarm permission (Android 14+)
-adb shell appops set com.example.smartalarmer SCHEDULE_EXACT_ALARM allow
-
-# Install debug build
-./gradlew installDebug
-```
-
-#### Alarm Scheduling Verification
-1. Created an alarm via the FAB `TimePickerDialog` in `MainActivity`.
-2. Verified it was persisted in Room by pulling the SQLite database files:
-   ```bash
-   # Must pull ALL three WAL-mode files for valid data
-   adb shell "run-as com.example.smartalarmer cat databases/alarm_database" > /tmp/db
-   adb shell "run-as com.example.smartalarmer cat databases/alarm_database-shm" > /tmp/db-shm
-   adb shell "run-as com.example.smartalarmer cat databases/alarm_database-wal" > /tmp/db-wal
-   python3 -c "import sqlite3; conn=sqlite3.connect('/tmp/db'); print(conn.execute('select * from alarms').fetchall())"
-   ```
-3. Confirmed the alarm was registered in Android's alarm subsystem:
-   ```bash
-   adb shell dumpsys alarm | grep com.example.smartalarmer
-   ```
-
-#### Alarm Trigger & Puzzle Dismiss Flow
-1. Waited for the alarm to fire at the scheduled time.
-2. Verified via logcat that the correct puzzle sequence was generated:
-   ```bash
-   adb logcat -d | grep TEST_DEBUG
-   # Output: Puzzles: TYPING, MATH, MEMORY
-   # Output: Typing Quote: The early bird gets the worm.
-   ```
-3. Solved each puzzle using ADB shell input commands:
-   - **Typing puzzle**: Used `adb shell input text` to type the target quote character-by-character, then tapped Submit.
-   - **Math puzzle**: Read the equation from `uiautomator dump`, computed the answer, tapped the on-screen numeric keyboard buttons by coordinate, then tapped ✔.
-   - **Memory puzzle**: Read the flashed sequence from logcat (`TEST_DEBUG: Memory Sequence: 5, 2, 4, 4`), then tapped the corresponding grid buttons by coordinate after the pattern display finished.
-4. Confirmed that after solving all 3 puzzles:
-   - `AlarmDismissActivity` finished.
-   - `AlarmService` stopped (verified via `adb shell dumpsys activity services`).
-   - Audio playback ceased.
-   - The app returned to `MainActivity`.
-
-#### Coordinate Discovery via UI Automator
-Button coordinates for ADB tap commands were obtained by:
-```bash
-adb shell uiautomator dump /data/local/tmp/uidump.xml
-adb pull /data/local/tmp/uidump.xml /tmp/uidump.xml
-# Parse to extract text labels and bounding rectangles
-python3 -c "
-import xml.etree.ElementTree as ET
-tree = ET.parse('/tmp/uidump.xml')
-for elem in tree.getroot().iter():
-    text = elem.get('text', '')
-    bounds = elem.get('bounds', '')
-    if text: print(f'{text:15} {bounds}')
-"
-```
-
-#### Soft Keyboard Interaction Note
-When the soft keyboard is open (during the typing puzzle), Compose `adjustResize` pushes the dialog upward, changing button y-coordinates. The workaround is to dismiss the keyboard first:
-```bash
-adb shell input keyevent KEYCODE_BACK
-```
-
-#### Boot Rescheduling
-Sending `ACTION_BOOT_COMPLETED` via `adb shell am broadcast` is blocked by Android security. Boot rescheduling was verified by:
-1. Inspecting `BootReceiver.kt` code logic (queries `getEnabledAlarms()` and calls `AlarmScheduler.schedule()` for each).
-2. Confirming compilation and that the receiver is correctly registered in `AndroidManifest.xml` with the `BOOT_COMPLETED` intent filter.
-3. Verifying the `AlarmSchedulerTest` unit tests cover the same `calculateNextTriggerTime()` logic that `BootReceiver` invokes.
+| `AlarmDatabaseTest` | Creates an in-memory Room database, inserts alarms, reads them back, and validates CRUD operations. |
+| `AlarmListScreenTest` | Tests Composable settings cards, dynamic weekdays text generation, play/test trigger callbacks, and edit clicks. |
+| `AlarmDismissScreenTest` | Verifies correctness of Compose states in individual Math, Memory, and Typing puzzle screens. |
+| `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |
 
 ---
 
@@ -311,6 +252,10 @@ Development proceeded incrementally, with each feature committed and verified be
 
 | Commit | Description |
 |--------|-------------|
+| `8e2b572` | **Latest:** Add run_app.sh launcher script |
+| `9ce179e` | Implement Glassmorphism styling, BottomSheet editor, and AlarmListScreenTest updates |
+| `05395e7` | Support IS_PREVIEW flag in AlarmDismissActivity and write AlarmDismissActivityTest |
+| `ae9ac6c` | Implement MainViewModel and MainViewModelTest |
 | `c955390` | Implement `TypingEngine` and unit tests |
 | `d3f0fef` | Implement `MemoryEngine` and unit tests |
 | `943bd4d` | Implement Room database persistence and in-memory test |
@@ -321,45 +266,7 @@ Development proceeded incrementally, with each feature committed and verified be
 | `418aee6` | Custom alarm list and FAB `TimePickerDialog` with Material Icons |
 | `3b8d350` | Update `AlarmDao.insertAlarm()` to return row ID |
 | `5be85d3` | End-to-end multiple alarm scheduling with time picker UI and emulator verification |
-| `c8a04f9` | **Cleanup:** delete unused template boilerplate (`Navigation.kt`, `DataRepository.kt`, `MainScreen.kt`, `MainScreenViewModel.kt`, etc.) |
+| `c8a04f9` | **Cleanup:** delete unused template boilerplate |
 | `151b9fe` | Implement `BootReceiver` to reschedule active alarms on device boot |
 | `d79cc28` | Precise day-of-week scheduling calculation (ISO-8601 mapping) |
 | `2e379f1` | Extract `calculateNextTriggerTime()`, add scheduling unit tests, add auto-rescheduling in `AlarmReceiver` |
-
-### Puzzle Provider Interfaces (Latest)
-
-The most recent user change introduced dependency injection interfaces for the puzzle engines:
-
-```kotlin
-// puzzle/PuzzleProviders.kt
-interface MathPuzzleProvider {
-    fun generate(difficulty: Difficulty): MathPuzzle
-}
-
-interface TypingPuzzleProvider {
-    fun getRandomQuote(): String
-    fun isMatch(target: String, input: String): Boolean
-}
-
-interface MemoryPuzzleProvider {
-    fun generateSequence(length: Int): List<Int>
-    fun verifyStep(sequence: List<Int>, userInputs: List<Int>): Boolean
-}
-```
-
-Each engine object (`MathEngine`, `TypingEngine`, `MemoryEngine`) now implements its respective interface, and all Compose puzzle views accept providers as optional parameters with production defaults. This enables:
-- **Deterministic UI testing**: Inject fake providers that return known puzzles.
-- **Compose Preview support**: Supply lightweight stubs without random generation.
-- **Future extensibility**: Swap puzzle logic without touching UI code.
-
----
-
-## Known Limitations & Gotchas
-
-1. **`SCHEDULE_EXACT_ALARM` on Android 14+**: The permission is revoked by default on API 34+. The app declares `USE_EXACT_ALARM` as a fallback, but on some OEM ROMs users may still need to manually grant "Alarms & reminders" access.
-
-2. **Room WAL mode**: When pulling the database for inspection, you must copy `alarm_database`, `alarm_database-shm`, and `alarm_database-wal` together. Pulling only the main file produces an apparently-empty database.
-
-3. **One alarm per ID**: `PendingIntent` request codes use `alarm.id`, so each alarm can only have one pending trigger at a time. This is intentional for non-overlapping recurring alarms.
-
-4. **No snooze**: By design. The only escape is solving all configured puzzles.
