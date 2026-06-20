@@ -1,23 +1,14 @@
 package com.example.smartalarmer.ui
 
-import android.content.Context
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.room.Room
 import com.example.smartalarmer.AlarmItemCard
 import com.example.smartalarmer.data.Alarm
-import com.example.smartalarmer.data.AlarmDao
-import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.theme.SmartAlarmerTheme
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Assert.*
-import org.junit.Before
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,47 +19,41 @@ class AlarmListScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private lateinit var database: AlarmDatabase
-    private lateinit var dao: AlarmDao
-
-    @Before
-    fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AlarmDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
-        dao = database.alarmDao()
-    }
-
-    @After
-    fun tearDown() {
-        database.close()
-    }
-
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private fun testAlarm(
         hour: Int = 7,
         minute: Int = 30,
+        daysOfWeek: String = "1,2,3,4,5",
         isEnabled: Boolean = true,
+        puzzlesList: String = "MATH",
+        puzzleCount: Int = 1
     ) = Alarm(
         id = 1,
         hour = hour,
         minute = minute,
-        daysOfWeek = "1,2,3,4,5",
+        daysOfWeek = daysOfWeek,
         isEnabled = isEnabled,
-        puzzlesList = "MATH",
-        puzzleCount = 1,
+        puzzlesList = puzzlesList,
+        puzzleCount = puzzleCount
     )
 
     private fun setAlarmCard(
         alarm: Alarm,
         onToggle: (Boolean) -> Unit = {},
         onDelete: () -> Unit = {},
+        onEdit: () -> Unit = {},
+        onTest: () -> Unit = {}
     ) {
         composeTestRule.setContent {
             SmartAlarmerTheme {
-                AlarmItemCard(alarm = alarm, onToggle = onToggle, onDelete = onDelete)
+                AlarmItemCard(
+                    alarm = alarm,
+                    onToggle = onToggle,
+                    onDelete = onDelete,
+                    onEdit = onEdit,
+                    onTest = onTest
+                )
             }
         }
     }
@@ -108,7 +93,7 @@ class AlarmListScreenTest {
         var toggledValue: Boolean? = null
         setAlarmCard(
             alarm = testAlarm(isEnabled = true),
-            onToggle = { toggledValue = it },
+            onToggle = { toggledValue = it }
         )
 
         composeTestRule.onNode(isToggleable()).performClick()
@@ -121,7 +106,7 @@ class AlarmListScreenTest {
         var deleted = false
         setAlarmCard(
             alarm = testAlarm(),
-            onDelete = { deleted = true },
+            onDelete = { deleted = true }
         )
 
         composeTestRule.onNodeWithContentDescription("Delete Alarm").performClick()
@@ -130,10 +115,46 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun alarmCard_showsPuzzleLabel() {
-        setAlarmCard(alarm = testAlarm())
+    fun alarmCard_displaysCustomDaysAndPuzzles() {
+        setAlarmCard(
+            alarm = testAlarm(daysOfWeek = "1,3,5", puzzlesList = "MATH,MEMORY", puzzleCount = 2)
+        )
 
-        composeTestRule.onNodeWithText("Required puzzles: Math, Memory, Typing").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Mon, Wed, Fri • Math, Memory (2 puzzles)").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_displaysOneTimeAlarm() {
+        setAlarmCard(
+            alarm = testAlarm(daysOfWeek = "", puzzlesList = "MATH")
+        )
+
+        composeTestRule.onNodeWithText("One-time • Math (1 puzzles)").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_testButtonClick_triggersCallback() {
+        var testClicked = false
+        setAlarmCard(
+            alarm = testAlarm(),
+            onTest = { testClicked = true }
+        )
+
+        composeTestRule.onNodeWithContentDescription("Test Alarm").performClick()
+        assertTrue(testClicked)
+    }
+
+    @Test
+    fun alarmCard_cardClick_triggersEditCallback() {
+        var editClicked = false
+        setAlarmCard(
+            alarm = testAlarm(),
+            onEdit = { editClicked = true }
+        )
+
+        // Click the card (finding the time text to perform click)
+        composeTestRule.onNodeWithText("07:30").performClick()
+        assertTrue(editClicked)
     }
 
     // ── Multiple alarms list ──────────────────────────────────────────────
@@ -143,7 +164,7 @@ class AlarmListScreenTest {
         val alarms = listOf(
             testAlarm(hour = 6, minute = 0).copy(id = 1),
             testAlarm(hour = 7, minute = 15).copy(id = 2),
-            testAlarm(hour = 8, minute = 45).copy(id = 3),
+            testAlarm(hour = 8, minute = 45).copy(id = 3)
         )
 
         composeTestRule.setContent {
