@@ -25,8 +25,47 @@ object AlarmScheduler {
             set(Calendar.HOUR_OF_DAY, alarm.hour)
             set(Calendar.MINUTE, alarm.minute)
             set(Calendar.SECOND, 0)
-            if (before(Calendar.getInstance())) {
-                add(Calendar.DATE, 1)
+        }
+
+        val activeDays = alarm.daysOfWeek.split(",")
+            .mapNotNull { it.trim().toIntOrNull() }
+            .mapNotNull { day ->
+                when (day) {
+                    1 -> Calendar.MONDAY
+                    2 -> Calendar.TUESDAY
+                    3 -> Calendar.WEDNESDAY
+                    4 -> Calendar.THURSDAY
+                    5 -> Calendar.FRIDAY
+                    6 -> Calendar.SATURDAY
+                    7 -> Calendar.SUNDAY
+                    else -> null
+                }
+            }
+            .toSet()
+
+        if (activeDays.isNotEmpty()) {
+            val now = Calendar.getInstance()
+            var found = false
+            for (i in 0..7) {
+                val checkTime = (calendar.clone() as Calendar).apply {
+                    add(Calendar.DATE, i)
+                }
+                val dayOfWeek = checkTime.get(Calendar.DAY_OF_WEEK)
+                if (activeDays.contains(dayOfWeek)) {
+                    if (checkTime.after(now)) {
+                        calendar.add(Calendar.DATE, i)
+                        found = true
+                        break
+                    }
+                }
+            }
+            if (!found && calendar.before(now)) {
+                calendar.add(Calendar.DATE, 1)
+            }
+        } else {
+            // One-time alarm
+            if (calendar.before(Calendar.getInstance())) {
+                calendar.add(Calendar.DATE, 1)
             }
         }
 

@@ -47,4 +47,29 @@ class AlarmDatabaseTest {
         assertEquals(7, allAlarms[0].hour)
         assertEquals(30, allAlarms[0].minute)
     }
+
+    @Test
+    fun testGetEnabledAlarmsOnly() = runBlocking {
+        val alarm1 = Alarm(
+            hour = 7,
+            minute = 30,
+            daysOfWeek = "1,2,3,4,5",
+            isEnabled = true,
+            puzzlesList = "MATH",
+            puzzleCount = 1
+        )
+        val alarm2 = Alarm(
+            hour = 8,
+            minute = 0,
+            daysOfWeek = "6,7",
+            isEnabled = false,
+            puzzlesList = "TYPING",
+            puzzleCount = 1
+        )
+        alarmDao.insertAlarm(alarm1)
+        alarmDao.insertAlarm(alarm2)
+        val enabledAlarms = alarmDao.getEnabledAlarms()
+        assertEquals(1, enabledAlarms.size)
+        assertEquals(7, enabledAlarms[0].hour)
+    }
 }
