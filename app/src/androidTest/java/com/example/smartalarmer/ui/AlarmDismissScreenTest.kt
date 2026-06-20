@@ -7,6 +7,7 @@ import com.example.smartalarmer.AlarmDismissScreen
 import com.example.smartalarmer.MathPuzzleView
 import com.example.smartalarmer.MemoryPuzzleView
 import com.example.smartalarmer.TypingPuzzleView
+import com.example.smartalarmer.ShakePuzzleView
 import com.example.smartalarmer.puzzle.*
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -41,6 +42,19 @@ class AlarmDismissScreenTest {
         override fun generateSequence(length: Int) = listOf(0, 1, 2)
         override fun verifyStep(sequence: List<Int>, userInputs: List<Int>) =
             MemoryEngine.verifyStep(sequence, userInputs)
+    }
+
+    private val fakeShake = object : ShakeSensorProvider {
+        private var callback: ((Float, Float, Float) -> Unit)? = null
+        override fun register(onSensorChanged: (Float, Float, Float) -> Unit) {
+            callback = onSensorChanged
+        }
+        override fun unregister() {
+            callback = null
+        }
+        fun simulateShake(x: Float, y: Float, z: Float) {
+            callback?.invoke(x, y, z)
+        }
     }
 
     // ── Math puzzle ───────────────────────────────────────────────────────
@@ -194,6 +208,45 @@ class AlarmDismissScreenTest {
         }
     }
 
+    // ── Shake puzzle ──────────────────────────────────────────────────────
+
+    @Test
+    fun shakePuzzle_displaysInitialShakes() {
+        composeTestRule.setContent {
+            ShakePuzzleView(
+                onComplete = {},
+                shakeProvider = fakeShake
+            )
+        }
+
+        composeTestRule.onNodeWithText("Shake the device!").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Shakes remaining: 30").assertIsDisplayed()
+    }
+
+    @Test
+    fun shakePuzzle_simulatedShakes_callsOnComplete() {
+        var completed = false
+        composeTestRule.setContent {
+            ShakePuzzleView(
+                onComplete = { completed = true },
+                shakeProvider = fakeShake
+            )
+        }
+
+        // Trigger 30 shakes. Each shake consists of moving X to 25 and back to -25.
+        // We must advance time slightly between calls so that lastUpdate difference is > 100ms.
+        for (i in 1..30) {
+            fakeShake.simulateShake(25f, 9.8f, 0f)
+            // Wait 150ms
+            Thread.sleep(150)
+            fakeShake.simulateShake(-25f, 9.8f, 0f)
+            Thread.sleep(150)
+        }
+
+        composeTestRule.waitForIdle()
+        assertTrue("onComplete should have been called after 30 shakes", completed)
+    }
+
     // ── Full flow ─────────────────────────────────────────────────────────
 
     @Test
@@ -207,6 +260,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
             )
         }
 
@@ -228,6 +282,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
             )
         }
 
