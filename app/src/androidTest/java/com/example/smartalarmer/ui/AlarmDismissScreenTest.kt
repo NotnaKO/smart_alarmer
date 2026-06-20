@@ -117,6 +117,30 @@ class AlarmDismissScreenTest {
         composeTestRule.onNodeWithText("Your Answer: 8").assertIsDisplayed()
     }
 
+    @Test
+    fun mathPuzzle_requestsOnlyMediumOrHardDifficulty() {
+        var requestedDifficulty: Difficulty? = null
+        val capturingMathProvider = object : MathPuzzleProvider {
+            override fun generate(difficulty: Difficulty): MathPuzzle {
+                requestedDifficulty = difficulty
+                return MathPuzzle(equation = "1 + 1", answer = 2, difficulty = difficulty)
+            }
+        }
+
+        composeTestRule.setContent {
+            MathPuzzleView(
+                onComplete = {},
+                mathProvider = capturingMathProvider,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        assertTrue(
+            "Math puzzle should only request MEDIUM or HARD difficulty",
+            requestedDifficulty == Difficulty.MEDIUM || requestedDifficulty == Difficulty.HARD
+        )
+    }
+
     // ── Typing puzzle ─────────────────────────────────────────────────────
 
     @Test
@@ -208,6 +232,34 @@ class AlarmDismissScreenTest {
         }
     }
 
+    @Test
+    fun memoryPuzzle_requestsOnlyMediumOrHardSequenceLength() {
+        var requestedLength: Int? = null
+        val capturingMemoryProvider = object : MemoryPuzzleProvider {
+            override fun generateSequence(length: Int): List<Int> {
+                requestedLength = length
+                return listOf(0, 1, 2)
+            }
+
+            override fun verifyStep(sequence: List<Int>, userInputs: List<Int>): Boolean {
+                return MemoryEngine.verifyStep(sequence, userInputs)
+            }
+        }
+
+        composeTestRule.setContent {
+            MemoryPuzzleView(
+                onComplete = {},
+                memoryProvider = capturingMemoryProvider,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        assertTrue(
+            "Memory puzzle should only request medium/hard sequence lengths",
+            requestedLength == 5 || requestedLength == 7
+        )
+    }
+
     // ── Shake puzzle ──────────────────────────────────────────────────────
 
     @Test
@@ -287,5 +339,24 @@ class AlarmDismissScreenTest {
         }
 
         composeTestRule.onNodeWithText("Task 1 of 1").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmDismissScreen_invalidPuzzleList_callsDismissImmediately() {
+        var dismissed = false
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "UNKNOWN,INVALID",
+                puzzleCount = 2,
+                onDismissComplete = { dismissed = true },
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
+            )
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) { dismissed }
+        assertTrue("onDismissComplete should be called when there are no valid puzzles", dismissed)
     }
 }
