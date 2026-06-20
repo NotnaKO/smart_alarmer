@@ -344,7 +344,7 @@ class MainActivity : ComponentActivity() {
                       modifier = Modifier.fillMaxWidth(),
                       horizontalArrangement = Arrangement.spacedBy(8.dp)
                   ) {
-                      val puzzleTypes = listOf("MATH", "MEMORY", "TYPING")
+                      val puzzleTypes = listOf("MATH", "MEMORY", "TYPING", "SHAKE")
                       puzzleTypes.forEach { type ->
                           val isSelected = selectedPuzzles.contains(type)
                           FilterChip(
