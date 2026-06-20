@@ -1,0 +1,93 @@
+package com.example.smartalarmer
+
+import android.app.*
+import android.content.Context
+import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import java.util.Timer
+import java.util.TimerTask
+
+class AlarmService : Service() {
+    private var mediaPlayer: MediaPlayer? = null
+    private var audioManager: AudioManager? = null
+    private var volumeTimer: Timer? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val channelId = "AlarmChannel"
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Active Alarm", NotificationManager.IMPORTANCE_HIGH)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val dismissIntent = Intent(this, AlarmDismissActivity::class.java).apply {
+            putExtra("PUZZLES_LIST", intent?.getStringExtra("PUZZLES_LIST"))
+            putExtra("PUZZLE_COUNT", intent?.getIntExtra("PUZZLE_COUNT", 2))
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("WAKE UP NOW!")
+            .setContentText("Complete tasks to silence the alarm")
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .build()
+
+        startForeground(1, notification)
+
+        // Play Loud Sound
+        val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(this@AlarmService, alarmUri)
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            isLooping = true
+            prepare()
+            start()
+        }
+
+        // Lock Volume to Maximum
+        volumeTimer = Timer().apply {
+            scheduleAtFixedRate(object : TimerTask() {
+                override fun run() {
+                    audioManager?.setStreamVolume(
+                        AudioManager.STREAM_ALARM,
+                        audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 7,
+                        0
+                    )
+                }
+            }, 0, 1000)
+        }
+
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        volumeTimer?.cancel()
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+}
