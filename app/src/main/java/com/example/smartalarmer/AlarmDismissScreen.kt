@@ -89,7 +89,10 @@ fun MathPuzzleView(
     onComplete: () -> Unit,
     mathProvider: MathPuzzleProvider = MathEngine,
 ) {
-    val puzzle = remember { mathProvider.generate(Difficulty.MEDIUM) }
+    val puzzle = remember {
+        val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
+        mathProvider.generate(difficulty)
+    }
     LaunchedEffect(puzzle) {
         android.util.Log.d("TEST_DEBUG", "Math Puzzle: ${puzzle.equation} = ${puzzle.answer}")
     }
