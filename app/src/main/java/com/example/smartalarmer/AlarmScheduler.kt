@@ -9,22 +9,12 @@ import com.example.smartalarmer.data.Alarm
 import java.util.Calendar
 
 object AlarmScheduler {
-    @SuppressLint("ScheduleExactAlarm")
-    fun schedule(context: Context, alarm: Alarm) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("ALARM_ID", alarm.id)
-            putExtra("PUZZLES_LIST", alarm.puzzlesList)
-            putExtra("PUZZLE_COUNT", alarm.puzzleCount)
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val calendar = Calendar.getInstance().apply {
+    fun calculateNextTriggerTime(alarm: Alarm, now: Calendar): Calendar {
+        val calendar = (now.clone() as Calendar).apply {
             set(Calendar.HOUR_OF_DAY, alarm.hour)
             set(Calendar.MINUTE, alarm.minute)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
 
         val activeDays = alarm.daysOfWeek.split(",")
@@ -44,7 +34,6 @@ object AlarmScheduler {
             .toSet()
 
         if (activeDays.isNotEmpty()) {
-            val now = Calendar.getInstance()
             var found = false
             for (i in 0..7) {
                 val checkTime = (calendar.clone() as Calendar).apply {
@@ -64,14 +53,30 @@ object AlarmScheduler {
             }
         } else {
             // One-time alarm
-            if (calendar.before(Calendar.getInstance())) {
+            if (calendar.before(now)) {
                 calendar.add(Calendar.DATE, 1)
             }
         }
+        return calendar
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    fun schedule(context: Context, alarm: Alarm) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("ALARM_ID", alarm.id)
+            putExtra("PUZZLES_LIST", alarm.puzzlesList)
+            putExtra("PUZZLE_COUNT", alarm.puzzleCount)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val nextTrigger = calculateNextTriggerTime(alarm, Calendar.getInstance())
 
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
+            nextTrigger.timeInMillis,
             pendingIntent
         )
     }

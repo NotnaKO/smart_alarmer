@@ -4,18 +4,51 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.example.smartalarmer.data.AlarmDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val alarmId = intent.getIntExtra("ALARM_ID", -1)
+        val puzzlesList = intent.getStringExtra("PUZZLES_LIST") ?: "MATH"
+        val puzzleCount = intent.getIntExtra("PUZZLE_COUNT", 2)
+
         val serviceIntent = Intent(context, AlarmService::class.java).apply {
-            putExtra("ALARM_ID", intent.getIntExtra("ALARM_ID", -1))
-            putExtra("PUZZLES_LIST", intent.getStringExtra("PUZZLES_LIST") ?: "MATH")
-            putExtra("PUZZLE_COUNT", intent.getIntExtra("PUZZLE_COUNT", 2))
+            putExtra("ALARM_ID", alarmId)
+            putExtra("PUZZLES_LIST", puzzlesList)
+            putExtra("PUZZLE_COUNT", puzzleCount)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent)
         } else {
             context.startService(serviceIntent)
+        }
+
+        if (alarmId != -1) {
+            val pendingResult = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val database = AlarmDatabase.getDatabase(context)
+                    val alarmDao = database.alarmDao()
+                    val alarm = alarmDao.getAlarmById(alarmId)
+                    if (alarm != null) {
+                        if (alarm.daysOfWeek.isNotEmpty()) {
+                            // Recurring alarm: schedule next occurrence
+                            AlarmScheduler.schedule(context, alarm)
+                        } else {
+                            // One-time alarm: disable it
+                            val updated = alarm.copy(isEnabled = false)
+                            alarmDao.updateAlarm(updated)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    pendingResult.finish()
+                }
+            }
         }
     }
 }
