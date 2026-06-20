@@ -30,6 +30,10 @@ fun AlarmDismissScreen(
             .take(puzzleCount)
     }
 
+    LaunchedEffect(puzzles) {
+        android.util.Log.d("TEST_DEBUG", "Puzzles: ${puzzles.joinToString(", ")}")
+    }
+
     var currentTaskIndex by remember { mutableStateOf(0) }
 
     if (currentTaskIndex >= puzzles.size) {
@@ -71,6 +75,9 @@ fun AlarmDismissScreen(
 @Composable
 fun MathPuzzleView(onComplete: () -> Unit) {
     val puzzle = remember { MathEngine.generate(Difficulty.MEDIUM) }
+    LaunchedEffect(puzzle) {
+        android.util.Log.d("TEST_DEBUG", "Math Puzzle: ${puzzle.equation} = ${puzzle.answer}")
+    }
     var input by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = puzzle.equation, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
@@ -128,6 +135,9 @@ fun MathPuzzleView(onComplete: () -> Unit) {
 @Composable
 fun TypingPuzzleView(onComplete: () -> Unit) {
     val targetQuote = remember { TypingEngine.getRandomQuote() }
+    LaunchedEffect(targetQuote) {
+        android.util.Log.d("TEST_DEBUG", "Typing Quote: $targetQuote")
+    }
     var input by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text(text = "Type this exact sentence:", color = Color.Gray, fontSize = 14.sp)
@@ -163,6 +173,9 @@ fun TypingPuzzleView(onComplete: () -> Unit) {
 @Composable
 fun MemoryPuzzleView(onComplete: () -> Unit) {
     val sequence = remember { MemoryEngine.generateSequence(4) }
+    LaunchedEffect(sequence) {
+        android.util.Log.d("TEST_DEBUG", "Memory Sequence: ${sequence.joinToString(", ")}")
+    }
     val userInputs = remember { mutableStateListOf<Int>() }
     var isShowingSequence by remember { mutableStateOf(true) }
     var activeFlashIndex by remember { mutableStateOf(-1) }

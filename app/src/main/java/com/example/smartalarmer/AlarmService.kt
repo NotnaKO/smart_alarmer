@@ -51,6 +51,13 @@ class AlarmService : Service() {
 
         startForeground(1, notification)
 
+        // Launch the activity directly to take over the screen immediately
+        try {
+            startActivity(dismissIntent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         // Play Loud Sound
         val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         mediaPlayer = MediaPlayer().apply {
