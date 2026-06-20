@@ -59,10 +59,39 @@ Three puzzles will be implemented in the initial release:
 ## Verification Plan
 
 ### Automated Tests
-- Unit tests verifying puzzle generation logic (math equation correctness, string comparison matching).
+
+#### 1. Unit Tests (Local JVM Tests under `test/`)
+- **`MathPuzzleTest`**:
+  - Verify that equations generated for each difficulty (Easy, Medium, Hard) evaluate to the correct expected answer.
+  - Verify range constraints (e.g., no negative results in Easy, divisions result in whole integers, algebraic variables resolve correctly).
+- **`TypingPuzzleTest`**:
+  - Verify character-by-character string matching algorithm (whitespace trimming, case sensitivity, handling of special characters).
+  - Verify the quotes list loader returns valid, non-empty, and diverse strings.
+- **`MemoryPuzzleTest`**:
+  - Verify state machine logic for Simon Says: transitions between pattern playback, user input phase, success state, and error reset state.
+  - Verify that tapping a correct item updates the cursor and tapping a wrong item resets the sequence.
+- **`AlarmSchedulerTest`**:
+  - Test time calculation utility functions (e.g., getting the next epoch millisecond time for a given hour/minute/day of week configuration).
+- **`AlarmDatabaseTest` (In-Memory Room DB)**:
+  - Test Room DAO operations (`insert`, `delete`, `queryActiveAlarms`) using an in-memory database instance to ensure data integrity.
+
+#### 2. Android Instrumentation Tests (Device/Emulator Tests under `androidTest/`)
+- **`AlarmDismissActivityTest` (Compose UI Tests)**:
+  - Verify that the custom numeric keypad clicks input characters into the Math answer buffer correctly.
+  - Verify that the Typing puzzle visual comparison updates correct letters in green/incorrect in red as typed.
+  - Verify the progress bar step increments when transitions happen.
+  - Verify that the Activity cannot be closed by a simulated Back button press.
 
 ### Manual Verification
-- Deploying the app on an Android device or emulator.
-- Scheduling an alarm for 1 minute in the future.
-- Locking the screen.
-- Verifying the screen wakes up, displays the overlay, plays sound, volume cannot be turned down, and the alarm stops only after successfully completing the random sequence of tasks.
+1. **Device Deploy**: Compile and install the debug APK on an Android device or emulator.
+2. **Alarm Setup**: Set an alarm for 1 minute in the future, selecting all three puzzles (Math, Typing, Memory) with a task count of 3.
+3. **Trigger Verification**: Lock the device screen. Once the time is reached, verify that:
+   - The device screen turns on and wakes up.
+   - The fullscreen alarm activity is presented over the lock screen.
+   - High-priority alarm audio begins playing at 100% volume.
+4. **Resilience Check**:
+   - Press the physical volume-down keys and check that the app immediately resets the volume to max.
+   - Attempt to swipe down notifications or press back and check that the overlay remains active.
+5. **Puzzle Solve & Dismissal**:
+   - Complete the Math, Typing, and Memory tasks sequentially.
+   - Verify that completing the final task sends the completion signal to the service, stops the audio playback, and finishes the Activity.
