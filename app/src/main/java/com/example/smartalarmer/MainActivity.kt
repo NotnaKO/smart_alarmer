@@ -29,6 +29,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.Manifest
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.theme.SmartAlarmerTheme
@@ -47,6 +58,49 @@ class MainActivity : ComponentActivity() {
                 val alarms by viewModel.alarms.collectAsState(initial = emptyList())
                 val isSheetVisible by viewModel.isBottomSheetVisible.collectAsState()
                 val editingAlarm by viewModel.editingAlarm.collectAsState()
+
+                var hasNotificationPermission by remember { mutableStateOf(true) }
+                var hasExactAlarmPermission by remember { mutableStateOf(true) }
+                var hasFullScreenIntentPermission by remember { mutableStateOf(true) }
+
+                val requestNotificationPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission(),
+                    onResult = { hasNotificationPermission = it }
+                )
+
+                val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                        if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                            hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) == PackageManager.PERMISSION_GRANTED
+                            } else {
+                                true
+                            }
+
+                            hasExactAlarmPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                                alarmManager.canScheduleExactAlarms()
+                            } else {
+                                true
+                            }
+
+                            hasFullScreenIntentPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                                notificationManager.canUseFullScreenIntent()
+                            } else {
+                                true
+                            }
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
+                }
 
                 Scaffold(
                     floatingActionButton = {
@@ -72,6 +126,86 @@ class MainActivity : ComponentActivity() {
                             .padding(16.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
+                            if (!hasNotificationPermission || !hasExactAlarmPermission || !hasFullScreenIntentPermission) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 16.dp)
+                                        .border(1.dp, Color(0xFFEF4444).copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0x33EF4444)),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(
+                                            text = "Permissions Required",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            fontSize = 16.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "Please enable all permissions below to ensure alarms wake up your device and display properly over the lock screen.",
+                                            color = Color.LightGray,
+                                            fontSize = 13.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            if (!hasNotificationPermission) {
+                                                Button(
+                                                    onClick = {
+                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                                        }
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text("Allow Notifications", fontSize = 11.sp)
+                                                }
+                                            }
+                                            if (!hasExactAlarmPermission) {
+                                                Button(
+                                                    onClick = {
+                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                                            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                                                data = Uri.parse("package:${context.packageName}")
+                                                            }
+                                                            context.startActivity(intent)
+                                                        }
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text("Allow Alarms", fontSize = 11.sp)
+                                                }
+                                            }
+                                            if (!hasFullScreenIntentPermission) {
+                                                Button(
+                                                    onClick = {
+                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                                            val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                                                                data = Uri.parse("package:${context.packageName}")
+                                                            }
+                                                            context.startActivity(intent)
+                                                        }
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text("Allow Lockscreen Display", fontSize = 11.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             Text(
                                 text = "Smart Alarmer",
                                 style = MaterialTheme.typography.headlineLarge,
