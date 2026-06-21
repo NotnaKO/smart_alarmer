@@ -143,6 +143,25 @@ class AlarmDismissScreenTest {
 
     // ── Typing puzzle ─────────────────────────────────────────────────────
 
+    private fun simulateVirtualKeyboardInput(text: String) {
+        var isShifted = false
+        text.forEach { char ->
+            if (char == ' ') {
+                composeTestRule.onNodeWithText("Space").performClick()
+            } else {
+                val shouldBeShifted = char.isUpperCase()
+                if (isShifted != shouldBeShifted) {
+                    composeTestRule.onNodeWithText("⇧").performClick()
+                    isShifted = shouldBeShifted
+                }
+                composeTestRule.onNodeWithText(char.toString()).performClick()
+            }
+        }
+        if (isShifted) {
+            composeTestRule.onNodeWithText("⇧").performClick()
+        }
+    }
+
     @Test
     fun typingPuzzle_exactMatch_callsOnComplete() {
         var completed = false
@@ -154,7 +173,7 @@ class AlarmDismissScreenTest {
         }
 
         composeTestRule.onNodeWithText("Wake up now").assertIsDisplayed()
-        composeTestRule.onNode(hasSetTextAction()).performTextInput("Wake up now")
+        simulateVirtualKeyboardInput("Wake up now")
         composeTestRule.onNodeWithText("Submit").performClick()
 
         assertTrue("onComplete should have been called", completed)
@@ -170,7 +189,7 @@ class AlarmDismissScreenTest {
             )
         }
 
-        composeTestRule.onNode(hasSetTextAction()).performTextInput("wrong text")
+        simulateVirtualKeyboardInput("wrong text")
         composeTestRule.onNodeWithText("Submit").performClick()
 
         assertTrue("onComplete should NOT be called", !completed)
