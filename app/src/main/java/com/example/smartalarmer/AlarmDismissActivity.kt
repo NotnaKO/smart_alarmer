@@ -29,9 +29,9 @@ class AlarmDismissActivity : ComponentActivity() {
                 window.addFlags(
                     WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                             or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                            or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 )
             }
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
         // Disable back button on real alarm, finish on preview

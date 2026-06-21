@@ -44,7 +44,7 @@ class AlarmService : Service() {
             .setContentTitle("WAKE UP NOW!")
             .setContentText("Complete tasks to silence the alarm")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .build()
