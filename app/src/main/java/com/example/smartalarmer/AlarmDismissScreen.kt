@@ -174,7 +174,8 @@ fun TypingPuzzleView(
         
         TextField(
             value = input,
-            onValueChange = { input = it },
+            onValueChange = { /* readOnly handles input */ },
+            readOnly = true,
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
@@ -183,6 +184,13 @@ fun TypingPuzzleView(
                 unfocusedContainerColor = Color(0xFF222222)
             )
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        VirtualKeyboard(
+            onKeyClick = { input += it },
+            onBackspace = { if (input.isNotEmpty()) input = input.dropLast(1) }
+        )
+        
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
@@ -194,6 +202,106 @@ fun TypingPuzzleView(
         ) {
             Text("Submit")
         }
+    }
+}
+
+@Composable
+fun VirtualKeyboard(
+    onKeyClick: (Char) -> Unit,
+    onBackspace: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isShifted by remember { mutableStateOf(false) }
+
+    val rows = remember(isShifted) {
+        listOf(
+            listOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
+            listOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
+            listOf('z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '!')
+        ).map { row ->
+            if (isShifted) {
+                row.map { if (it in 'a'..'z') it.uppercaseChar() else it }
+            } else {
+                row
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1E1B3A), RoundedCornerShape(16.dp))
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Rows 1 & 2
+        rows.take(2).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+            ) {
+                row.forEach { char ->
+                    KeyButton(text = char.toString(), onClick = { onKeyClick(char) }, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+
+        // Row 3 (Shift, letters & punctuation, Backspace)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            KeyButton(
+                text = "⇧",
+                onClick = { isShifted = !isShifted },
+                containerColor = if (isShifted) Color(0xFF6366F1) else Color(0x33FFFFFF),
+                modifier = Modifier.weight(1.5f)
+            )
+
+            rows[2].forEach { char ->
+                KeyButton(text = char.toString(), onClick = { onKeyClick(char) }, modifier = Modifier.weight(1f))
+            }
+
+            KeyButton(
+                text = "⌫",
+                onClick = onBackspace,
+                containerColor = Color(0x33FFFFFF),
+                modifier = Modifier.weight(1.5f)
+            )
+        }
+
+        // Row 4 (Space)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+        ) {
+            KeyButton(
+                text = "Space",
+                onClick = { onKeyClick(' ') },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun KeyButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = Color(0x1AFFFFFF),
+    contentColor: Color = Color.White
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(44.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = contentColor),
+        shape = RoundedCornerShape(8.dp),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Text(text = text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 
