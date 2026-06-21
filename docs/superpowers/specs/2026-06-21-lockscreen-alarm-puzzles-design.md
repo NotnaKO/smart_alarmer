@@ -25,9 +25,25 @@ To bypass OS-level restrictions that disable the system soft keyboard on secure 
 * **Custom Layout:** Display a grid of standard QWERTY characters, a spacebar, backspace, shift toggle, and submit button.
 * **Input Mutation:** Modifies the input string directly from Compose button click handlers.
 
+### 4. Instrumented Lockscreen Testing using UI Automator
+To guarantee the activity successfully wakes the device, displays over the lockscreen, and remains interactive, we will write a dedicated instrumented test:
+* **UI Automator integration:** We will import `androidx.test.uiautomator:uiautomator` to manipulate screen power state.
+* **Test Flow:**
+  1. Initialize `UiDevice`.
+  2. Put the device to sleep (`device.sleep()`) to turn the screen off and lock the device.
+  3. Launch `AlarmDismissActivity` with real-mode flags.
+  4. Assert the screen turns back on (`device.isScreenOn == true`).
+  5. Assert the activity UI is rendered and interactive by checking Compose nodes.
+
 ---
 
 ## 📋 Proposed File Changes
+
+### [MODIFY] [libs.versions.toml](file:///home/notnako/smart_alarmer/gradle/libs.versions.toml)
+* Add `uiautomator` library definition.
+
+### [MODIFY] [build.gradle.kts](file:///home/notnako/smart_alarmer/app/build.gradle.kts)
+* Add `androidTestImplementation(libs.androidx.uiautomator)` dependency.
 
 ### [MODIFY] [MainActivity.kt](file:///home/notnako/smart_alarmer/app/src/main/java/com/example/smartalarmer/MainActivity.kt)
 * Add permission tracking state (`showNotificationPermissionWarning`, `showExactAlarmWarning`, `showFullScreenIntentWarning`).
@@ -45,6 +61,9 @@ To bypass OS-level restrictions that disable the system soft keyboard on secure 
 * Implement `VirtualKeyboard` composable.
 * Update `TypingPuzzleView` to use `readOnly = true` on `TextField` and display `VirtualKeyboard` below it.
 
+### [NEW] [AlarmDismissActivityLockScreenTest.kt](file:///home/notnako/smart_alarmer/app/src/androidTest/java/com/example/smartalarmer/ui/AlarmDismissActivityLockScreenTest.kt)
+* Add instrumented test using UI Automator to verify lockscreen wake-up and Compose interactive state.
+
 ---
 
 ## 🧪 Verification Plan
@@ -52,9 +71,11 @@ To bypass OS-level restrictions that disable the system soft keyboard on secure 
 ### Automated Tests
 * Run existing tests: `./gradlew test` and `./gradlew connectedAndroidTest` to ensure no regressions.
 * Add unit tests verifying `TypingPuzzleView` still calls `onComplete` upon correct input typed via virtual keyboard.
+* Run the new lockscreen test: `./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.smartalarmer.ui.AlarmDismissActivityLockScreenTest`
 
 ### Manual Verification
 * Run the app on the emulator.
 * Verify permission warnings appear when permissions are missing.
 * Grant permissions and ensure warning banners disappear.
 * Trigger a test alarm in preview mode and verify the Typing puzzle works and can be solved using the new custom virtual keyboard.
+
