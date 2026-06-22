@@ -17,7 +17,7 @@ This design spec outlines changes to solve lockscreen alarm issues. On newer And
 When scheduling the alarm, we configure the `PendingIntent` that triggers `AlarmDismissActivity` with the correct `ActivityOptions` to explicitly allow background activity starts.
 
 - **Target File:** [AlarmService.kt](file:///home/notnako/smart_alarmer/app/src/main/java/com/example/smartalarmer/AlarmService.kt)
-- **Action:** Create `ActivityOptions` with `setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)` on Android 14 (API 34) and higher, and pass it to `PendingIntent.getActivity()`.
+- **Action:** Create `ActivityOptions` with `setPendingIntentCreatorBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)` on Android 14 (API 34) and higher, and pass it to `PendingIntent.getActivity()`.
 
 ### 2. Device utility helper (`DeviceUtils.kt`)
 We introduce a helper to detect system-level details and generate intents for system settings.

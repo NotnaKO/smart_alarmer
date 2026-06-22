@@ -165,7 +165,7 @@
   ```kotlin
           val options = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
               android.app.ActivityOptions.makeBasic().apply {
-                  setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                  setPendingIntentCreatorBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
               }
           } else {
               null
@@ -182,7 +182,7 @@
 - [ ] **Step 3: Commit**
   ```bash
   git add app/src/main/java/com/example/smartalarmer/AlarmService.kt
-  git commit -m "feat: configure setPendingIntentBackgroundActivityStartMode for full-screen alarm launch"
+  git commit -m "feat: configure setPendingIntentCreatorBackgroundActivityStartMode for full-screen alarm launch"
   ```
 
 ---
