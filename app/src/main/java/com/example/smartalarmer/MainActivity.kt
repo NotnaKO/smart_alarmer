@@ -62,6 +62,8 @@ class MainActivity : ComponentActivity() {
                 var hasNotificationPermission by remember { mutableStateOf(true) }
                 var hasExactAlarmPermission by remember { mutableStateOf(true) }
                 var hasFullScreenIntentPermission by remember { mutableStateOf(true) }
+                var isIgnoringBatteryOptimizations by remember { mutableStateOf(true) }
+                val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
 
                 val requestNotificationPermissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -94,6 +96,8 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 true
                             }
+                            
+                            isIgnoringBatteryOptimizations = DeviceUtils.isIgnoringBatteryOptimizations(context)
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
@@ -126,6 +130,75 @@ class MainActivity : ComponentActivity() {
                             .padding(16.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
+                            if (!isIgnoringBatteryOptimizations || isXiaomiDevice) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 16.dp)
+                                        .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0x22F59E0B)),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(
+                                            text = "Background Execution Settings",
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            fontSize = 16.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "To ensure alarms trigger reliably in deep sleep and display over the lockscreen, please verify background settings:",
+                                            color = Color.LightGray,
+                                            fontSize = 13.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            if (!isIgnoringBatteryOptimizations) {
+                                                Button(
+                                                    onClick = {
+                                                        val intent = DeviceUtils.getBatteryOptimizationIntent(context)
+                                                        try {
+                                                            context.startActivity(intent)
+                                                        } catch (e: Exception) {
+                                                            // Fallback to general settings if action cannot be started
+                                                            val fallback = DeviceUtils.getStandardAppInfoIntent(context)
+                                                            context.startActivity(fallback)
+                                                        }
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text("Disable Battery Limits", fontSize = 11.sp, color = Color.Black)
+                                                }
+                                            }
+                                            if (isXiaomiDevice) {
+                                                Button(
+                                                    onClick = {
+                                                        val intent = DeviceUtils.getMiuiPermissionIntent(context)
+                                                        try {
+                                                            context.startActivity(intent)
+                                                        } catch (e: Exception) {
+                                                            val fallback = DeviceUtils.getStandardAppInfoIntent(context)
+                                                            context.startActivity(fallback)
+                                                        }
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text("Xiaomi Settings", fontSize = 11.sp, color = Color.Black)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             if (!hasNotificationPermission || !hasExactAlarmPermission || !hasFullScreenIntentPermission) {
                                 Card(
                                     modifier = Modifier
