@@ -27,7 +27,8 @@ class AlarmListScreenTest {
         daysOfWeek: String = "1,2,3,4,5",
         isEnabled: Boolean = true,
         puzzlesList: String = "MATH",
-        puzzleCount: Int = 1
+        puzzleCount: Int = 1,
+        isGradualVolume: Boolean = false
     ) = Alarm(
         id = 1,
         hour = hour,
@@ -35,7 +36,8 @@ class AlarmListScreenTest {
         daysOfWeek = daysOfWeek,
         isEnabled = isEnabled,
         puzzlesList = puzzlesList,
-        puzzleCount = puzzleCount
+        puzzleCount = puzzleCount,
+        isGradualVolume = isGradualVolume
     )
 
     private fun setAlarmCard(
@@ -130,6 +132,15 @@ class AlarmListScreenTest {
         )
 
         composeTestRule.onNodeWithText("One-time • Math (1 puzzles)").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_displaysGradualVolumeIndicator() {
+        setAlarmCard(
+            alarm = testAlarm(isGradualVolume = true)
+        )
+
+        composeTestRule.onNodeWithText("Weekdays • Math (1 puzzles) • Gradual Volume").assertIsDisplayed()
     }
 
     @Test
