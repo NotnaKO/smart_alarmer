@@ -62,7 +62,9 @@ class MainActivity : ComponentActivity() {
                 var hasNotificationPermission by remember { mutableStateOf(true) }
                 var hasExactAlarmPermission by remember { mutableStateOf(true) }
                 var hasFullScreenIntentPermission by remember { mutableStateOf(true) }
-                var isIgnoringBatteryOptimizations by remember { mutableStateOf(true) }
+                val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
+                var isXiaomiDismissed by remember { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
+                var isIgnoringBatteryOptimizations by remember { mutableStateOf(DeviceUtils.isIgnoringBatteryOptimizations(context)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
 
                 val requestNotificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -130,7 +132,8 @@ class MainActivity : ComponentActivity() {
                             .padding(16.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
-                            if (!isIgnoringBatteryOptimizations || isXiaomiDevice) {
+                            val showXiaomiWarning = isXiaomiDevice && !isXiaomiDismissed
+                            if (!isIgnoringBatteryOptimizations || showXiaomiWarning) {
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -169,14 +172,17 @@ class MainActivity : ComponentActivity() {
                                                             context.startActivity(fallback)
                                                         }
                                                     },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color(0xFFF59E0B),
+                                                        contentColor = Color.Black
+                                                    ),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Disable Battery Limits", fontSize = 11.sp, color = Color.Black)
+                                                    Text("Disable Battery Limits", fontSize = 11.sp)
                                                 }
                                             }
-                                            if (isXiaomiDevice) {
+                                            if (showXiaomiWarning) {
                                                 Button(
                                                     onClick = {
                                                         val intent = DeviceUtils.getMiuiPermissionIntent(context)
@@ -187,11 +193,26 @@ class MainActivity : ComponentActivity() {
                                                             context.startActivity(fallback)
                                                         }
                                                     },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color(0xFFF59E0B),
+                                                        contentColor = Color.Black
+                                                    ),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Xiaomi Settings", fontSize = 11.sp, color = Color.Black)
+                                                    Text("Xiaomi Settings", fontSize = 11.sp)
+                                                }
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        sharedPrefs.edit().putBoolean("xiaomi_warning_dismissed", true).apply()
+                                                        isXiaomiDismissed = true
+                                                    },
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF59E0B)),
+                                                    border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f)),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text("Dismiss", fontSize = 11.sp)
                                                 }
                                             }
                                         }
