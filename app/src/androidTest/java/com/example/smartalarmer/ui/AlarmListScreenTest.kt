@@ -163,8 +163,8 @@ class AlarmListScreenTest {
             onEdit = { editClicked = true }
         )
 
-        // Click the card (finding the time text to perform click)
-        composeTestRule.onNodeWithText("07:30").performClick()
+        // Click the card (finding the clickable node containing the time text)
+        composeTestRule.onNode(hasClickAction() and hasAnyDescendant(hasText("07:30"))).performClick()
         assertTrue(editClicked)
     }
 
