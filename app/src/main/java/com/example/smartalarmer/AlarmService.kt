@@ -36,8 +36,15 @@ class AlarmService : Service() {
             putExtra("PUZZLE_COUNT", intent?.getIntExtra("PUZZLE_COUNT", 2))
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         }
+        val options = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            android.app.ActivityOptions.makeBasic().apply {
+                setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+            }
+        } else {
+            null
+        }
         val fullScreenPendingIntent = PendingIntent.getActivity(
-            this, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, options?.toBundle()
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
