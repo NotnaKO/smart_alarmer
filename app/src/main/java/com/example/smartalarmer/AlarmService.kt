@@ -106,13 +106,24 @@ class AlarmService : Service() {
             }
         }
 
-        // Lock Volume to Maximum
+        val isGradualVolume = intent?.getBooleanExtra("IS_GRADUAL_VOLUME", true) ?: true
+
+        // Lock Volume / Gradual Volume Crescendo
+        val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 7
+        val startTime = System.currentTimeMillis()
+
         volumeTimer = Timer().apply {
             scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
+                    val targetVolume = if (isGradualVolume) {
+                        val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000L
+                        calculateGradualVolume(elapsedSeconds, maxVolume)
+                    } else {
+                        maxVolume
+                    }
                     audioManager?.setStreamVolume(
                         AudioManager.STREAM_ALARM,
-                        audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 7,
+                        targetVolume,
                         0
                     )
                 }
@@ -130,4 +141,15 @@ class AlarmService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    companion object {
+        fun calculateGradualVolume(elapsedSeconds: Long, maxVolume: Int, durationSeconds: Long = 30L): Int {
+            if (elapsedSeconds < durationSeconds) {
+                val progress = elapsedSeconds.toDouble() / durationSeconds.toDouble()
+                val volumeRange = maxVolume - 1
+                return 1 + (progress * volumeRange).toInt()
+            }
+            return maxVolume
+        }
+    }
 }
