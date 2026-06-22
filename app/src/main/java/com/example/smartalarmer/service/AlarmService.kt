@@ -1,4 +1,4 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.service
 
 import android.app.*
 import android.content.Context
@@ -9,13 +9,20 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import java.util.Timer
-import java.util.TimerTask
+import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class AlarmService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
-    private var volumeTimer: Timer? = null
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
 
     override fun onCreate() {
         super.onCreate()
@@ -113,22 +120,21 @@ class AlarmService : Service() {
         val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 7
         val startTime = System.currentTimeMillis()
 
-        volumeTimer = Timer().apply {
-            scheduleAtFixedRate(object : TimerTask() {
-                override fun run() {
-                    val targetVolume = if (isGradualVolume) {
-                        val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000L
-                        calculateGradualVolume(elapsedSeconds, maxVolume)
-                    } else {
-                        maxVolume
-                    }
-                    audioManager?.setStreamVolume(
-                        AudioManager.STREAM_ALARM,
-                        targetVolume,
-                        0
-                    )
+        serviceScope.launch {
+            while (isActive) {
+                val targetVolume = if (isGradualVolume) {
+                    val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000L
+                    calculateGradualVolume(elapsedSeconds, maxVolume)
+                } else {
+                    maxVolume
                 }
-            }, 0, 1000)
+                audioManager?.setStreamVolume(
+                    AudioManager.STREAM_ALARM,
+                    targetVolume,
+                    0
+                )
+                delay(1000)
+            }
         }
 
         return START_STICKY
@@ -137,7 +143,7 @@ class AlarmService : Service() {
     override fun onDestroy() {
         mediaPlayer?.stop()
         mediaPlayer?.release()
-        volumeTimer?.cancel()
+        serviceJob.cancel()
         super.onDestroy()
     }
 

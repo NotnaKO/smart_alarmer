@@ -24,11 +24,10 @@ val puzzle = remember {
 ```kotlin
 enum class PuzzleType { MATH, TYPING, MEMORY, SHAKE }
 ```
-* Pass `isPreview` down from `AlarmDismissScreen` signature into the individual puzzle views (specifically `ShakePuzzleView`).
-* Implement `ShakePuzzleView(onComplete: () -> Unit, isPreview: Boolean = false)`:
-  * Uses `SensorManager` and `Sensor.TYPE_ACCELEROMETER` to detect shaking.
+* Implement `ShakePuzzleView(onComplete: () -> Unit, shakeProvider: ShakeSensorProvider)`:
+  * Uses `SensorManager` and `Sensor.TYPE_ACCELEROMETER` (in the `AndroidShakeSensorProvider` implementation) to detect shaking.
   * Tracks shake counts (requires 30 shakes).
-  * In preview mode (`isPreview == true`), shows a button labeled "Simulate Shake" to increment the shake count for easy testing.
+  * For automated testing (instrumented UI tests), uses a mock `ShakeSensorProvider` that invokes the sensor callback directly to simulate shake events.
   * Ensures sensor listener is registered in `DisposableEffect` and cleaned up on composition dispose.
 
 #### [MODIFY] [MainActivity.kt](file:///home/notnako/smart_alarmer/app/src/main/java/com/example/smartalarmer/MainActivity.kt)

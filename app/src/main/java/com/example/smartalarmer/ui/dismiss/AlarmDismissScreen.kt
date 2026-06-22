@@ -1,4 +1,4 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.ui.dismiss
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,6 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartalarmer.puzzle.*
+import com.example.smartalarmer.ui.theme.*
+import com.example.smartalarmer.R
+import androidx.compose.ui.res.stringArrayResource
 
 enum class PuzzleType { MATH, TYPING, MEMORY, SHAKE }
 
@@ -53,7 +56,7 @@ fun AlarmDismissScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121212))
+            .background(DarkBgScreen)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -116,7 +119,7 @@ fun MathPuzzleView(
                         Button(
                             onClick = { input += num.toString() },
                             modifier = Modifier.padding(4.dp).size(64.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                            colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                         ) {
                             Text(text = num.toString(), color = Color.White, fontSize = 20.sp)
                         }
@@ -134,7 +137,7 @@ fun MathPuzzleView(
                 Button(
                     onClick = { input += "0" },
                     modifier = Modifier.padding(4.dp).size(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                    colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                 ) {
                     Text(text = "0", color = Color.White, fontSize = 20.sp)
                 }
@@ -147,7 +150,7 @@ fun MathPuzzleView(
                         }
                     },
                     modifier = Modifier.padding(4.dp).size(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenSuccess)
                 ) {
                     Text(text = "✔", color = Color.White, fontSize = 20.sp)
                 }
@@ -161,7 +164,8 @@ fun TypingPuzzleView(
     onComplete: () -> Unit,
     typingProvider: TypingPuzzleProvider = TypingEngine,
 ) {
-    val targetQuote = remember { typingProvider.getRandomQuote() }
+    val quotes = stringArrayResource(R.array.typing_quotes).toList()
+    val targetQuote = remember { typingProvider.getRandomQuote(quotes) }
     LaunchedEffect(targetQuote) {
         android.util.Log.d("TEST_DEBUG", "Typing Quote: $targetQuote")
     }
@@ -180,8 +184,8 @@ fun TypingPuzzleView(
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedContainerColor = Color(0xFF222222),
-                unfocusedContainerColor = Color(0xFF222222)
+                focusedContainerColor = DarkGreyInput,
+                unfocusedContainerColor = DarkGreyInput
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -198,7 +202,7 @@ fun TypingPuzzleView(
                     onComplete()
                 }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6))
+            colors = ButtonDefaults.buttonColors(containerColor = Purple600)
         ) {
             Text("Submit")
         }
@@ -230,7 +234,7 @@ fun VirtualKeyboard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF1E1B3A), RoundedCornerShape(16.dp))
+            .background(KeyboardBg, RoundedCornerShape(16.dp))
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -256,7 +260,7 @@ fun VirtualKeyboard(
             KeyButton(
                 text = "⇧",
                 onClick = { isShifted = !isShifted },
-                containerColor = if (isShifted) Color(0xFF6366F1) else Color(0x33FFFFFF),
+                containerColor = if (isShifted) IndigoPrimary else KeyButtonBgActive,
                 modifier = Modifier.weight(1.5f)
             )
 
@@ -267,7 +271,7 @@ fun VirtualKeyboard(
             KeyButton(
                 text = "⌫",
                 onClick = onBackspace,
-                containerColor = Color(0x33FFFFFF),
+                containerColor = KeyButtonBgActive,
                 modifier = Modifier.weight(1.5f)
             )
         }
@@ -291,7 +295,7 @@ fun KeyButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = Color(0x1AFFFFFF),
+    containerColor: Color = KeyButtonBg,
     contentColor: Color = Color.White
 ) {
     Button(
@@ -366,7 +370,7 @@ fun MemoryPuzzleView(
                             },
                             modifier = Modifier.padding(6.dp).size(72.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isFlashed) Color(0xFFF59E0B) else Color(0xFF333333)
+                                containerColor = if (isFlashed) OrangeWarning else DarkGreyButton
                             ),
                             shape = RoundedCornerShape(36.dp)
                           ) {}
@@ -440,8 +444,8 @@ fun ShakePuzzleView(
         LinearProgressIndicator(
             progress = { (targetShakes - shakeCount).toFloat() / targetShakes },
             modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
-            color = Color(0xFF10B981),
-            trackColor = Color(0x33FFFFFF)
+            color = GreenSuccess,
+            trackColor = KeyButtonBgActive
         )
     }
 }

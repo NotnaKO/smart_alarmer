@@ -1,4 +1,4 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.ui.main
 
 import android.app.TimePickerDialog
 import android.content.Intent
@@ -44,8 +44,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
-import com.example.smartalarmer.theme.SmartAlarmerTheme
-import com.example.smartalarmer.ui.main.MainViewModel
+import com.example.smartalarmer.ui.theme.*
+import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
+import com.example.smartalarmer.utils.DeviceUtils
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -114,7 +115,7 @@ class MainActivity : ComponentActivity() {
                     floatingActionButton = {
                         FloatingActionButton(
                             onClick = { viewModel.openEditSheet(null) },
-                            containerColor = Color(0xFF6366F1),
+                            containerColor = IndigoPrimary,
                             contentColor = Color.White,
                             shape = RoundedCornerShape(16.dp)
                         ) {
@@ -127,7 +128,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color(0xFF0F0C20), Color(0xFF15102A))
+                                    colors = listOf(DarkBgStart, DarkBgEnd)
                                 )
                             )
                             .padding(paddingValues)
@@ -140,8 +141,8 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
-                                        .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0x22F59E0B)),
+                                        .border(1.dp, OrangeWarning.copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
+                                    colors = CardDefaults.cardColors(containerColor = OrangeWarningSemi),
                                     shape = RoundedCornerShape(16.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
@@ -175,7 +176,7 @@ class MainActivity : ComponentActivity() {
                                                         }
                                                     },
                                                     colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Color(0xFFF59E0B),
+                                                        containerColor = OrangeWarning,
                                                         contentColor = Color.Black
                                                     ),
                                                     shape = RoundedCornerShape(8.dp),
@@ -196,7 +197,7 @@ class MainActivity : ComponentActivity() {
                                                         }
                                                     },
                                                     colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Color(0xFFF59E0B),
+                                                        containerColor = OrangeWarning,
                                                         contentColor = Color.Black
                                                     ),
                                                     shape = RoundedCornerShape(8.dp),
@@ -209,8 +210,8 @@ class MainActivity : ComponentActivity() {
                                                         sharedPrefs.edit().putBoolean("xiaomi_warning_dismissed", true).apply()
                                                         isXiaomiDismissed = true
                                                     },
-                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFF59E0B)),
-                                                    border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f)),
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = OrangeWarning),
+                                                    border = BorderStroke(1.dp, OrangeWarning.copy(alpha = 0.5f)),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
@@ -227,8 +228,8 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = 16.dp)
-                                        .border(1.dp, Color(0xFFEF4444).copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0x33EF4444)),
+                                        .border(1.dp, RedError.copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
+                                    colors = CardDefaults.cardColors(containerColor = RedErrorSemi),
                                     shape = RoundedCornerShape(16.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
@@ -256,7 +257,7 @@ class MainActivity : ComponentActivity() {
                                                             requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                                         }
                                                     },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = RedError),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
@@ -273,7 +274,7 @@ class MainActivity : ComponentActivity() {
                                                             context.startActivity(intent)
                                                         }
                                                     },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = RedError),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
@@ -290,7 +291,7 @@ class MainActivity : ComponentActivity() {
                                                             context.startActivity(intent)
                                                         }
                                                     },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = RedError),
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
@@ -401,8 +402,8 @@ class MainActivity : ComponentActivity() {
           modifier = Modifier
               .fillMaxWidth()
               .clickable(onClick = onEdit)
-              .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(24.dp)),
-          colors = CardDefaults.cardColors(containerColor = Color(0x0FFFFFFF)),
+              .border(1.dp, CardBorderGlass, RoundedCornerShape(24.dp)),
+          colors = CardDefaults.cardColors(containerColor = CardBgGlass),
           shape = RoundedCornerShape(24.dp)
       ) {
           Row(
@@ -430,8 +431,8 @@ class MainActivity : ComponentActivity() {
                   OutlinedButton(
                       onClick = onTest,
                       modifier = Modifier.padding(end = 8.dp),
-                      colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF10B981)),
-                      border = BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f)),
+                      colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenSuccess),
+                      border = BorderStroke(1.dp, GreenSuccess.copy(alpha = 0.5f)),
                       shape = RoundedCornerShape(12.dp),
                       contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                   ) {
@@ -448,16 +449,16 @@ class MainActivity : ComponentActivity() {
                       checked = alarm.isEnabled,
                       onCheckedChange = onToggle,
                       colors = SwitchDefaults.colors(
-                          checkedThumbColor = Color(0xFF6366F1),
-                          checkedTrackColor = Color(0x4D6366F1),
+                          checkedThumbColor = IndigoPrimary,
+                          checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
                           uncheckedThumbColor = Color.Gray,
-                          uncheckedTrackColor = Color(0x1AFFFFFF)
+                          uncheckedTrackColor = CardBorderGlass
                       )
                   )
 
                   IconButton(
                       onClick = onDelete,
-                      colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFFEF4444))
+                      colors = IconButtonDefaults.iconButtonColors(contentColor = RedError)
                   ) {
                       Icon(Icons.Filled.Delete, contentDescription = "Delete Alarm")
                   }
@@ -491,8 +492,8 @@ class MainActivity : ComponentActivity() {
       ModalBottomSheet(
           onDismissRequest = onDismiss,
           sheetState = sheetState,
-          containerColor = Color(0xFF1E1B3A),
-          dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0x33FFFFFF)) }
+          containerColor = BottomSheetBg,
+          dragHandle = { BottomSheetDefaults.DragHandle(color = BottomSheetDrag) }
       ) {
           Column(
               modifier = Modifier
@@ -525,7 +526,7 @@ class MainActivity : ComponentActivity() {
                               true
                           ).show()
                       }
-                      .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(16.dp))
+                      .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
                       .padding(16.dp),
                   horizontalArrangement = Arrangement.SpaceBetween,
                   verticalAlignment = Alignment.CenterVertically
@@ -554,7 +555,7 @@ class MainActivity : ComponentActivity() {
                               modifier = Modifier
                                   .size(40.dp)
                                   .background(
-                                      if (isSelected) Color(0xFF6366F1) else Color(0x1AFFFFFF),
+                                      if (isSelected) IndigoPrimary else KeyButtonBg,
                                       CircleShape
                                   )
                                   .clickable {
@@ -599,9 +600,9 @@ class MainActivity : ComponentActivity() {
                               },
                               label = { Text(type) },
                               colors = FilterChipDefaults.filterChipColors(
-                                  selectedContainerColor = Color(0xFF6366F1),
+                                  selectedContainerColor = IndigoPrimary,
                                   selectedLabelColor = Color.White,
-                                  containerColor = Color(0x1AFFFFFF),
+                                  containerColor = KeyButtonBg,
                                   labelColor = Color.Gray
                               )
                           )
@@ -622,7 +623,7 @@ class MainActivity : ComponentActivity() {
                   ) {
                       Button(
                           onClick = { if (puzzleCount > 1) puzzleCount-- },
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0x1AFFFFFF)),
+                          colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
                           contentPadding = PaddingValues(0.dp),
                           modifier = Modifier.size(36.dp),
                           shape = CircleShape
@@ -632,7 +633,7 @@ class MainActivity : ComponentActivity() {
                       Text(text = puzzleCount.toString(), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                       Button(
                           onClick = { if (puzzleCount < selectedPuzzles.size) puzzleCount++ },
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0x1AFFFFFF)),
+                          colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
                           contentPadding = PaddingValues(0.dp),
                           modifier = Modifier.size(36.dp),
                           shape = CircleShape
@@ -656,10 +657,10 @@ class MainActivity : ComponentActivity() {
                       checked = isGradualVolume,
                       onCheckedChange = { isGradualVolume = it },
                       colors = SwitchDefaults.colors(
-                          checkedThumbColor = Color(0xFF6366F1),
-                          checkedTrackColor = Color(0x4D6366F1),
+                          checkedThumbColor = IndigoPrimary,
+                          checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
                           uncheckedThumbColor = Color.Gray,
-                          uncheckedTrackColor = Color(0x1AFFFFFF)
+                          uncheckedTrackColor = CardBorderGlass
                       )
                   )
               }
@@ -675,7 +676,7 @@ class MainActivity : ComponentActivity() {
                       onClick = onDismiss,
                       modifier = Modifier.weight(1f),
                       colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                      border = BorderStroke(1.dp, Color(0x33FFFFFF))
+                      border = BorderStroke(1.dp, BottomSheetDrag)
                   ) {
                       Text("Cancel")
                   }
@@ -686,7 +687,7 @@ class MainActivity : ComponentActivity() {
                           onSave(hour, minute, daysCsv, puzzlesCsv, puzzleCount, isGradualVolume)
                       },
                       modifier = Modifier.weight(1f),
-                      colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
+                      colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                   ) {
                       Text("Save", color = Color.White)
                   }

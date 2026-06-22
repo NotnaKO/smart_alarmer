@@ -1,4 +1,4 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.utils
 
 import android.content.Context
 import android.content.Intent

@@ -15,10 +15,13 @@ class TypingEngineTest {
 
     @Test
     fun testGetRandomQuote() {
-        val quote1 = TypingEngine.getRandomQuote()
-        val quote2 = TypingEngine.getRandomQuote()
+        val testQuotes = listOf("Quote A", "Quote B")
+        val quote1 = TypingEngine.getRandomQuote(testQuotes)
+        val quote2 = TypingEngine.getRandomQuote(testQuotes)
         // Ensure non-empty
         assertTrue(quote1.isNotEmpty())
         assertTrue(quote2.isNotEmpty())
+        assertTrue(testQuotes.contains(quote1))
+        assertTrue(testQuotes.contains(quote2))
     }
 }

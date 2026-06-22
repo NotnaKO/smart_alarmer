@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.smartalarmer.AlarmItemCard
+import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.data.Alarm
-import com.example.smartalarmer.theme.SmartAlarmerTheme
+import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
