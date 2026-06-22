@@ -9,6 +9,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -484,14 +486,18 @@ class MainActivity : ComponentActivity() {
       var puzzleCount by remember { mutableStateOf(alarm?.puzzleCount ?: 1) }
       var isGradualVolume by remember { mutableStateOf(alarm?.isGradualVolume ?: true) }
 
+      val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
       ModalBottomSheet(
           onDismissRequest = onDismiss,
+          sheetState = sheetState,
           containerColor = Color(0xFF1E1B3A),
           dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0x33FFFFFF)) }
       ) {
           Column(
               modifier = Modifier
                   .fillMaxWidth()
+                  .verticalScroll(rememberScrollState())
                   .padding(24.dp)
                   .navigationBarsPadding(),
               verticalArrangement = Arrangement.spacedBy(20.dp)
