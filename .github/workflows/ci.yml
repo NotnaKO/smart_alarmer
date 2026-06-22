@@ -88,7 +88,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          script: ./gradlew connectedAndroidTest
+          script: ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.sleepDevice=true
 
   build:
     name: Build APKs

@@ -25,9 +25,15 @@ class AlarmDismissActivityLockScreenTest {
     fun alarmDismissActivity_wakesDeviceAndShowsOverLockScreen() {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         
-        // 1. Put device to sleep (lock screen)
-        device.sleep()
-        Thread.sleep(1000)
+        // Check if we should sleep the device. We default to false to avoid local emulator/host freezes.
+        val arguments = InstrumentationRegistry.getArguments()
+        val shouldSleep = arguments.getString("sleepDevice") == "true"
+        
+        if (shouldSleep) {
+            // 1. Put device to sleep (lock screen)
+            device.sleep()
+            Thread.sleep(1000)
+        }
         
         // 2. Launch AlarmDismissActivity
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -48,7 +54,9 @@ class AlarmDismissActivityLockScreenTest {
             composeTestRule.onNodeWithText("Task 1 of 1").assertExists()
         }
         
-        // 5. Clean up by waking device
-        device.wakeUp()
+        if (shouldSleep) {
+            // 5. Clean up by waking device
+            device.wakeUp()
+        }
     }
 }

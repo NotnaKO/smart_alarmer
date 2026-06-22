@@ -163,8 +163,8 @@ class AlarmListScreenTest {
             onEdit = { editClicked = true }
         )
 
-        // Click the card (finding the clickable node containing the time text)
-        composeTestRule.onNode(hasClickAction() and hasAnyDescendant(hasText("07:30"))).performClick()
+        // Click the card (finding the time text in the unmerged tree to perform click on the left side)
+        composeTestRule.onNodeWithText("07:30", useUnmergedTree = true).performClick()
         assertTrue(editClicked)
     }
 
