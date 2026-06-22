@@ -11,5 +11,6 @@ data class Alarm(
     val daysOfWeek: String, // CSV e.g., "1,2,3,4,5"
     val isEnabled: Boolean = true,
     val puzzlesList: String, // CSV e.g., "MATH,TYPING,MEMORY"
-    val puzzleCount: Int = 2
+    val puzzleCount: Int = 2,
+    val isGradualVolume: Boolean = true
 )
