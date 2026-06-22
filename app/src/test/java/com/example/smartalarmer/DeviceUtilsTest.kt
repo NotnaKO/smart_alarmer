@@ -9,5 +9,6 @@ class DeviceUtilsTest {
         // In standard host JVM environment, SystemProperties does not exist
         // and should safely return false.
         assertFalse(DeviceUtils.isMiUi())
+        assertFalse(DeviceUtils.isXiaomi())
     }
 }

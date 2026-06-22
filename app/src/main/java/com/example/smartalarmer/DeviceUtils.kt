@@ -30,6 +30,9 @@ object DeviceUtils {
     }
 
     fun getMiuiPermissionIntent(context: Context): Intent {
+        if (!isXiaomi()) {
+            return getStandardAppInfoIntent(context)
+        }
         return try {
             Intent("miui.intent.action.APP_PERM_EDITOR").apply {
                 setClassName(
