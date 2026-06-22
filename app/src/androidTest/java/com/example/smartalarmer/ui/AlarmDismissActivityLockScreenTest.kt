@@ -9,7 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
-import com.example.smartalarmer.AlarmDismissActivity
+import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test

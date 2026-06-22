@@ -9,7 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.smartalarmer.AlarmDismissActivity
+import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

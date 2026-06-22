@@ -1,4 +1,4 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.ui.dismiss
 
 import android.content.Intent
 import android.os.Build
@@ -11,7 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.smartalarmer.theme.SmartAlarmerTheme
+import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
+import com.example.smartalarmer.service.AlarmService
 
 class AlarmDismissActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

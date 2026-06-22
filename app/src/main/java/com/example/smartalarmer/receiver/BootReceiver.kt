@@ -1,9 +1,10 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.scheduler.AlarmScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

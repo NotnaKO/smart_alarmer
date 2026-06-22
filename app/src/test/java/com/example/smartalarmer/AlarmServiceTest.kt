@@ -1,5 +1,6 @@
 package com.example.smartalarmer
 
+import com.example.smartalarmer.service.AlarmService
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -1,6 +1,7 @@
 package com.example.smartalarmer
 
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.scheduler.AlarmScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Calendar

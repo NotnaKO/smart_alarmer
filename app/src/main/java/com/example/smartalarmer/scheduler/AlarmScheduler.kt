@@ -1,4 +1,4 @@
-package com.example.smartalarmer
+package com.example.smartalarmer.scheduler
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.receiver.AlarmReceiver
 import java.util.Calendar
 
 object AlarmScheduler {

@@ -3,11 +3,11 @@ package com.example.smartalarmer.ui
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.smartalarmer.AlarmDismissScreen
-import com.example.smartalarmer.MathPuzzleView
-import com.example.smartalarmer.MemoryPuzzleView
-import com.example.smartalarmer.TypingPuzzleView
-import com.example.smartalarmer.ShakePuzzleView
+import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
+import com.example.smartalarmer.ui.dismiss.MathPuzzleView
+import com.example.smartalarmer.ui.dismiss.MemoryPuzzleView
+import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
+import com.example.smartalarmer.ui.dismiss.ShakePuzzleView
 import com.example.smartalarmer.puzzle.*
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -30,7 +30,7 @@ class AlarmDismissScreenTest {
 
     /** Always returns the same fixed quote. */
     private val fakeTyping = object : TypingPuzzleProvider {
-        override fun getRandomQuote() = "Wake up now"
+        override fun getRandomQuote(quotes: List<String>) = "Wake up now"
         override fun isMatch(target: String, input: String) = target.trim() == input.trim()
     }
 

@@ -1,4 +1,4 @@
-package com.example.smartalarmer.theme
+package com.example.smartalarmer.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

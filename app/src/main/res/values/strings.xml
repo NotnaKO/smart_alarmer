@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Smart Alarmer</string>
+    <string-array name="typing_quotes">
+        <item>The early bird gets the worm.</item>
+        <item>Waking up is the first step to success.</item>
+        <item>No snooze allowed. Rise and shine!</item>
+        <item>Make today count. Get out of bed.</item>
+    </string-array>
 </resources>

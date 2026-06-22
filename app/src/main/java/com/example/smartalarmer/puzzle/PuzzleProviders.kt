@@ -5,7 +5,7 @@ interface MathPuzzleProvider {
 }
 
 interface TypingPuzzleProvider {
-    fun getRandomQuote(): String
+    fun getRandomQuote(quotes: List<String>): String
     fun isMatch(target: String, input: String): Boolean
 }
 

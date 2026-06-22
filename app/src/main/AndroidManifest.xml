@@ -20,7 +20,7 @@
         android:windowSoftInputMode="adjustResize"
         android:theme="@style/Theme.SmartAlarmer">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,11 +29,11 @@
         </activity>
 
         <!-- AlarmReceiver -->
-        <receiver android:name=".AlarmReceiver" android:enabled="true" android:exported="false" />
+        <receiver android:name=".receiver.AlarmReceiver" android:enabled="true" android:exported="false" />
 
         <!-- BootReceiver -->
         <receiver
-            android:name=".BootReceiver"
+            android:name=".receiver.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -43,14 +43,14 @@
         
         <!-- AlarmService -->
         <service 
-            android:name=".AlarmService" 
+            android:name=".service.AlarmService" 
             android:foregroundServiceType="mediaPlayback"
             android:enabled="true"
             android:exported="false" />
             
         <!-- AlarmDismissActivity -->
         <activity
-            android:name=".AlarmDismissActivity"
+            android:name=".ui.dismiss.AlarmDismissActivity"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:launchMode="singleInstance"
