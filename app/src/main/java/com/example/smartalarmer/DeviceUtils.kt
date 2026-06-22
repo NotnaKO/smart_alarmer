@@ -17,7 +17,9 @@ object DeviceUtils {
                             brand.equals("Xiaomi", ignoreCase = true) ||
                             manufacturer.equals("Redmi", ignoreCase = true) ||
                             brand.equals("Redmi", ignoreCase = true) ||
+                            manufacturer.equals("POCO", ignoreCase = true) ||
                             brand.equals("POCO", ignoreCase = true) ||
+                            manufacturer.equals("POCOPHONE", ignoreCase = true) ||
                             brand.equals("POCOPHONE", ignoreCase = true)
         return isXiaomiBrand || isMiUi() || isHyperOs()
     }
