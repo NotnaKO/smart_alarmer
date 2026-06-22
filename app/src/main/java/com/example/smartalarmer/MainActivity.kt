@@ -359,8 +359,8 @@ class MainActivity : ComponentActivity() {
                               AlarmEditSheet(
                                   alarm = editingAlarm,
                                   onDismiss = { viewModel.closeEditSheet() },
-                                  onSave = { hour, minute, days, puzzles, count ->
-                                      viewModel.saveAlarm(context, hour, minute, days, puzzles, count)
+                                  onSave = { hour, minute, days, puzzles, count, isGradual ->
+                                      viewModel.saveAlarm(context, hour, minute, days, puzzles, count, isGradual)
                                   }
                               )
                           }
@@ -393,6 +393,7 @@ class MainActivity : ComponentActivity() {
 
       val puzzlesText = alarm.puzzlesList.split(",")
           .joinToString(", ") { it.trim().lowercase().replaceFirstChar { c -> c.uppercase() } }
+      val gradualText = if (alarm.isGradualVolume) " • Gradual Volume" else ""
 
       Card(
           modifier = Modifier
@@ -418,7 +419,7 @@ class MainActivity : ComponentActivity() {
                   )
                   Spacer(modifier = Modifier.height(4.dp))
                   Text(
-                      text = "$daysSummary • $puzzlesText (${alarm.puzzleCount} puzzles)",
+                      text = "$daysSummary • $puzzlesText (${alarm.puzzleCount} puzzles)$gradualText",
                       fontSize = 13.sp,
                       color = Color.LightGray
                   )
@@ -468,7 +469,7 @@ class MainActivity : ComponentActivity() {
   fun AlarmEditSheet(
       alarm: Alarm?,
       onDismiss: () -> Unit,
-      onSave: (hour: Int, minute: Int, daysOfWeek: String, puzzlesList: String, puzzleCount: Int) -> Unit
+      onSave: (hour: Int, minute: Int, daysOfWeek: String, puzzlesList: String, puzzleCount: Int, isGradualVolume: Boolean) -> Unit
   ) {
       val context = LocalContext.current
       var hour by remember { mutableStateOf(alarm?.hour ?: 8) }
@@ -481,6 +482,7 @@ class MainActivity : ComponentActivity() {
       val selectedPuzzles = remember { mutableStateListOf<String>().apply { addAll(initialPuzzles) } }
 
       var puzzleCount by remember { mutableStateOf(alarm?.puzzleCount ?: 1) }
+      var isGradualVolume by remember { mutableStateOf(alarm?.isGradualVolume ?: true) }
 
       ModalBottomSheet(
           onDismissRequest = onDismiss,
@@ -634,6 +636,28 @@ class MainActivity : ComponentActivity() {
                   }
               }
 
+              // Gradual Volume toggle
+              Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.SpaceBetween,
+                  verticalAlignment = Alignment.CenterVertically
+              ) {
+                  Column {
+                      Text("Gradual Volume", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                      Text("Volume ramps up over 30 seconds", color = Color.LightGray, fontSize = 12.sp)
+                  }
+                  Switch(
+                      checked = isGradualVolume,
+                      onCheckedChange = { isGradualVolume = it },
+                      colors = SwitchDefaults.colors(
+                          checkedThumbColor = Color(0xFF6366F1),
+                          checkedTrackColor = Color(0x4D6366F1),
+                          uncheckedThumbColor = Color.Gray,
+                          uncheckedTrackColor = Color(0x1AFFFFFF)
+                      )
+                  )
+              }
+
               Spacer(modifier = Modifier.height(12.dp))
 
               // Actions
@@ -653,7 +677,7 @@ class MainActivity : ComponentActivity() {
                       onClick = {
                           val daysCsv = selectedDays.sorted().joinToString(",")
                           val puzzlesCsv = selectedPuzzles.joinToString(",")
-                          onSave(hour, minute, daysCsv, puzzlesCsv, puzzleCount)
+                          onSave(hour, minute, daysCsv, puzzlesCsv, puzzleCount, isGradualVolume)
                       },
                       modifier = Modifier.weight(1f),
                       colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
