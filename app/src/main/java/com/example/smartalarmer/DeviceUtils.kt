@@ -13,15 +13,24 @@ object DeviceUtils {
     fun isXiaomi(): Boolean {
         val manufacturer = Build.MANUFACTURER ?: ""
         val brand = Build.BRAND ?: ""
-        return manufacturer.equals("Xiaomi", ignoreCase = true) || 
-               brand.equals("Xiaomi", ignoreCase = true) || 
-               isMiUi()
+        val isXiaomiBrand = manufacturer.equals("Xiaomi", ignoreCase = true) || 
+                            brand.equals("Xiaomi", ignoreCase = true) ||
+                            manufacturer.equals("Redmi", ignoreCase = true) ||
+                            brand.equals("Redmi", ignoreCase = true) ||
+                            brand.equals("POCO", ignoreCase = true) ||
+                            brand.equals("POCOPHONE", ignoreCase = true)
+        return isXiaomiBrand || isMiUi() || isHyperOs()
     }
 
     fun isMiUi(): Boolean {
         val name = getSystemProperty("ro.miui.ui.version.name")
         val code = getSystemProperty("ro.miui.ui.version.code")
         return !name.isNullOrBlank() || !code.isNullOrBlank()
+    }
+
+    fun isHyperOs(): Boolean {
+        return !getSystemProperty("ro.hyper.os.version.name").isNullOrBlank() ||
+               !getSystemProperty("ro.hyper.os.version.code").isNullOrBlank()
     }
 
     fun isIgnoringBatteryOptimizations(context: Context): Boolean {
@@ -33,16 +42,12 @@ object DeviceUtils {
         if (!isXiaomi()) {
             return getStandardAppInfoIntent(context)
         }
-        return try {
-            Intent("miui.intent.action.APP_PERM_EDITOR").apply {
-                setClassName(
-                    "com.miui.securitycenter",
-                    "com.miui.permcenter.permissions.PermissionsEditorActivity"
-                )
-                putExtra("extra_pkgname", context.packageName)
-            }
-        } catch (e: Exception) {
-            getStandardAppInfoIntent(context)
+        return Intent("miui.intent.action.APP_PERM_EDITOR").apply {
+            setClassName(
+                "com.miui.securitycenter",
+                "com.miui.permcenter.permissions.PermissionsEditorActivity"
+            )
+            putExtra("extra_pkgname", context.packageName)
         }
     }
 

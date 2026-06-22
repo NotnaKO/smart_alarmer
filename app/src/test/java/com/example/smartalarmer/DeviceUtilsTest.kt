@@ -10,5 +10,6 @@ class DeviceUtilsTest {
         // and should safely return false.
         assertFalse(DeviceUtils.isMiUi())
         assertFalse(DeviceUtils.isXiaomi())
+        assertFalse(DeviceUtils.isHyperOs())
     }
 }
