@@ -216,15 +216,14 @@ fun VirtualKeyboard(
     modifier: Modifier = Modifier
 ) {
     var isShifted by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val locale = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
+    val language = locale.language
 
-    val rows = remember(isShifted) {
-        listOf(
-            listOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
-            listOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
-            listOf('z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '!')
-        ).map { row ->
+    val rows = remember(isShifted, language) {
+        KeyboardLayouts.getLayoutForLanguage(language).map { row ->
             if (isShifted) {
-                row.map { if (it in 'a'..'z') it.uppercaseChar() else it }
+                row.map { it.uppercaseChar() }
             } else {
                 row
             }
@@ -289,6 +288,7 @@ fun VirtualKeyboard(
         }
     }
 }
+
 
 @Composable
 fun KeyButton(
