@@ -1,0 +1,101 @@
+<resources>
+    <!-- Application Name -->
+    <string name="app_name">Умный будильник</string>
+
+    <!-- Main Screen Settings / Errors -->
+    <string name="bg_execution_settings">Настройки фоновой работы</string>
+    <string name="bg_execution_desc">Чтобы гарантировать надежное срабатывание будильника в режиме глубокого сна и его отображение поверх экрана блокировки, проверьте фоновые настройки:</string>
+    <string name="disable_battery_limits">Отключить лимиты батареи</string>
+    <string name="xiaomi_settings">Настройки Xiaomi</string>
+    <string name="dismiss">Скрыть</string>
+    <string name="permissions_required">Требуются разрешения</string>
+    <string name="permissions_desc">Пожалуйста, предоставьте все разрешения ниже, чтобы будильник мог разбудить устройство и корректно отображаться на экране блокировки.</string>
+    <string name="allow_notifications">Разрешить уведомления</string>
+    <string name="allow_alarms">Разрешить будильники</string>
+    <string name="allow_lockscreen">Поверх экрана блокировки</string>
+    <string name="no_alarms_scheduled">Нет запланированных будильников.\nНажмите +, чтобы добавить.</string>
+    <string name="test_btn">Тест</string>
+    <string name="delete_alarm_desc">Удалить будильник</string>
+    <string name="add_alarm_desc">Добавить будильник</string>
+
+    <!-- Alarm Edit Sheet -->
+    <string name="new_alarm">Новый будильник</string>
+    <string name="edit_alarm">Изменить будильник</string>
+    <string name="time_label">Время</string>
+    <string name="repeat_days_label">Дни повтора</string>
+    <string name="dismiss_puzzles_label">Головоломки для выключения</string>
+    <string name="puzzles_required">Количество головоломок</string>
+    <string name="gradual_volume">Нарастающая громкость</string>
+    <string name="gradual_volume_desc">Громкость нарастает в течение 60 секунд</string>
+    <string name="cancel">Отмена</string>
+    <string name="save">Сохранить</string>
+
+    <!-- Day Summary Labels -->
+    <string name="one_time">Однократно</string>
+    <string name="every_day">Каждый день</string>
+    <string name="weekdays">Будни</string>
+    <string name="weekends">Выходные</string>
+
+    <!-- Day Name Abbreviations (Single Letter) -->
+    <string name="day_m">П</string>
+    <string name="day_t">В</string>
+    <string name="day_w">С</string>
+    <string name="day_th">Ч</string>
+    <string name="day_f">П</string>
+    <string name="day_sa">С</string>
+    <string name="day_su">В</string>
+
+    <!-- Day Names Short (3 Letters) -->
+    <string name="day_mon">Пн</string>
+    <string name="day_tue">Вт</string>
+    <string name="day_wed">Ср</string>
+    <string name="day_thu">Чт</string>
+    <string name="day_fri">Пт</string>
+    <string name="day_sat">Сб</string>
+    <string name="day_sun">Вс</string>
+
+    <!-- Puzzle Names -->
+    <string name="puzzle_math">Математика</string>
+    <string name="puzzle_memory">Память</string>
+    <string name="puzzle_typing">Ввод текста</string>
+    <string name="puzzle_shake">Встряхивание</string>
+
+    <!-- Pluralized Toast Resources -->
+    <plurals name="hours_plural">
+        <item quantity="one">%1$d час</item>
+        <item quantity="few">%1$d часа</item>
+        <item quantity="many">%1$d часов</item>
+        <item quantity="other">%1$d часов</item>
+    </plurals>
+    <plurals name="minutes_plural">
+        <item quantity="one">%1$d минута</item>
+        <item quantity="few">%1$d минуты</item>
+        <item quantity="many">%1$d минут</item>
+        <item quantity="other">%1$d минут</item>
+    </plurals>
+    <string name="alarm_set_toast">Будильник заведен: прозвенит через %1$s</string>
+    <string name="hours_and_minutes_connector">%1$s и %2$s</string>
+
+    <!-- Alarm Dismiss Screen -->
+    <string name="task_progress_format">Задача %1$d из %2$d</string>
+    <string name="your_answer_format">Ваш ответ: %1$s</string>
+    <string name="type_sentence_label">Введите это предложение точно:</string>
+    <string name="submit_btn">Отправить</string>
+    <string name="memorize_pattern">Запомните узор...</string>
+    <string name="repeat_pattern">Повторите узор!</string>
+    <string name="shake_device">Встряхните устройство!</string>
+    <string name="shakes_remaining">Осталось встряхиваний: %1$d</string>
+
+    <!-- Notification Service -->
+    <string name="active_alarm_channel_name">Активный будильник</string>
+    <string name="wake_up_title">ПРОСЫПАЙСЯ!</string>
+    <string name="wake_up_desc">Выполните задания, чтобы отключить будильник</string>
+
+    <!-- Typing Quotes -->
+    <string-array name="typing_quotes">
+        <item>Кто рано встает, тому Бог подает.</item>
+        <item>Ранний подъем — первый шаг к успеху.</item>
+        <item>Дремать нельзя. Просыпайся и сияй!</item>
+        <item>Сделай этот день важным. Вставай с постели.</item>
+    </string-array>
+</resources>

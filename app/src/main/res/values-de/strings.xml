@@ -1,0 +1,97 @@
+<resources>
+    <!-- Application Name -->
+    <string name="app_name">Smart Alarmer</string>
+
+    <!-- Main Screen Settings / Errors -->
+    <string name="bg_execution_settings">Hintergrund-Ausführungseinstellungen</string>
+    <string name="bg_execution_desc">Um sicherzustellen, dass Alarme im Tiefschlaf zuverlässig auslösen und über dem Sperrbildschirm angezeigt werden, überprüfen Sie bitte die Hintergrund-Einstellungen:</string>
+    <string name="disable_battery_limits">Akku-Limits deaktivieren</string>
+    <string name="xiaomi_settings">Xiaomi-Einstellungen</string>
+    <string name="dismiss">Verwerfen</string>
+    <string name="permissions_required">Erforderliche Berechtigungen</string>
+    <string name="permissions_desc">Bitte aktivieren Sie alle unten stehenden Berechtigungen, damit Alarme Ihr Gerät wecken und korrekt auf dem Sperrbildschirm angezeigt werden.</string>
+    <string name="allow_notifications">Benachrichtigungen erlauben</string>
+    <string name="allow_alarms">Alarme erlauben</string>
+    <string name="allow_lockscreen">Sperrbildschirm-Anzeige erlauben</string>
+    <string name="no_alarms_scheduled">Keine Alarme geplant.\nTippen Sie auf +, um einen Alarm hinzuzufügen.</string>
+    <string name="test_btn">Testen</string>
+    <string name="delete_alarm_desc">Alarm löschen</string>
+    <string name="add_alarm_desc">Alarm hinzufügen</string>
+
+    <!-- Alarm Edit Sheet -->
+    <string name="new_alarm">Neuer Alarm</string>
+    <string name="edit_alarm">Alarm bearbeiten</string>
+    <string name="time_label">Uhrzeit</string>
+    <string name="repeat_days_label">Wiederholungstage</string>
+    <string name="dismiss_puzzles_label">Rätsel zum Ausschalten</string>
+    <string name="puzzles_required">Erforderliche Rätsel</string>
+    <string name="gradual_volume">Ansteigende Lautstärke</string>
+    <string name="gradual_volume_desc">Lautstärke steigt über 60 Sekunden an</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="save">Speichern</string>
+
+    <!-- Day Summary Labels -->
+    <string name="one_time">Einmalig</string>
+    <string name="every_day">Täglich</string>
+    <string name="weekdays">Wochentage</string>
+    <string name="weekends">Wochenenden</string>
+
+    <!-- Day Name Abbreviations (Single Letter) -->
+    <string name="day_m">M</string>
+    <string name="day_t">D</string>
+    <string name="day_w">M</string>
+    <string name="day_th">D</string>
+    <string name="day_f">F</string>
+    <string name="day_sa">S</string>
+    <string name="day_su">S</string>
+
+    <!-- Day Names Short (3 Letters) -->
+    <string name="day_mon">Mo</string>
+    <string name="day_tue">Di</string>
+    <string name="day_wed">Mi</string>
+    <string name="day_thu">Do</string>
+    <string name="day_fri">Fr</string>
+    <string name="day_sat">Sa</string>
+    <string name="day_sun">So</string>
+
+    <!-- Puzzle Names -->
+    <string name="puzzle_math">Mathe</string>
+    <string name="puzzle_memory">Gedächtnis</string>
+    <string name="puzzle_typing">Tippen</string>
+    <string name="puzzle_shake">Schütteln</string>
+
+    <!-- Pluralized Toast Resources -->
+    <plurals name="hours_plural">
+        <item quantity="one">%1$d Stunde</item>
+        <item quantity="other">%1$d Stunden</item>
+    </plurals>
+    <plurals name="minutes_plural">
+        <item quantity="one">%1$d Minute</item>
+        <item quantity="other">%1$d Minuten</item>
+    </plurals>
+    <string name="alarm_set_toast">Alarm in %1$s ab jetzt gestellt</string>
+    <string name="hours_and_minutes_connector">%1$s und %2$s</string>
+
+    <!-- Alarm Dismiss Screen -->
+    <string name="task_progress_format">Aufgabe %1$d von %2$d</string>
+    <string name="your_answer_format">Deine Antwort: %1$s</string>
+    <string name="type_sentence_label">Tippe diesen Satz exakt ab:</string>
+    <string name="submit_btn">Bestätigen</string>
+    <string name="memorize_pattern">Muster merken...</string>
+    <string name="repeat_pattern">Muster wiederholen!</string>
+    <string name="shake_device">Gerät schütteln!</string>
+    <string name="shakes_remaining">Verbleibende Erschütterungen: %1$d</string>
+
+    <!-- Notification Service -->
+    <string name="active_alarm_channel_name">Aktiver Alarm</string>
+    <string name="wake_up_title">JETZT AUFSTEHEN!</string>
+    <string name="wake_up_desc">Löse die Aufgaben, um den Alarm auszuschalten</string>
+
+    <!-- Typing Quotes -->
+    <string-array name="typing_quotes">
+        <item>Morgenstund hat Gold im Mund.</item>
+        <item>Aufstehen ist der erste Schritt zum Erfolg.</item>
+        <item>Schlummern verboten. Aufstehen und strahlen!</item>
+        <item>Mach das Beste aus dem Tag. Raus aus dem Bett.</item>
+    </string-array>
+</resources>
