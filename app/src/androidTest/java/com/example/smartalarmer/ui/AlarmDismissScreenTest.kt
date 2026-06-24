@@ -8,6 +8,7 @@ import com.example.smartalarmer.ui.dismiss.MathPuzzleView
 import com.example.smartalarmer.ui.dismiss.MemoryPuzzleView
 import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
 import com.example.smartalarmer.ui.dismiss.ShakePuzzleView
+import com.example.smartalarmer.ui.dismiss.VirtualKeyboard
 import com.example.smartalarmer.puzzle.*
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -377,5 +378,68 @@ class AlarmDismissScreenTest {
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) { dismissed }
         assertTrue("onDismissComplete should be called when there are no valid puzzles", dismissed)
+    }
+
+    @Test
+    fun virtualKeyboard_inSpanish_displaysSpanishSpecificKeys() {
+        composeTestRule.setContent {
+            val config = androidx.compose.ui.platform.LocalConfiguration.current.apply {
+                val locale = java.util.Locale.forLanguageTag("es")
+                setLocale(locale)
+            }
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalConfiguration provides config
+            ) {
+                VirtualKeyboard(
+                    onKeyClick = {},
+                    onBackspace = {}
+                )
+            }
+        }
+
+        // Spanish layout should have 'ñ' key displayed
+        composeTestRule.onNodeWithText("ñ").assertIsDisplayed()
+    }
+
+    @Test
+    fun virtualKeyboard_inGerman_displaysGermanSpecificKeys() {
+        composeTestRule.setContent {
+            val config = androidx.compose.ui.platform.LocalConfiguration.current.apply {
+                val locale = java.util.Locale.forLanguageTag("de")
+                setLocale(locale)
+            }
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalConfiguration provides config
+            ) {
+                VirtualKeyboard(
+                    onKeyClick = {},
+                    onBackspace = {}
+                )
+            }
+        }
+
+        // German layout should have 'ü' key displayed
+        composeTestRule.onNodeWithText("ü").assertIsDisplayed()
+    }
+
+    @Test
+    fun virtualKeyboard_inRussian_displaysRussianSpecificKeys() {
+        composeTestRule.setContent {
+            val config = androidx.compose.ui.platform.LocalConfiguration.current.apply {
+                val locale = java.util.Locale.forLanguageTag("ru")
+                setLocale(locale)
+            }
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalConfiguration provides config
+            ) {
+                VirtualKeyboard(
+                    onKeyClick = {},
+                    onBackspace = {}
+                )
+            }
+        }
+
+        // Russian layout should have 'й' key displayed
+        composeTestRule.onNodeWithText("й").assertIsDisplayed()
     }
 }

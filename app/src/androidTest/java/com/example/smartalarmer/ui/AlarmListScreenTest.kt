@@ -111,7 +111,9 @@ class AlarmListScreenTest {
             onDelete = { deleted = true }
         )
 
-        composeTestRule.onNodeWithContentDescription("Delete Alarm").performClick()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val deleteDesc = context.getString(com.example.smartalarmer.R.string.delete_alarm_desc)
+        composeTestRule.onNodeWithContentDescription(deleteDesc).performClick()
 
         assertTrue("onDelete should have been called", deleted)
     }
@@ -151,7 +153,9 @@ class AlarmListScreenTest {
             onTest = { testClicked = true }
         )
 
-        composeTestRule.onNodeWithContentDescription("Test Alarm").performClick()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val testBtnDesc = context.getString(com.example.smartalarmer.R.string.test_btn)
+        composeTestRule.onNodeWithContentDescription(testBtnDesc).performClick()
         assertTrue(testClicked)
     }
 
