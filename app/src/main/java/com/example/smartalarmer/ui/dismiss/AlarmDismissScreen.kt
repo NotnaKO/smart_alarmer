@@ -221,8 +221,8 @@ fun VirtualKeyboard(
     modifier: Modifier = Modifier
 ) {
     var isShifted by remember { mutableStateOf(false) }
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val locale = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val locale = configuration.locales[0] ?: java.util.Locale.getDefault()
     val language = locale.language
 
     val rows = remember(isShifted, language) {

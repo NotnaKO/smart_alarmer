@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -382,29 +383,28 @@ class MainActivity : ComponentActivity() {
       onEdit: () -> Unit = {},
       onTest: () -> Unit = {}
   ) {
-      val context = LocalContext.current
       val daysList = alarm.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
       val daysSummary = when {
-          daysList.isEmpty() -> context.getString(com.example.smartalarmer.R.string.one_time)
-          daysList.size == 7 -> context.getString(com.example.smartalarmer.R.string.every_day)
-          daysList.containsAll(listOf(1, 2, 3, 4, 5)) && daysList.size == 5 -> context.getString(com.example.smartalarmer.R.string.weekdays)
-          daysList.containsAll(listOf(6, 7)) && daysList.size == 2 -> context.getString(com.example.smartalarmer.R.string.weekends)
+          daysList.isEmpty() -> stringResource(com.example.smartalarmer.R.string.one_time)
+          daysList.size == 7 -> stringResource(com.example.smartalarmer.R.string.every_day)
+          daysList.containsAll(listOf(1, 2, 3, 4, 5)) && daysList.size == 5 -> stringResource(com.example.smartalarmer.R.string.weekdays)
+          daysList.containsAll(listOf(6, 7)) && daysList.size == 2 -> stringResource(com.example.smartalarmer.R.string.weekends)
           else -> {
               val names = listOf(
-                  context.getString(com.example.smartalarmer.R.string.day_mon),
-                  context.getString(com.example.smartalarmer.R.string.day_tue),
-                  context.getString(com.example.smartalarmer.R.string.day_wed),
-                  context.getString(com.example.smartalarmer.R.string.day_thu),
-                  context.getString(com.example.smartalarmer.R.string.day_fri),
-                  context.getString(com.example.smartalarmer.R.string.day_sat),
-                  context.getString(com.example.smartalarmer.R.string.day_sun)
+                  stringResource(com.example.smartalarmer.R.string.day_mon),
+                  stringResource(com.example.smartalarmer.R.string.day_tue),
+                  stringResource(com.example.smartalarmer.R.string.day_wed),
+                  stringResource(com.example.smartalarmer.R.string.day_thu),
+                  stringResource(com.example.smartalarmer.R.string.day_fri),
+                  stringResource(com.example.smartalarmer.R.string.day_sat),
+                  stringResource(com.example.smartalarmer.R.string.day_sun)
               )
               daysList.sorted().joinToString(", ") { names[it - 1] }
           }
       }
 
       val puzzlesText = alarm.puzzlesList.split(",")
-          .joinToString(", ") { puzzleId ->
+          .map { puzzleId ->
               val resId = when (puzzleId.trim().uppercase()) {
                   "MATH" -> com.example.smartalarmer.R.string.puzzle_math
                   "MEMORY" -> com.example.smartalarmer.R.string.puzzle_memory
@@ -412,9 +412,10 @@ class MainActivity : ComponentActivity() {
                   "SHAKE" -> com.example.smartalarmer.R.string.puzzle_shake
                   else -> com.example.smartalarmer.R.string.puzzle_math
               }
-              context.getString(resId)
+              stringResource(resId)
           }
-      val gradualText = if (alarm.isGradualVolume) " • " + context.getString(com.example.smartalarmer.R.string.gradual_volume) else ""
+          .joinToString(", ")
+      val gradualText = if (alarm.isGradualVolume) " • " + stringResource(com.example.smartalarmer.R.string.gradual_volume) else ""
 
       Card(
           modifier = Modifier
@@ -567,13 +568,13 @@ class MainActivity : ComponentActivity() {
                       horizontalArrangement = Arrangement.SpaceBetween
                   ) {
                       val dayLabels = listOf(
-                          context.getString(com.example.smartalarmer.R.string.day_m),
-                          context.getString(com.example.smartalarmer.R.string.day_t),
-                          context.getString(com.example.smartalarmer.R.string.day_w),
-                          context.getString(com.example.smartalarmer.R.string.day_th),
-                          context.getString(com.example.smartalarmer.R.string.day_f),
-                          context.getString(com.example.smartalarmer.R.string.day_sa),
-                          context.getString(com.example.smartalarmer.R.string.day_su)
+                          stringResource(com.example.smartalarmer.R.string.day_m),
+                          stringResource(com.example.smartalarmer.R.string.day_t),
+                          stringResource(com.example.smartalarmer.R.string.day_w),
+                          stringResource(com.example.smartalarmer.R.string.day_th),
+                          stringResource(com.example.smartalarmer.R.string.day_f),
+                          stringResource(com.example.smartalarmer.R.string.day_sa),
+                          stringResource(com.example.smartalarmer.R.string.day_su)
                       )
                       for (i in 1..7) {
                           val isSelected = selectedDays.contains(i)
@@ -609,10 +610,10 @@ class MainActivity : ComponentActivity() {
                       puzzleTypes.forEach { type ->
                           val isSelected = selectedPuzzles.contains(type)
                           val displayName = when (type) {
-                              "MATH" -> context.getString(com.example.smartalarmer.R.string.puzzle_math)
-                              "MEMORY" -> context.getString(com.example.smartalarmer.R.string.puzzle_memory)
-                              "TYPING" -> context.getString(com.example.smartalarmer.R.string.puzzle_typing)
-                              "SHAKE" -> context.getString(com.example.smartalarmer.R.string.puzzle_shake)
+                              "MATH" -> stringResource(com.example.smartalarmer.R.string.puzzle_math)
+                              "MEMORY" -> stringResource(com.example.smartalarmer.R.string.puzzle_memory)
+                              "TYPING" -> stringResource(com.example.smartalarmer.R.string.puzzle_typing)
+                              "SHAKE" -> stringResource(com.example.smartalarmer.R.string.puzzle_shake)
                               else -> type
                           }
                           FilterChip(
