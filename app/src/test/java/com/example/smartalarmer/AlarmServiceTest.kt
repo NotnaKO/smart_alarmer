@@ -12,13 +12,19 @@ class AlarmServiceTest {
         // Start of playback (0s) -> minimum volume 1
         assertEquals(1, AlarmService.calculateGradualVolume(0L, maxVolume))
 
-        // Halfway through (15s) -> 1 + 15 * 6 / 30 = 4
-        assertEquals(4, AlarmService.calculateGradualVolume(15L, maxVolume))
+        // Quarter-way through (15s) -> 1 + 15 * 6 / 60 = 2
+        assertEquals(2, AlarmService.calculateGradualVolume(15L, maxVolume))
 
-        // End of crescendo (30s) -> max volume 7
-        assertEquals(7, AlarmService.calculateGradualVolume(30L, maxVolume))
+        // Halfway through (30s) -> 1 + 30 * 6 / 60 = 4
+        assertEquals(4, AlarmService.calculateGradualVolume(30L, maxVolume))
 
-        // Beyond crescendo (45s) -> max volume 7
-        assertEquals(7, AlarmService.calculateGradualVolume(45L, maxVolume))
+        // Three-quarter-way through (45s) -> 1 + 45 * 6 / 60 = 5
+        assertEquals(5, AlarmService.calculateGradualVolume(45L, maxVolume))
+
+        // End of crescendo (60s) -> max volume 7
+        assertEquals(7, AlarmService.calculateGradualVolume(60L, maxVolume))
+
+        // Beyond crescendo (75s) -> max volume 7
+        assertEquals(7, AlarmService.calculateGradualVolume(75L, maxVolume))
     }
 }

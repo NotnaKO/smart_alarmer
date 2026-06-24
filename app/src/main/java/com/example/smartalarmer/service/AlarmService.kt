@@ -150,7 +150,7 @@ class AlarmService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
-        fun calculateGradualVolume(elapsedSeconds: Long, maxVolume: Int, durationSeconds: Long = 30L): Int {
+        fun calculateGradualVolume(elapsedSeconds: Long, maxVolume: Int, durationSeconds: Long = 60L): Int {
             if (elapsedSeconds < durationSeconds) {
                 val progress = elapsedSeconds.toDouble() / durationSeconds.toDouble()
                 val volumeRange = maxVolume - 1

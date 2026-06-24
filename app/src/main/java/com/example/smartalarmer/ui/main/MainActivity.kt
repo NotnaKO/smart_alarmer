@@ -651,7 +651,7 @@ class MainActivity : ComponentActivity() {
               ) {
                   Column {
                       Text("Gradual Volume", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                      Text("Volume ramps up over 30 seconds", color = Color.LightGray, fontSize = 12.sp)
+                      Text("Volume ramps up over 60 seconds", color = Color.LightGray, fontSize = 12.sp)
                   }
                   Switch(
                       checked = isGradualVolume,
