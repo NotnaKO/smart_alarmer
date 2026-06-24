@@ -16,6 +16,7 @@ import com.example.smartalarmer.puzzle.*
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.R
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 
 enum class PuzzleType { MATH, TYPING, MEMORY, SHAKE }
 
@@ -63,7 +64,11 @@ fun AlarmDismissScreen(
     ) {
         // Progress Header
         Text(
-            text = "Task ${currentTaskIndex + 1} of ${puzzles.size}",
+            text = stringResource(
+                R.string.task_progress_format,
+                currentTaskIndex + 1,
+                puzzles.size
+            ),
             color = Color.White,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
@@ -109,7 +114,7 @@ fun MathPuzzleView(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = puzzle.equation, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Your Answer: $input", color = Color.LightGray, fontSize = 20.sp)
+        Text(text = stringResource(R.string.your_answer_format, input), color = Color.LightGray, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(24.dp))
         // Numeric Keyboard
         Column {
@@ -171,7 +176,7 @@ fun TypingPuzzleView(
     }
     var input by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Type this exact sentence:", color = Color.Gray, fontSize = 14.sp)
+        Text(text = stringResource(R.string.type_sentence_label), color = Color.Gray, fontSize = 14.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = targetQuote, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(24.dp))
@@ -204,7 +209,7 @@ fun TypingPuzzleView(
             },
             colors = ButtonDefaults.buttonColors(containerColor = Purple600)
         ) {
-            Text("Submit")
+            Text(stringResource(R.string.submit_btn))
         }
     }
 }
@@ -344,7 +349,11 @@ fun MemoryPuzzleView(
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = if (isShowingSequence) "Memorize Pattern..." else "Repeat Pattern!",
+            text = if (isShowingSequence) {
+                stringResource(R.string.memorize_pattern)
+            } else {
+                stringResource(R.string.repeat_pattern)
+            },
             color = Color.White,
             fontSize = 18.sp
         )
@@ -429,14 +438,14 @@ fun ShakePuzzleView(
         modifier = Modifier.fillMaxWidth().padding(16.dp)
     ) {
         Text(
-            text = "Shake the device!",
+            text = stringResource(R.string.shake_device),
             color = Color.White,
             fontSize = 24.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Shakes remaining: $shakeCount",
+            text = stringResource(R.string.shakes_remaining, shakeCount),
             color = Color.LightGray,
             fontSize = 18.sp
         )

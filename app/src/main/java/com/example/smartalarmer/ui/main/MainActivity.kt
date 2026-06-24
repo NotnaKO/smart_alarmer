@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
                             contentColor = Color.White,
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Icon(Icons.Filled.Add, contentDescription = "Add Alarm")
+                            Icon(Icons.Filled.Add, contentDescription = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.add_alarm_desc))
                         }
                     }
                 ) { paddingValues ->
@@ -147,14 +147,14 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text(
-                                            text = "Background Execution Settings",
+                                            text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.bg_execution_settings),
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
                                             fontSize = 16.sp
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "To ensure alarms trigger reliably in deep sleep and display over the lockscreen, please verify background settings:",
+                                            text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.bg_execution_desc),
                                             color = Color.LightGray,
                                             fontSize = 13.sp
                                         )
@@ -182,7 +182,7 @@ class MainActivity : ComponentActivity() {
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Disable Battery Limits", fontSize = 11.sp)
+                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.disable_battery_limits), fontSize = 11.sp)
                                                 }
                                             }
                                             if (showXiaomiWarning) {
@@ -203,7 +203,7 @@ class MainActivity : ComponentActivity() {
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Xiaomi Settings", fontSize = 11.sp)
+                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.xiaomi_settings), fontSize = 11.sp)
                                                 }
                                                 OutlinedButton(
                                                     onClick = {
@@ -215,7 +215,7 @@ class MainActivity : ComponentActivity() {
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Dismiss", fontSize = 11.sp)
+                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.dismiss), fontSize = 11.sp)
                                                 }
                                             }
                                         }
@@ -234,14 +234,14 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text(
-                                            text = "Permissions Required",
+                                            text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.permissions_required),
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
                                             fontSize = 16.sp
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = "Please enable all permissions below to ensure alarms wake up your device and display properly over the lock screen.",
+                                            text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.permissions_desc),
                                             color = Color.LightGray,
                                             fontSize = 13.sp
                                         )
@@ -261,7 +261,7 @@ class MainActivity : ComponentActivity() {
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Allow Notifications", fontSize = 11.sp)
+                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.allow_notifications), fontSize = 11.sp)
                                                 }
                                             }
                                             if (!hasExactAlarmPermission) {
@@ -278,7 +278,7 @@ class MainActivity : ComponentActivity() {
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Allow Alarms", fontSize = 11.sp)
+                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.allow_alarms), fontSize = 11.sp)
                                                 }
                                             }
                                             if (!hasFullScreenIntentPermission) {
@@ -295,7 +295,7 @@ class MainActivity : ComponentActivity() {
                                                     shape = RoundedCornerShape(8.dp),
                                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                                 ) {
-                                                    Text("Allow Lockscreen Display", fontSize = 11.sp)
+                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.allow_lockscreen), fontSize = 11.sp)
                                                 }
                                             }
                                         }
@@ -304,7 +304,7 @@ class MainActivity : ComponentActivity() {
                             }
 
                             Text(
-                                text = "Smart Alarmer",
+                                text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.app_name),
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
@@ -319,7 +319,7 @@ class MainActivity : ComponentActivity() {
                                       contentAlignment = Alignment.Center
                                   ) {
                                       Text(
-                                          text = "No alarms scheduled.\nTap + to add an alarm.",
+                                          text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.no_alarms_scheduled),
                                           color = Color.Gray,
                                           fontSize = 16.sp,
                                           textAlign = TextAlign.Center
@@ -382,21 +382,39 @@ class MainActivity : ComponentActivity() {
       onEdit: () -> Unit = {},
       onTest: () -> Unit = {}
   ) {
+      val context = LocalContext.current
       val daysList = alarm.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
       val daysSummary = when {
-          daysList.isEmpty() -> "One-time"
-          daysList.size == 7 -> "Every day"
-          daysList.containsAll(listOf(1, 2, 3, 4, 5)) && daysList.size == 5 -> "Weekdays"
-          daysList.containsAll(listOf(6, 7)) && daysList.size == 2 -> "Weekends"
+          daysList.isEmpty() -> context.getString(com.example.smartalarmer.R.string.one_time)
+          daysList.size == 7 -> context.getString(com.example.smartalarmer.R.string.every_day)
+          daysList.containsAll(listOf(1, 2, 3, 4, 5)) && daysList.size == 5 -> context.getString(com.example.smartalarmer.R.string.weekdays)
+          daysList.containsAll(listOf(6, 7)) && daysList.size == 2 -> context.getString(com.example.smartalarmer.R.string.weekends)
           else -> {
-              val names = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+              val names = listOf(
+                  context.getString(com.example.smartalarmer.R.string.day_mon),
+                  context.getString(com.example.smartalarmer.R.string.day_tue),
+                  context.getString(com.example.smartalarmer.R.string.day_wed),
+                  context.getString(com.example.smartalarmer.R.string.day_thu),
+                  context.getString(com.example.smartalarmer.R.string.day_fri),
+                  context.getString(com.example.smartalarmer.R.string.day_sat),
+                  context.getString(com.example.smartalarmer.R.string.day_sun)
+              )
               daysList.sorted().joinToString(", ") { names[it - 1] }
           }
       }
 
       val puzzlesText = alarm.puzzlesList.split(",")
-          .joinToString(", ") { it.trim().lowercase().replaceFirstChar { c -> c.uppercase() } }
-      val gradualText = if (alarm.isGradualVolume) " • Gradual Volume" else ""
+          .joinToString(", ") { puzzleId ->
+              val resId = when (puzzleId.trim().uppercase()) {
+                  "MATH" -> com.example.smartalarmer.R.string.puzzle_math
+                  "MEMORY" -> com.example.smartalarmer.R.string.puzzle_memory
+                  "TYPING" -> com.example.smartalarmer.R.string.puzzle_typing
+                  "SHAKE" -> com.example.smartalarmer.R.string.puzzle_shake
+                  else -> com.example.smartalarmer.R.string.puzzle_math
+              }
+              context.getString(resId)
+          }
+      val gradualText = if (alarm.isGradualVolume) " • " + context.getString(com.example.smartalarmer.R.string.gradual_volume) else ""
 
       Card(
           modifier = Modifier
@@ -438,11 +456,11 @@ class MainActivity : ComponentActivity() {
                   ) {
                       Icon(
                           imageVector = Icons.Filled.PlayArrow,
-                          contentDescription = "Test Alarm",
+                          contentDescription = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.test_btn),
                           modifier = Modifier.size(16.dp)
                       )
                       Spacer(modifier = Modifier.width(4.dp))
-                      Text("Test", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                      Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.test_btn), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                   }
 
                   Switch(
@@ -460,7 +478,7 @@ class MainActivity : ComponentActivity() {
                       onClick = onDelete,
                       colors = IconButtonDefaults.iconButtonColors(contentColor = RedError)
                   ) {
-                      Icon(Icons.Filled.Delete, contentDescription = "Delete Alarm")
+                      Icon(Icons.Filled.Delete, contentDescription = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.delete_alarm_desc))
                   }
               }
           }
@@ -504,7 +522,7 @@ class MainActivity : ComponentActivity() {
               verticalArrangement = Arrangement.spacedBy(20.dp)
           ) {
               Text(
-                  text = if (alarm == null) "New Alarm" else "Edit Alarm",
+                  text = if (alarm == null) androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.new_alarm) else androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.edit_alarm),
                   fontSize = 20.sp,
                   fontWeight = FontWeight.Bold,
                   color = Color.White
@@ -531,7 +549,7 @@ class MainActivity : ComponentActivity() {
                   horizontalArrangement = Arrangement.SpaceBetween,
                   verticalAlignment = Alignment.CenterVertically
               ) {
-                  Text("Time", color = Color.LightGray, fontSize = 16.sp)
+                  Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.time_label), color = Color.LightGray, fontSize = 16.sp)
                   Text(
                       text = String.format("%02d:%02d", hour, minute),
                       color = Color.White,
@@ -542,13 +560,21 @@ class MainActivity : ComponentActivity() {
 
               // Days of week
               Column {
-                  Text("Repeat Days", color = Color.LightGray, fontSize = 14.sp)
+                  Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.repeat_days_label), color = Color.LightGray, fontSize = 14.sp)
                   Spacer(modifier = Modifier.height(8.dp))
                   Row(
                       modifier = Modifier.fillMaxWidth(),
                       horizontalArrangement = Arrangement.SpaceBetween
                   ) {
-                      val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+                      val dayLabels = listOf(
+                          context.getString(com.example.smartalarmer.R.string.day_m),
+                          context.getString(com.example.smartalarmer.R.string.day_t),
+                          context.getString(com.example.smartalarmer.R.string.day_w),
+                          context.getString(com.example.smartalarmer.R.string.day_th),
+                          context.getString(com.example.smartalarmer.R.string.day_f),
+                          context.getString(com.example.smartalarmer.R.string.day_sa),
+                          context.getString(com.example.smartalarmer.R.string.day_su)
+                      )
                       for (i in 1..7) {
                           val isSelected = selectedDays.contains(i)
                           Box(
@@ -571,11 +597,9 @@ class MainActivity : ComponentActivity() {
                           }
                       }
                   }
-              }
-
-              // Puzzle selection
+                           // Puzzle selection
               Column {
-                  Text("Dismiss Puzzles", color = Color.LightGray, fontSize = 14.sp)
+                  Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.dismiss_puzzles_label), color = Color.LightGray, fontSize = 14.sp)
                   Spacer(modifier = Modifier.height(8.dp))
                   Row(
                       modifier = Modifier.fillMaxWidth(),
@@ -584,6 +608,13 @@ class MainActivity : ComponentActivity() {
                       val puzzleTypes = listOf("MATH", "MEMORY", "TYPING", "SHAKE")
                       puzzleTypes.forEach { type ->
                           val isSelected = selectedPuzzles.contains(type)
+                          val displayName = when (type) {
+                              "MATH" -> context.getString(com.example.smartalarmer.R.string.puzzle_math)
+                              "MEMORY" -> context.getString(com.example.smartalarmer.R.string.puzzle_memory)
+                              "TYPING" -> context.getString(com.example.smartalarmer.R.string.puzzle_typing)
+                              "SHAKE" -> context.getString(com.example.smartalarmer.R.string.puzzle_shake)
+                              else -> type
+                          }
                           FilterChip(
                               selected = isSelected,
                               onClick = {
@@ -598,7 +629,7 @@ class MainActivity : ComponentActivity() {
                                       selectedPuzzles.add(type)
                                   }
                               },
-                              label = { Text(type) },
+                              label = { Text(displayName) },
                               colors = FilterChipDefaults.filterChipColors(
                                   selectedContainerColor = IndigoPrimary,
                                   selectedLabelColor = Color.White,
@@ -616,7 +647,7 @@ class MainActivity : ComponentActivity() {
                   horizontalArrangement = Arrangement.SpaceBetween,
                   verticalAlignment = Alignment.CenterVertically
               ) {
-                  Text("Puzzles Required", color = Color.LightGray, fontSize = 16.sp)
+                  Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.puzzles_required), color = Color.LightGray, fontSize = 16.sp)
                   Row(
                       verticalAlignment = Alignment.CenterVertically,
                       horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -650,8 +681,8 @@ class MainActivity : ComponentActivity() {
                   verticalAlignment = Alignment.CenterVertically
               ) {
                   Column {
-                      Text("Gradual Volume", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                      Text("Volume ramps up over 60 seconds", color = Color.LightGray, fontSize = 12.sp)
+                      Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.gradual_volume), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                      Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.gradual_volume_desc), color = Color.LightGray, fontSize = 12.sp)
                   }
                   Switch(
                       checked = isGradualVolume,
@@ -678,7 +709,7 @@ class MainActivity : ComponentActivity() {
                       colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                       border = BorderStroke(1.dp, BottomSheetDrag)
                   ) {
-                      Text("Cancel")
+                      Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.cancel))
                   }
                   Button(
                       onClick = {
@@ -689,9 +720,10 @@ class MainActivity : ComponentActivity() {
                       modifier = Modifier.weight(1f),
                       colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                   ) {
-                      Text("Save", color = Color.White)
+                      Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.save), color = Color.White)
                   }
               }
           }
       }
   }
+}
