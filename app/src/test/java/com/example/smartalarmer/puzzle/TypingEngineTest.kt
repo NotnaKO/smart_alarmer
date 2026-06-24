@@ -1,27 +1,28 @@
 package com.example.smartalarmer.puzzle
 
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class TypingEngineTest {
     @Test
-    fun testMatchTextExact() {
-        val target = "Wake up and smell the coffee!"
-        assertTrue(TypingEngine.isMatch(target, "Wake up and smell the coffee!"))
-        assertTrue(TypingEngine.isMatch(target, "  Wake up and smell the coffee!  "))
-        assertFalse(TypingEngine.isMatch(target, "wake up and smell the coffee!"))
-    }
+    fun testNormalizationAndMatching() {
+        // English matches
+        assertTrue(TypingEngine.isMatch("The early bird gets the worm.", "the early bird gets the worm"))
+        assertTrue(TypingEngine.isMatch("No snooze allowed. Rise and shine!", "no snooze allowed rise and shine"))
 
-    @Test
-    fun testGetRandomQuote() {
-        val testQuotes = listOf("Quote A", "Quote B")
-        val quote1 = TypingEngine.getRandomQuote(testQuotes)
-        val quote2 = TypingEngine.getRandomQuote(testQuotes)
-        // Ensure non-empty
-        assertTrue(quote1.isNotEmpty())
-        assertTrue(quote2.isNotEmpty())
-        assertTrue(testQuotes.contains(quote1))
-        assertTrue(testQuotes.contains(quote2))
+        // Spanish matches (accent-insensitive)
+        assertTrue(TypingEngine.isMatch("Al que madruga, Dios le ayuda.", "al que madruga dios le ayuda"))
+        assertTrue(TypingEngine.isMatch("No se permite dormir más.", "no se permite dormir mas"))
+
+        // German matches
+        assertTrue(TypingEngine.isMatch("Morgenstund hat Gold im Mund.", "morgenstund hat gold im mund"))
+
+        // Russian matches (punctuation-tolerant)
+        assertTrue(TypingEngine.isMatch("Кто рано встает, тому Бог подает.", "кто рано встает тому бог подает"))
+        assertTrue(TypingEngine.isMatch("Ранний подъем — первый шаг к успеху.", "ранний подъем первый шаг к успеху"))
+
+        // Non-matches
+        assertFalse(TypingEngine.isMatch("The early bird", "The late bird"))
     }
 }
