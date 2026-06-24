@@ -1,0 +1,97 @@
+<resources>
+    <!-- Application Name -->
+    <string name="app_name">Smart Alarmer</string>
+
+    <!-- Main Screen Settings / Errors -->
+    <string name="bg_execution_settings">Ajustes de ejecución en segundo plano</string>
+    <string name="bg_execution_desc">Para garantizar que las alarmas se activen de forma fiable en modo de suspensión profunda y se muestren en la pantalla de bloqueo, verifique los ajustes de segundo plano:</string>
+    <string name="disable_battery_limits">Desactivar límites de batería</string>
+    <string name="xiaomi_settings">Ajustes de Xiaomi</string>
+    <string name="dismiss">Descartar</string>
+    <string name="permissions_required">Permisos requeridos</string>
+    <string name="permissions_desc">Habilite todos los permisos a continuación para asegurarse de que las alarmas activen su dispositivo y se muestren correctamente en la pantalla de bloqueo.</string>
+    <string name="allow_notifications">Permitir notificaciones</string>
+    <string name="allow_alarms">Permitir alarmas</string>
+    <string name="allow_lockscreen">Permitir visualización en pantalla de bloqueo</string>
+    <string name="no_alarms_scheduled">No hay alarmas programadas.\nToque + para añadir una alarma.</string>
+    <string name="test_btn">Probar</string>
+    <string name="delete_alarm_desc">Eliminar alarma</string>
+    <string name="add_alarm_desc">Añadir alarma</string>
+
+    <!-- Alarm Edit Sheet -->
+    <string name="new_alarm">Nueva alarma</string>
+    <string name="edit_alarm">Editar alarma</string>
+    <string name="time_label">Hora</string>
+    <string name="repeat_days_label">Repetir días</string>
+    <string name="dismiss_puzzles_label">Puzzles para apagar</string>
+    <string name="puzzles_required">Puzzles requeridos</string>
+    <string name="gradual_volume">Volumen gradual</string>
+    <string name="gradual_volume_desc">El volumen aumenta durante 60 segundos</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+
+    <!-- Day Summary Labels -->
+    <string name="one_time">Una vez</string>
+    <string name="every_day">Todos los días</string>
+    <string name="weekdays">Días laborables</string>
+    <string name="weekends">Fines de semana</string>
+
+    <!-- Day Name Abbreviations (Single Letter) -->
+    <string name="day_m">L</string>
+    <string name="day_t">M</string>
+    <string name="day_w">X</string>
+    <string name="day_th">J</string>
+    <string name="day_f">V</string>
+    <string name="day_sa">S</string>
+    <string name="day_su">D</string>
+
+    <!-- Day Names Short (3 Letters) -->
+    <string name="day_mon">Lun</string>
+    <string name="day_tue">Mar</string>
+    <string name="day_wed">Mié</string>
+    <string name="day_thu">Jue</string>
+    <string name="day_fri">Vie</string>
+    <string name="day_sat">Sáb</string>
+    <string name="day_sun">Dom</string>
+
+    <!-- Puzzle Names -->
+    <string name="puzzle_math">Matemáticas</string>
+    <string name="puzzle_memory">Memoria</string>
+    <string name="puzzle_typing">Escritura</string>
+    <string name="puzzle_shake">Agitar</string>
+
+    <!-- Pluralized Toast Resources -->
+    <plurals name="hours_plural">
+        <item quantity="one">%1$d hora</item>
+        <item quantity="other">%1$d horas</item>
+    </plurals>
+    <plurals name="minutes_plural">
+        <item quantity="one">%1$d minuto</item>
+        <item quantity="other">%1$d minutos</item>
+    </plurals>
+    <string name="alarm_set_toast">Alarma programada para dentro de %1$s</string>
+    <string name="hours_and_minutes_connector">%1$s y %2$s</string>
+
+    <!-- Alarm Dismiss Screen -->
+    <string name="task_progress_format">Tarea %1$d de %2$d</string>
+    <string name="your_answer_format">Tu respuesta: %1$s</string>
+    <string name="type_sentence_label">Escribe esta frase exacta:</string>
+    <string name="submit_btn">Enviar</string>
+    <string name="memorize_pattern">Memoriza el patrón...</string>
+    <string name="repeat_pattern">¡Repite el patrón!</string>
+    <string name="shake_device">¡Agita el dispositivo!</string>
+    <string name="shakes_remaining">Sacudidas restantes: %1$d</string>
+
+    <!-- Notification Service -->
+    <string name="active_alarm_channel_name">Alarma activa</string>
+    <string name="wake_up_title">¡DESPIÉRTATE YA!</string>
+    <string name="wake_up_desc">Completa las tareas para apagar la alarma</string>
+
+    <!-- Typing Quotes -->
+    <string-array name="typing_quotes">
+        <item>Al que madruga, Dios le ayuda.</item>
+        <item>El primer paso para triunfar es levantarse.</item>
+        <item>No se permite dormir mas. A levantarse!</item>
+        <item>Haz que hoy cuente. Sal de la cama.</item>
+    </string-array>
+</resources>

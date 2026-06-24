@@ -83,8 +83,21 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
             val diffMs = nextTrigger.timeInMillis - System.currentTimeMillis()
             val hours = diffMs / (3600 * 1000)
             val minutes = (diffMs % (3600 * 1000)) / (60 * 1000)
-            val timeText = if (hours > 0) "$hours hours and $minutes minutes" else "$minutes minutes"
-            android.widget.Toast.makeText(context, "Alarm set for $timeText from now", android.widget.Toast.LENGTH_LONG).show()
+            
+            val hoursText = if (hours > 0) {
+                context.resources.getQuantityString(com.example.smartalarmer.R.plurals.hours_plural, hours.toInt(), hours.toInt())
+            } else ""
+            
+            val minutesText = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.minutes_plural, minutes.toInt(), minutes.toInt())
+            
+            val timeText = if (hours > 0) {
+                context.getString(com.example.smartalarmer.R.string.hours_and_minutes_connector, hoursText, minutesText)
+            } else {
+                minutesText
+            }
+            
+            val toastMsg = context.getString(com.example.smartalarmer.R.string.alarm_set_toast, timeText)
+            android.widget.Toast.makeText(context, toastMsg, android.widget.Toast.LENGTH_LONG).show()
 
             closeEditSheet()
         }

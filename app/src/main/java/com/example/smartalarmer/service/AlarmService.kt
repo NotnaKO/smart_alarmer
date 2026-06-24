@@ -34,7 +34,11 @@ class AlarmService : Service() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Active Alarm", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(
+                channelId,
+                getString(com.example.smartalarmer.R.string.active_alarm_channel_name),
+                NotificationManager.IMPORTANCE_HIGH
+            )
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -56,8 +60,8 @@ class AlarmService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("WAKE UP NOW!")
-            .setContentText("Complete tasks to silence the alarm")
+            .setContentTitle(getString(com.example.smartalarmer.R.string.wake_up_title))
+            .setContentText(getString(com.example.smartalarmer.R.string.wake_up_desc))
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)

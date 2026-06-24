@@ -1,3 +1,33 @@
+# Localization & Keyboard Layout Design Spec
+
+This specification outlines the strategy and implementation details for localizing the **Smart Alarmer** Android application into Spanish (`es`), German (`de`), and Russian (`ru`). It also details the design of a dynamic, localized virtual keyboard layout for the typing puzzle to match each user's language environment.
+
+---
+
+## 1. Objectives
+
+1.  **String Extraction**: Centralize all user-facing strings (static labels, buttons, error cards, and dialog texts) from `MainActivity.kt`, `AlarmDismissScreen.kt`, and `AlarmService.kt` into Android resource files.
+2.  **Resource Translation**: Provide translation files for Spanish (`es`), German (`de`), and Russian (`ru`) locales.
+3.  **Correct Pluralization**: Implement localized plural formats for the alarm-setting toast using Android's `<plurals>` resources.
+4.  **Dynamic Keyboard Layouts**: Adjust the in-app virtual keyboard in the typing puzzle to match QWERTY (default/Spanish with `ñ`), QWERTZ (German with `ä`, `ö`, `ü`, `ß`), and ЙЦУКЕН (Russian Cyrillic).
+5.  **Robust Matching**: Implement accent-insensitive and punctuation-tolerant matching in the typing engine validation to ensure a smooth, accessible user experience.
+
+---
+
+## 2. Component Design & Changes
+
+### A. Android Resource Layout (`app/src/main/res/`)
+
+The following files will contain all localized resources:
+
+1.  `app/src/main/res/values/strings.xml` (English / Default)
+2.  `app/src/main/res/values-es/strings.xml` (Spanish)
+3.  `app/src/main/res/values-de/strings.xml` (German)
+4.  `app/src/main/res/values-ru/strings.xml` (Russian)
+
+#### String Identifiers & Base Values
+
+```xml
 <resources>
     <!-- Application Name -->
     <string name="app_name">Smart Alarmer</string>
@@ -95,3 +125,58 @@
         <item>Make today count. Get out of bed.</item>
     </string-array>
 </resources>
+```
+
+### B. Custom Virtual Keyboard Layout Selector
+
+In `AlarmDismissScreen.kt`, the custom key layout will be determined using the helper class:
+
+```kotlin
+object KeyboardLayouts {
+    fun getLayoutForLanguage(language: String): List<List<Char>> {
+        return when (language) {
+            "ru" -> listOf(
+                listOf('й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х', 'ъ'),
+                listOf('ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'),
+                listOf('я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю', '.', '!')
+            )
+            "de" -> listOf(
+                listOf('q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'),
+                listOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'),
+                listOf('y', 'x', 'c', 'v', 'b', 'n', 'm', 'ß', '.', '!')
+            )
+            "es" -> listOf(
+                listOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
+                listOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ'),
+                listOf('z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '!')
+            )
+            else -> listOf(
+                listOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
+                listOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
+                listOf('z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '!')
+            )
+        }
+    }
+}
+```
+
+### C. Normalization and Matching Logic
+
+To ensure compatibility and reduce user typing fatigue/accidental mistakes with dynamic keyboard characters, `TypingEngine.isMatch` will perform normalization:
+1.  Lowercases all characters.
+2.  Decomposes diacritics/accents using Java's standard `Normalizer`.
+3.  Filters out non-alphanumeric/non-space symbols (eliminating commas, periods, question marks, dashes, quotes).
+4.  Normalizes spaces.
+
+---
+
+## 3. Verification Plan
+
+### Automated Unit Tests
+We will add new unit tests under `src/test/java/com/example/smartalarmer/puzzle/TypingEngineTest.kt` to verify:
+-  Different language normalizations (accent stripping, punctuation removal).
+-  Successful matches across Russian, Spanish, German, and English quotes under the normalized rules.
+
+### Manual Verification
+- We can change system language to Spanish (`es`), German (`de`), and Russian (`ru`) and verify that all UI elements, notification titles, and dynamic layouts update as expected.
+- We will run the application and trigger a test alarm for each language to ensure the custom virtual keyboard dynamically adjusts row sizes/layout, and allows input.
