@@ -51,6 +51,7 @@
         <!-- AlarmDismissActivity -->
         <activity
             android:name=".ui.dismiss.AlarmDismissActivity"
+            android:screenOrientation="portrait"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:launchMode="singleInstance"
