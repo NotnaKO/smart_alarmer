@@ -6,17 +6,12 @@ import android.content.Intent
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.rule.ServiceTestRule
 import org.junit.Assert.*
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmServiceTest {
-
-    @get:Rule
-    val serviceRule = ServiceTestRule()
 
     @Test
     fun alarmService_createsNotificationChannelOnStart() {
@@ -27,13 +22,22 @@ class AlarmServiceTest {
             putExtra("IS_PREVIEW", true)
         }
 
-        serviceRule.startService(intent)
+        try {
+            context.startService(intent)
+            Thread.sleep(1000) // Allow service to start and execute onStartCommand
 
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = notificationManager.getNotificationChannel("AlarmChannel")
-            assertNotNull("AlarmChannel should be created", channel)
-            assertEquals("Active Alarm", channel?.name)
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = notificationManager.getNotificationChannel("AlarmChannel")
+                assertNotNull("AlarmChannel should be created", channel)
+                assertEquals("Active Alarm", channel?.name)
+            }
+        } finally {
+            try {
+                context.stopService(Intent(context, AlarmService::class.java))
+            } catch (e: Exception) {
+                // Ignore failure in cleanup
+            }
         }
     }
 

@@ -22,7 +22,19 @@ class MainActivityFlowTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        runBlocking {
+        
+        // Ensure emulator screen is awake and unlocked
+        val device = androidx.test.uiautomator.UiDevice.getInstance(
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+        )
+        try {
+            device.wakeUp()
+            device.executeShellCommand("wm dismiss-keyguard")
+        } catch (e: Exception) {
+            // Safe fallback if UiDevice is not available
+        }
+
+        runBlocking(kotlinx.coroutines.Dispatchers.IO) {
             AlarmDatabase.getDatabase(context).clearAllTables()
         }
     }
@@ -30,7 +42,7 @@ class MainActivityFlowTest {
     @After
     fun tearDown() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        runBlocking {
+        runBlocking(kotlinx.coroutines.Dispatchers.IO) {
             AlarmDatabase.getDatabase(context).clearAllTables()
         }
     }
