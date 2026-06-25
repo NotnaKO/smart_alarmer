@@ -602,9 +602,10 @@ class MainActivity : ComponentActivity() {
               Column {
                   Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.dismiss_puzzles_label), color = Color.LightGray, fontSize = 14.sp)
                   Spacer(modifier = Modifier.height(8.dp))
-                  Row(
+                  FlowRow(
                       modifier = Modifier.fillMaxWidth(),
-                      horizontalArrangement = Arrangement.spacedBy(8.dp)
+                      horizontalArrangement = Arrangement.spacedBy(8.dp),
+                      verticalArrangement = Arrangement.spacedBy(8.dp)
                   ) {
                       val puzzleTypes = listOf("MATH", "MEMORY", "TYPING", "SHAKE")
                       puzzleTypes.forEach { type ->
