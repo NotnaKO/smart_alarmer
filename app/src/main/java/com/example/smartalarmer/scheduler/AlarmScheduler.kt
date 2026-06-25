@@ -69,6 +69,8 @@ object AlarmScheduler {
             putExtra("PUZZLES_LIST", alarm.puzzlesList)
             putExtra("PUZZLE_COUNT", alarm.puzzleCount)
             putExtra("IS_GRADUAL_VOLUME", alarm.isGradualVolume)
+            putExtra("SOUND_URI", alarm.soundUri)
+            putExtra("ALARM_LABEL", alarm.label)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
