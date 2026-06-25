@@ -25,6 +25,7 @@ fun AlarmDismissScreen(
     puzzlesList: String,
     puzzleCount: Int,
     onDismissComplete: () -> Unit,
+    alarmLabel: String = "",
     mathProvider: MathPuzzleProvider = MathEngine,
     typingProvider: TypingPuzzleProvider = TypingEngine,
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
@@ -62,6 +63,18 @@ fun AlarmDismissScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
+        // Label Header (if present)
+        if (alarmLabel.isNotEmpty()) {
+            Text(
+                text = alarmLabel,
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
         // Progress Header
         Text(
             text = stringResource(

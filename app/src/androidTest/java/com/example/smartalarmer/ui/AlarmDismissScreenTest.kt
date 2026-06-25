@@ -95,7 +95,9 @@ class AlarmDismissScreenTest {
         composeTestRule.onNodeWithText("✔").performClick()
 
         // Input should be cleared (label resets to empty)
-        composeTestRule.onNodeWithText("Your Answer: ").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val yourAnswerEmpty = context.getString(com.example.smartalarmer.R.string.your_answer_format, "")
+        composeTestRule.onNodeWithText(yourAnswerEmpty).assertIsDisplayed()
         assertTrue("onComplete should NOT be called", !completed)
     }
 
@@ -110,12 +112,14 @@ class AlarmDismissScreenTest {
 
         composeTestRule.onNodeWithText("8").performClick()
         composeTestRule.onNodeWithText("5").performClick()
-        // input is now "85"
-        composeTestRule.onNodeWithText("Your Answer: 85").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val yourAnswer85 = context.getString(com.example.smartalarmer.R.string.your_answer_format, "85")
+        composeTestRule.onNodeWithText(yourAnswer85).assertIsDisplayed()
 
         composeTestRule.onNodeWithText("⌫").performClick()
         // input should be "8"
-        composeTestRule.onNodeWithText("Your Answer: 8").assertIsDisplayed()
+        val yourAnswer8 = context.getString(com.example.smartalarmer.R.string.your_answer_format, "8")
+        composeTestRule.onNodeWithText(yourAnswer8).assertIsDisplayed()
     }
 
     @Test
@@ -173,9 +177,11 @@ class AlarmDismissScreenTest {
             )
         }
 
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val submitBtn = context.getString(com.example.smartalarmer.R.string.submit_btn)
         composeTestRule.onNodeWithText("Wake up now").assertIsDisplayed()
         simulateVirtualKeyboardInput("Wake up now")
-        composeTestRule.onNodeWithText("Submit").performClick()
+        composeTestRule.onNodeWithText(submitBtn).performClick()
 
         assertTrue("onComplete should have been called", completed)
     }
@@ -190,8 +196,10 @@ class AlarmDismissScreenTest {
             )
         }
 
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val submitBtn = context.getString(com.example.smartalarmer.R.string.submit_btn)
         simulateVirtualKeyboardInput("wrong text")
-        composeTestRule.onNodeWithText("Submit").performClick()
+        composeTestRule.onNodeWithText(submitBtn).performClick()
 
         assertTrue("onComplete should NOT be called", !completed)
     }
@@ -213,13 +221,15 @@ class AlarmDismissScreenTest {
         }
 
         // Wait until flash animation finishes and input is allowed
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            composeTestRule.onAllNodesWithText("Repeat Pattern!").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(repeatPattern).fetchSemanticsNodes().isNotEmpty()
         }
 
         // Tap the three buttons in order: index 0, 1, 2
         // The 3×3 grid has 9 buttons — we click the first three (indices 0,1,2)
-        val buttons = composeTestRule.onAllNodes(hasClickAction() and !hasText("Repeat Pattern!"))
+        val buttons = composeTestRule.onAllNodes(hasClickAction() and !hasText(repeatPattern))
         buttons[0].performClick()
         buttons[1].performClick()
         buttons[2].performClick()
@@ -238,17 +248,20 @@ class AlarmDismissScreenTest {
         }
 
         // Wait for input phase
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            composeTestRule.onAllNodesWithText("Repeat Pattern!").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(repeatPattern).fetchSemanticsNodes().isNotEmpty()
         }
 
         // Tap the wrong button (index 2 first instead of 0)
-        val buttons = composeTestRule.onAllNodes(hasClickAction() and !hasText("Repeat Pattern!"))
+        val buttons = composeTestRule.onAllNodes(hasClickAction() and !hasText(repeatPattern))
         buttons[2].performClick()   // wrong first step
 
         // Puzzle should reset: "Memorize Pattern..." should reappear
+        val memorizePattern = context.getString(com.example.smartalarmer.R.string.memorize_pattern)
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            composeTestRule.onAllNodesWithText("Memorize Pattern...").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText(memorizePattern).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -291,8 +304,12 @@ class AlarmDismissScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Shake the device!").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Shakes remaining: 30").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val shakeDevice = context.getString(com.example.smartalarmer.R.string.shake_device)
+        val shakesRemaining = context.getString(com.example.smartalarmer.R.string.shakes_remaining, 30)
+
+        composeTestRule.onNodeWithText(shakeDevice).assertIsDisplayed()
+        composeTestRule.onNodeWithText(shakesRemaining).assertIsDisplayed()
     }
 
     @Test
@@ -358,7 +375,45 @@ class AlarmDismissScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Task 1 of 1").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val expectedText = context.getString(com.example.smartalarmer.R.string.task_progress_format, 1, 1)
+        composeTestRule.onNodeWithText(expectedText).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmDismissScreen_withLabel_showsLabelAtTop() {
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                alarmLabel = "Wake Up Gym",
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
+            )
+        }
+
+        composeTestRule.onNodeWithText("Wake Up Gym").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmDismissScreen_withoutLabel_doesNotShowLabel() {
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                alarmLabel = "",
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
+            )
+        }
+
+        composeTestRule.onNodeWithText("Wake Up Gym").assertDoesNotExist()
     }
 
     @Test
