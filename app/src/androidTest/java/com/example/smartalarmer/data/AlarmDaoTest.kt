@@ -39,7 +39,9 @@ class AlarmDaoTest {
         minute: Int = 30,
         isEnabled: Boolean = true,
         daysOfWeek: String = "1,2,3,4,5",
-        isGradualVolume: Boolean = true
+        isGradualVolume: Boolean = true,
+        label: String = "Wake Up",
+        soundUri: String? = "content://settings/system/alarm_alert"
     ) = Alarm(
         hour = hour,
         minute = minute,
@@ -47,7 +49,9 @@ class AlarmDaoTest {
         isEnabled = isEnabled,
         puzzlesList = "MATH",
         puzzleCount = 1,
-        isGradualVolume = isGradualVolume
+        isGradualVolume = isGradualVolume,
+        label = label,
+        soundUri = soundUri
     )
 
     // ── Tests ────────────────────────────────────────────────────────────────
@@ -62,6 +66,15 @@ class AlarmDaoTest {
         assertEquals(7, alarms[0].hour)
         assertEquals(30, alarms[0].minute)
         assertTrue(alarms[0].isGradualVolume)
+    }
+
+    @Test
+    fun insertAndGetAlarm_withLabelAndSoundUri() = runTest {
+        val id = dao.insertAlarm(alarm(label = "Cardio", soundUri = "content://custom/sound")).toInt()
+        val alarms = dao.getAllAlarms().first()
+        assertEquals(1, alarms.size)
+        assertEquals("Cardio", alarms[0].label)
+        assertEquals("content://custom/sound", alarms[0].soundUri)
     }
 
     @Test

@@ -39,13 +39,17 @@ class AlarmDatabaseTest {
             minute = 30,
             daysOfWeek = "1,2,3,4,5",
             puzzlesList = "MATH,TYPING",
-            puzzleCount = 2
+            puzzleCount = 2,
+            label = "Morning",
+            soundUri = "content://test/uri"
         )
         alarmDao.insertAlarm(alarm)
         val allAlarms = alarmDao.getAllAlarms().first()
         assertEquals(1, allAlarms.size)
         assertEquals(7, allAlarms[0].hour)
         assertEquals(30, allAlarms[0].minute)
+        assertEquals("Morning", allAlarms[0].label)
+        assertEquals("content://test/uri", allAlarms[0].soundUri)
     }
 
     @Test

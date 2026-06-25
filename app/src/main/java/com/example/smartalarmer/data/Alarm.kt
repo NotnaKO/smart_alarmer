@@ -12,5 +12,7 @@ data class Alarm(
     val isEnabled: Boolean = true,
     val puzzlesList: String, // CSV e.g., "MATH,TYPING,MEMORY"
     val puzzleCount: Int = 2,
-    val isGradualVolume: Boolean = true
+    val isGradualVolume: Boolean = true,
+    val label: String = "",
+    val soundUri: String? = null
 )
