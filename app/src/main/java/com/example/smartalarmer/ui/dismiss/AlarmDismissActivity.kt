@@ -44,6 +44,7 @@ class AlarmDismissActivity : ComponentActivity() {
 
         val puzzlesList = intent.getStringExtra("PUZZLES_LIST") ?: "MATH"
         val puzzleCount = intent.getIntExtra("PUZZLE_COUNT", 2)
+        val alarmLabel = intent.getStringExtra("ALARM_LABEL") ?: ""
 
         setContent {
             SmartAlarmerTheme {
@@ -51,6 +52,7 @@ class AlarmDismissActivity : ComponentActivity() {
                     AlarmDismissScreen(
                         puzzlesList = puzzlesList,
                         puzzleCount = puzzleCount,
+                        alarmLabel = alarmLabel,
                         onDismissComplete = {
                             if (!isPreview) {
                                 stopService(Intent(this, AlarmService::class.java))

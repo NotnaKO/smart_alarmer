@@ -28,6 +28,7 @@ class AlarmDismissActivityTest {
             putExtra("PUZZLES_LIST", "MATH")
             putExtra("PUZZLE_COUNT", 1)
             putExtra("IS_PREVIEW", true)
+            putExtra("ALARM_LABEL", "Test Preview")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
 

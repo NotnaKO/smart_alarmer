@@ -7,6 +7,7 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
@@ -45,6 +46,7 @@ class AlarmService : Service() {
         val dismissIntent = Intent(this, AlarmDismissActivity::class.java).apply {
             putExtra("PUZZLES_LIST", intent?.getStringExtra("PUZZLES_LIST"))
             putExtra("PUZZLE_COUNT", intent?.getIntExtra("PUZZLE_COUNT", 2))
+            putExtra("ALARM_LABEL", intent?.getStringExtra("ALARM_LABEL") ?: "")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         }
         val options = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -78,11 +80,18 @@ class AlarmService : Service() {
         }
 
         // Play Loud Sound with fallbacks and correct audio routing
-        val fallbackUris = listOf(
+        val soundUriString = intent?.getStringExtra("SOUND_URI")
+        val userUri = soundUriString?.let { Uri.parse(it) }
+
+        val fallbackUris = mutableListOf<Uri?>()
+        if (userUri != null) {
+            fallbackUris.add(userUri)
+        }
+        fallbackUris.addAll(listOf(
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        )
+        ))
 
         var successfullyStarted = false
         for (uri in fallbackUris) {

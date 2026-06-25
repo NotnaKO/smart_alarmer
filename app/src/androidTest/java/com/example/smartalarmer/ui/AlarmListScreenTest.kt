@@ -28,7 +28,9 @@ class AlarmListScreenTest {
         isEnabled: Boolean = true,
         puzzlesList: String = "MATH",
         puzzleCount: Int = 1,
-        isGradualVolume: Boolean = false
+        isGradualVolume: Boolean = false,
+        label: String = "",
+        soundUri: String? = null
     ) = Alarm(
         id = 1,
         hour = hour,
@@ -37,7 +39,9 @@ class AlarmListScreenTest {
         isEnabled = isEnabled,
         puzzlesList = puzzlesList,
         puzzleCount = puzzleCount,
-        isGradualVolume = isGradualVolume
+        isGradualVolume = isGradualVolume,
+        label = label,
+        soundUri = soundUri
     )
 
     private fun setAlarmCard(
@@ -124,7 +128,16 @@ class AlarmListScreenTest {
             alarm = testAlarm(daysOfWeek = "1,3,5", puzzlesList = "MATH,MEMORY", puzzleCount = 2)
         )
 
-        composeTestRule.onNodeWithText("Mon, Wed, Fri • Math, Memory (2 puzzles)").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val mon = context.getString(com.example.smartalarmer.R.string.day_mon)
+        val wed = context.getString(com.example.smartalarmer.R.string.day_wed)
+        val fri = context.getString(com.example.smartalarmer.R.string.day_fri)
+        val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
+        val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
+        val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
+        
+        val expected = "$mon, $wed, $fri • $math, $memory (2 puzzles) • $defaultSound"
+        composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
     @Test
@@ -133,7 +146,13 @@ class AlarmListScreenTest {
             alarm = testAlarm(daysOfWeek = "", puzzlesList = "MATH")
         )
 
-        composeTestRule.onNodeWithText("One-time • Math (1 puzzles)").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val oneTime = context.getString(com.example.smartalarmer.R.string.one_time)
+        val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
+        val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
+        
+        val expected = "$oneTime • $math (1 puzzles) • $defaultSound"
+        composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
     @Test
@@ -142,7 +161,14 @@ class AlarmListScreenTest {
             alarm = testAlarm(isGradualVolume = true)
         )
 
-        composeTestRule.onNodeWithText("Weekdays • Math (1 puzzles) • Gradual Volume").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val weekdays = context.getString(com.example.smartalarmer.R.string.weekdays)
+        val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
+        val gradual = context.getString(com.example.smartalarmer.R.string.gradual_volume)
+        val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
+        
+        val expected = "$weekdays • $math (1 puzzles) • $gradual • $defaultSound"
+        composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
     @Test
@@ -170,6 +196,23 @@ class AlarmListScreenTest {
         // Click the card (finding the time text in the unmerged tree to perform click on the left side)
         composeTestRule.onNodeWithText("07:30", useUnmergedTree = true).performClick()
         assertTrue(editClicked)
+    }
+
+    @Test
+    fun alarmCard_withLabel_showsLabelAsTitleAndTimeAsSubtitle() {
+        setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = "Morning Gym"))
+
+        composeTestRule.onNodeWithText("Morning Gym").assertIsDisplayed()
+        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_withoutLabel_showsTimeAsTitleOnly() {
+        setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = ""))
+
+        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+        // No text matching Morning Gym should exist
+        composeTestRule.onNodeWithText("Morning Gym").assertDoesNotExist()
     }
 
     // ── Multiple alarms list ──────────────────────────────────────────────

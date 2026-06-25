@@ -29,6 +29,9 @@
     <string name="gradual_volume_desc">Lautstärke steigt über 60 Sekunden an</string>
     <string name="cancel">Abbrechen</string>
     <string name="save">Speichern</string>
+    <string name="sound_label">Alarmton</string>
+    <string name="sound_default">Standard-Alarm</string>
+    <string name="label_placeholder">Alarm-Label (z. B. Arbeit)</string>
 
     <!-- Day Summary Labels -->
     <string name="one_time">Einmalig</string>

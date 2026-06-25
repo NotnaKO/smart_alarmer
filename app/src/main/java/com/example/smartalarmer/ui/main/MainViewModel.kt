@@ -45,7 +45,9 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
         daysOfWeek: String,
         puzzlesList: String,
         puzzleCount: Int,
-        isGradualVolume: Boolean
+        isGradualVolume: Boolean,
+        label: String,
+        soundUri: String?
     ) {
         viewModelScope.launch {
             val current = _editingAlarm.value
@@ -57,6 +59,8 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
                     puzzlesList = puzzlesList,
                     puzzleCount = puzzleCount,
                     isGradualVolume = isGradualVolume,
+                    label = label,
+                    soundUri = soundUri,
                     isEnabled = true
                 )
                 alarmDao.updateAlarm(updated)
@@ -70,6 +74,8 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
                     puzzlesList = puzzlesList,
                     puzzleCount = puzzleCount,
                     isGradualVolume = isGradualVolume,
+                    label = label,
+                    soundUri = soundUri,
                     isEnabled = true
                 )
                 val generatedId = alarmDao.insertAlarm(newAlarm).toInt()

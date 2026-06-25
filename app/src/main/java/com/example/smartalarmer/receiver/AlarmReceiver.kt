@@ -17,12 +17,16 @@ class AlarmReceiver : BroadcastReceiver() {
         val puzzlesList = intent.getStringExtra("PUZZLES_LIST") ?: "MATH"
         val puzzleCount = intent.getIntExtra("PUZZLE_COUNT", 2)
         val isGradualVolume = intent.getBooleanExtra("IS_GRADUAL_VOLUME", true)
+        val soundUri = intent.getStringExtra("SOUND_URI")
+        val alarmLabel = intent.getStringExtra("ALARM_LABEL") ?: ""
 
         val serviceIntent = Intent(context, AlarmService::class.java).apply {
             putExtra("ALARM_ID", alarmId)
             putExtra("PUZZLES_LIST", puzzlesList)
             putExtra("PUZZLE_COUNT", puzzleCount)
             putExtra("IS_GRADUAL_VOLUME", isGradualVolume)
+            putExtra("SOUND_URI", soundUri)
+            putExtra("ALARM_LABEL", alarmLabel)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent)
