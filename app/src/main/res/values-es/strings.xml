@@ -29,6 +29,9 @@
     <string name="gradual_volume_desc">El volumen aumenta durante 60 segundos</string>
     <string name="cancel">Cancelar</string>
     <string name="save">Guardar</string>
+    <string name="sound_label">Sonido de alarma</string>
+    <string name="sound_default">Alarma predeterminada</string>
+    <string name="label_placeholder">Etiqueta de alarma (ej. Trabajo)</string>
 
     <!-- Day Summary Labels -->
     <string name="one_time">Una vez</string>

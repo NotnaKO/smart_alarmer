@@ -29,6 +29,9 @@
     <string name="gradual_volume_desc">Volume ramps up over 60 seconds</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+    <string name="sound_label">Alarm Sound</string>
+    <string name="sound_default">Default Alarm</string>
+    <string name="label_placeholder">Alarm Label (e.g. Work)</string>
 
     <!-- Day Summary Labels -->
     <string name="one_time">One-time</string>

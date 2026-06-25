@@ -28,7 +28,9 @@ class AlarmListScreenTest {
         isEnabled: Boolean = true,
         puzzlesList: String = "MATH",
         puzzleCount: Int = 1,
-        isGradualVolume: Boolean = false
+        isGradualVolume: Boolean = false,
+        label: String = "",
+        soundUri: String? = null
     ) = Alarm(
         id = 1,
         hour = hour,
@@ -37,7 +39,9 @@ class AlarmListScreenTest {
         isEnabled = isEnabled,
         puzzlesList = puzzlesList,
         puzzleCount = puzzleCount,
-        isGradualVolume = isGradualVolume
+        isGradualVolume = isGradualVolume,
+        label = label,
+        soundUri = soundUri
     )
 
     private fun setAlarmCard(
@@ -170,6 +174,23 @@ class AlarmListScreenTest {
         // Click the card (finding the time text in the unmerged tree to perform click on the left side)
         composeTestRule.onNodeWithText("07:30", useUnmergedTree = true).performClick()
         assertTrue(editClicked)
+    }
+
+    @Test
+    fun alarmCard_withLabel_showsLabelAsTitleAndTimeAsSubtitle() {
+        setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = "Morning Gym"))
+
+        composeTestRule.onNodeWithText("Morning Gym").assertIsDisplayed()
+        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_withoutLabel_showsTimeAsTitleOnly() {
+        setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = ""))
+
+        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+        // No text matching Morning Gym should exist
+        composeTestRule.onNodeWithText("Morning Gym").assertDoesNotExist()
     }
 
     // ── Multiple alarms list ──────────────────────────────────────────────

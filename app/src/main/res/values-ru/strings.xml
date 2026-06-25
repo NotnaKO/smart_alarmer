@@ -29,6 +29,9 @@
     <string name="gradual_volume_desc">Громкость нарастает в течение 60 секунд</string>
     <string name="cancel">Отмена</string>
     <string name="save">Сохранить</string>
+    <string name="sound_label">Звук будильника</string>
+    <string name="sound_default">По умолчанию</string>
+    <string name="label_placeholder">Название будильника (например, Работа)</string>
 
     <!-- Day Summary Labels -->
     <string name="one_time">Однократно</string>

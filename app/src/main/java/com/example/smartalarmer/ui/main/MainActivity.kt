@@ -2,6 +2,7 @@ package com.example.smartalarmer.ui.main
 
 import android.app.TimePickerDialog
 import android.content.Intent
+import android.media.RingtoneManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -75,6 +76,23 @@ class MainActivity : ComponentActivity() {
                     contract = ActivityResultContracts.RequestPermission(),
                     onResult = { hasNotificationPermission = it }
                 )
+
+                var pickedSoundUri by remember { mutableStateOf<String?>(null) }
+                var labelInput by remember { mutableStateOf("") }
+
+                val ringtonePickerLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+                ) { result ->
+                    if (result.resultCode == RESULT_OK) {
+                        val uri = result.data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                        pickedSoundUri = uri?.toString()
+                    }
+                }
+
+                LaunchedEffect(editingAlarm) {
+                    pickedSoundUri = editingAlarm?.soundUri
+                    labelInput = editingAlarm?.label ?: ""
+                }
 
                 val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
@@ -349,6 +367,7 @@ class MainActivity : ComponentActivity() {
                                                   val intent = Intent(context, AlarmDismissActivity::class.java).apply {
                                                       putExtra("PUZZLES_LIST", alarm.puzzlesList)
                                                       putExtra("PUZZLE_COUNT", alarm.puzzleCount)
+                                                      putExtra("ALARM_LABEL", alarm.label)
                                                       putExtra("IS_PREVIEW", true)
                                                   }
                                                   context.startActivity(intent)
@@ -360,12 +379,33 @@ class MainActivity : ComponentActivity() {
                           }
 
                           if (isSheetVisible) {
+                              val resolvedSoundName = pickedSoundUri?.let { uriStr ->
+                                  runCatching {
+                                      RingtoneManager.getRingtone(context, Uri.parse(uriStr))?.getTitle(context)
+                                  }.getOrNull()
+                              } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
+
                               AlarmEditSheet(
                                   alarm = editingAlarm,
                                   onDismiss = { viewModel.closeEditSheet() },
-                                  onSave = { hour, minute, days, puzzles, count, isGradual ->
-                                      viewModel.saveAlarm(context, hour, minute, days, puzzles, count, isGradual)
-                                  }
+                                  onSave = { hour, minute, days, puzzles, count, isGradual, lbl, sound ->
+                                      viewModel.saveAlarm(context, hour, minute, days, puzzles, count, isGradual, lbl, sound)
+                                  },
+                                  onPickSound = {
+                                      val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                          putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
+                                          putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+                                          putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                          putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                                          pickedSoundUri?.let {
+                                              putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(it))
+                                          }
+                                      }
+                                      ringtonePickerLauncher.launch(intent)
+                                  },
+                                  selectedSoundName = resolvedSoundName,
+                                  initialLabel = labelInput,
+                                  pickedSoundUri = pickedSoundUri
                               )
                           }
                       }
@@ -383,6 +423,7 @@ class MainActivity : ComponentActivity() {
       onEdit: () -> Unit = {},
       onTest: () -> Unit = {}
   ) {
+      val context = LocalContext.current
       val daysList = alarm.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
       val daysSummary = when {
           daysList.isEmpty() -> stringResource(com.example.smartalarmer.R.string.one_time)
@@ -433,15 +474,36 @@ class MainActivity : ComponentActivity() {
               horizontalArrangement = Arrangement.SpaceBetween
           ) {
               Column(modifier = Modifier.weight(1f)) {
-                  Text(
-                      text = String.format("%02d:%02d", alarm.hour, alarm.minute),
-                      fontSize = 32.sp,
-                      fontWeight = FontWeight.Bold,
-                      color = Color.White
-                  )
+                  if (alarm.label.isNotEmpty()) {
+                      Text(
+                          text = alarm.label,
+                          fontSize = 20.sp,
+                          fontWeight = FontWeight.Bold,
+                          color = Color.White
+                      )
+                      Spacer(modifier = Modifier.height(2.dp))
+                      Text(
+                          text = String.format("%02d:%02d", alarm.hour, alarm.minute),
+                          fontSize = 18.sp,
+                          fontWeight = FontWeight.Medium,
+                          color = Color.LightGray
+                      )
+                  } else {
+                      Text(
+                          text = String.format("%02d:%02d", alarm.hour, alarm.minute),
+                          fontSize = 32.sp,
+                          fontWeight = FontWeight.Bold,
+                          color = Color.White
+                      )
+                  }
                   Spacer(modifier = Modifier.height(4.dp))
+                  val soundName = alarm.soundUri?.let { uriStr ->
+                      runCatching {
+                          RingtoneManager.getRingtone(context, Uri.parse(uriStr))?.getTitle(context)
+                      }.getOrNull()
+                  } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
                   Text(
-                      text = "$daysSummary • $puzzlesText (${alarm.puzzleCount} puzzles)$gradualText",
+                      text = "$daysSummary • $puzzlesText (${alarm.puzzleCount} puzzles)$gradualText • $soundName",
                       fontSize = 13.sp,
                       color = Color.LightGray
                   )
@@ -491,7 +553,11 @@ class MainActivity : ComponentActivity() {
   fun AlarmEditSheet(
       alarm: Alarm?,
       onDismiss: () -> Unit,
-      onSave: (hour: Int, minute: Int, daysOfWeek: String, puzzlesList: String, puzzleCount: Int, isGradualVolume: Boolean) -> Unit
+      onSave: (hour: Int, minute: Int, daysOfWeek: String, puzzlesList: String, puzzleCount: Int, isGradualVolume: Boolean, label: String, soundUri: String?) -> Unit,
+      onPickSound: () -> Unit,
+      selectedSoundName: String,
+      initialLabel: String,
+      pickedSoundUri: String?
   ) {
       val context = LocalContext.current
       var hour by remember { mutableStateOf(alarm?.hour ?: 8) }
@@ -529,6 +595,20 @@ class MainActivity : ComponentActivity() {
                   color = Color.White
               )
 
+              var label by remember { mutableStateOf(initialLabel) }
+              OutlinedTextField(
+                  value = label,
+                  onValueChange = { label = it },
+                  label = { Text(stringResource(com.example.smartalarmer.R.string.label_placeholder)) },
+                  modifier = Modifier.fillMaxWidth(),
+                  colors = OutlinedTextFieldDefaults.colors(
+                      focusedTextColor = Color.White,
+                      unfocusedTextColor = Color.White,
+                      focusedBorderColor = IndigoPrimary,
+                      unfocusedBorderColor = CardBorderGlass
+                  )
+              )
+
               // Time Button
               Row(
                   modifier = Modifier
@@ -555,6 +635,25 @@ class MainActivity : ComponentActivity() {
                       text = String.format("%02d:%02d", hour, minute),
                       color = Color.White,
                       fontSize = 20.sp,
+                      fontWeight = FontWeight.Bold
+                  )
+              }
+
+              // Sound Button
+              Row(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .clickable { onPickSound() }
+                      .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                      .padding(16.dp),
+                  horizontalArrangement = Arrangement.SpaceBetween,
+                  verticalAlignment = Alignment.CenterVertically
+              ) {
+                  Text(stringResource(com.example.smartalarmer.R.string.sound_label), color = Color.LightGray, fontSize = 16.sp)
+                  Text(
+                      text = selectedSoundName,
+                      color = Color.White,
+                      fontSize = 16.sp,
                       fontWeight = FontWeight.Bold
                   )
               }
@@ -717,7 +816,7 @@ class MainActivity : ComponentActivity() {
                       onClick = {
                           val daysCsv = selectedDays.sorted().joinToString(",")
                           val puzzlesCsv = selectedPuzzles.joinToString(",")
-                          onSave(hour, minute, daysCsv, puzzlesCsv, puzzleCount, isGradualVolume)
+                          onSave(hour, minute, daysCsv, puzzlesCsv, puzzleCount, isGradualVolume, label, pickedSoundUri)
                       },
                       modifier = Modifier.weight(1f),
                       colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
