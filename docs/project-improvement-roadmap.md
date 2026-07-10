@@ -9,7 +9,7 @@ missing convenience feature.
 
 - `./gradlew testDebugUnitTest`: 16 tests passed.
 - `./gradlew lintDebug`: passed with warnings.
-- `./gradlew connectedDebugAndroidTest`: 51 tests passed on the
+- `./gradlew connectedDebugAndroidTest`: 52 tests passed on the
   `medium_phone (AVD) - 16` emulator.
 - Instrumented logs showed that preview receiver/service tests started real
   alarm playback twice and launched two dismissal activities. Passing tests did
@@ -20,7 +20,7 @@ missing convenience feature.
 - [x] Make `IS_PREVIEW` propagate from `AlarmReceiver` through `AlarmService`
   to `AlarmDismissActivity`. Preview service starts must not play audio, change
   volume, use a full-screen intent, or launch the activity automatically.
-- [ ] Add `MODIFY_AUDIO_SETTINGS`, request transient audio focus, restore the
+- [x] Add `MODIFY_AUDIO_SETTINGS`, request transient audio focus, restore the
   previous alarm volume, and release every playback fallback resource.
 - [ ] Make exact-alarm scheduling return a result instead of assuming success.
   Check `canScheduleExactAlarms()`, handle `SecurityException`, select one exact

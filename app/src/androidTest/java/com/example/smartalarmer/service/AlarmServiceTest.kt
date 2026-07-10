@@ -1,14 +1,18 @@
 package com.example.smartalarmer.service
 
+import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import androidx.core.content.ContextCompat
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import org.junit.Assert.*
 import org.junit.Test
@@ -25,6 +29,8 @@ class AlarmServiceTest {
             putExtra("PUZZLE_COUNT", 1)
             putExtra("IS_PREVIEW", true)
         }
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val volumeBeforePreview = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
 
         try {
             context.startService(intent)
@@ -45,6 +51,11 @@ class AlarmServiceTest {
                     resumedActivities.any { it is AlarmDismissActivity }
                 )
             }
+            assertEquals(
+                "Preview mode must not change alarm volume",
+                volumeBeforePreview,
+                audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+            )
         } finally {
             try {
                 context.stopService(Intent(context, AlarmService::class.java))
@@ -52,6 +63,16 @@ class AlarmServiceTest {
                 // Ignore failure in cleanup
             }
         }
+    }
+
+    @Test
+    fun alarmService_hasPermissionToManageAlarmVolume() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        assertEquals(
+            PackageManager.PERMISSION_GRANTED,
+            ContextCompat.checkSelfPermission(context, Manifest.permission.MODIFY_AUDIO_SETTINGS)
+        )
     }
 
     @Test
