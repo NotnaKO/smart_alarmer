@@ -6,6 +6,10 @@ import android.content.Intent
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
+import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,7 +18,7 @@ import org.junit.runner.RunWith
 class AlarmServiceTest {
 
     @Test
-    fun alarmService_createsNotificationChannelOnStart() {
+    fun alarmService_previewStart_createsChannelWithoutLaunchingDismissActivity() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = Intent(context, AlarmService::class.java).apply {
             putExtra("PUZZLES_LIST", "MATH")
@@ -31,6 +35,15 @@ class AlarmServiceTest {
                 val channel = notificationManager.getNotificationChannel("AlarmChannel")
                 assertNotNull("AlarmChannel should be created", channel)
                 assertEquals("Active Alarm", channel?.name)
+            }
+
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val resumedActivities = ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.RESUMED)
+                assertFalse(
+                    "Preview mode must not launch AlarmDismissActivity",
+                    resumedActivities.any { it is AlarmDismissActivity }
+                )
             }
         } finally {
             try {

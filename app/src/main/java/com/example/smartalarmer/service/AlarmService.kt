@@ -31,6 +31,7 @@ class AlarmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val isPreview = intent?.getBooleanExtra("IS_PREVIEW", false) ?: false
         val channelId = "AlarmChannel"
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -47,6 +48,7 @@ class AlarmService : Service() {
             putExtra("PUZZLES_LIST", intent?.getStringExtra("PUZZLES_LIST"))
             putExtra("PUZZLE_COUNT", intent?.getIntExtra("PUZZLE_COUNT", 2))
             putExtra("ALARM_LABEL", intent?.getStringExtra("ALARM_LABEL") ?: "")
+            putExtra("IS_PREVIEW", isPreview)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         }
         val options = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -57,20 +59,29 @@ class AlarmService : Service() {
         } else {
             null
         }
-        val fullScreenPendingIntent = PendingIntent.getActivity(
+        val dismissPendingIntent = PendingIntent.getActivity(
             this, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, options?.toBundle()
         )
 
-        val notification = NotificationCompat.Builder(this, channelId)
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentTitle(getString(com.example.smartalarmer.R.string.wake_up_title))
             .setContentText(getString(com.example.smartalarmer.R.string.wake_up_desc))
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .build()
+            .setContentIntent(dismissPendingIntent)
+
+        if (!isPreview) {
+            notificationBuilder.setFullScreenIntent(dismissPendingIntent, true)
+        }
+
+        val notification = notificationBuilder.build()
 
         startForeground(1, notification)
+
+        if (isPreview) {
+            return START_NOT_STICKY
+        }
 
         // Launch the activity directly to take over the screen immediately
         try {

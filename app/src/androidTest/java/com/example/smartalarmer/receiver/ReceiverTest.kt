@@ -4,6 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
+import com.example.smartalarmer.service.AlarmService
+import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -20,6 +26,20 @@ class ReceiverTest {
             putExtra("IS_PREVIEW", true)
         }
 
-        receiver.onReceive(context, intent)
+        try {
+            receiver.onReceive(context, intent)
+            Thread.sleep(500)
+
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val resumedActivities = ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.RESUMED)
+                assertFalse(
+                    "Receiver preview mode must not launch AlarmDismissActivity",
+                    resumedActivities.any { it is AlarmDismissActivity }
+                )
+            }
+        } finally {
+            context.stopService(Intent(context, AlarmService::class.java))
+        }
     }
 }

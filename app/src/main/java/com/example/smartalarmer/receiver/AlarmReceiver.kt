@@ -19,6 +19,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val isGradualVolume = intent.getBooleanExtra("IS_GRADUAL_VOLUME", true)
         val soundUri = intent.getStringExtra("SOUND_URI")
         val alarmLabel = intent.getStringExtra("ALARM_LABEL") ?: ""
+        val isPreview = intent.getBooleanExtra("IS_PREVIEW", false)
 
         val serviceIntent = Intent(context, AlarmService::class.java).apply {
             putExtra("ALARM_ID", alarmId)
@@ -27,6 +28,7 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("IS_GRADUAL_VOLUME", isGradualVolume)
             putExtra("SOUND_URI", soundUri)
             putExtra("ALARM_LABEL", alarmLabel)
+            putExtra("IS_PREVIEW", isPreview)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent)
