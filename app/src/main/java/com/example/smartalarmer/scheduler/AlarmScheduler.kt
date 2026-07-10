@@ -7,7 +7,14 @@ import android.content.Context
 import android.content.Intent
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.receiver.AlarmReceiver
+import com.example.smartalarmer.ui.main.MainActivity
 import java.util.Calendar
+
+sealed interface AlarmScheduleResult {
+    data class Scheduled(val triggerAtMillis: Long) : AlarmScheduleResult
+    data object PermissionRequired : AlarmScheduleResult
+    data class Failure(val exception: Exception) : AlarmScheduleResult
+}
 
 object AlarmScheduler {
     fun calculateNextTriggerTime(alarm: Alarm, now: Calendar): Calendar {
@@ -62,27 +69,62 @@ object AlarmScheduler {
     }
 
     @SuppressLint("ScheduleExactAlarm")
-    fun schedule(context: Context, alarm: Alarm) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("ALARM_ID", alarm.id)
-            putExtra("PUZZLES_LIST", alarm.puzzlesList)
-            putExtra("PUZZLE_COUNT", alarm.puzzleCount)
-            putExtra("IS_GRADUAL_VOLUME", alarm.isGradualVolume)
-            putExtra("SOUND_URI", alarm.soundUri)
-            putExtra("ALARM_LABEL", alarm.label)
+    fun schedule(context: Context, alarm: Alarm): AlarmScheduleResult {
+        return try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val nextTrigger = calculateNextTriggerTime(alarm, Calendar.getInstance())
+            val canScheduleExactAlarm = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S ||
+                alarmManager.canScheduleExactAlarms()
+
+            val intent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("ALARM_ID", alarm.id)
+                putExtra("PUZZLES_LIST", alarm.puzzlesList)
+                putExtra("PUZZLE_COUNT", alarm.puzzleCount)
+                putExtra("IS_GRADUAL_VOLUME", alarm.isGradualVolume)
+                putExtra("SOUND_URI", alarm.soundUri)
+                putExtra("ALARM_LABEL", alarm.label)
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val showIntent = PendingIntent.getActivity(
+                context,
+                alarm.id,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            scheduleExact(
+                triggerAtMillis = nextTrigger.timeInMillis,
+                canScheduleExactAlarm = canScheduleExactAlarm
+            ) {
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(nextTrigger.timeInMillis, showIntent),
+                    pendingIntent
+                )
+            }
+        } catch (_: SecurityException) {
+            AlarmScheduleResult.PermissionRequired
+        } catch (e: Exception) {
+            AlarmScheduleResult.Failure(e)
         }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, alarm.id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+    }
 
-        val nextTrigger = calculateNextTriggerTime(alarm, Calendar.getInstance())
+    internal fun scheduleExact(
+        triggerAtMillis: Long,
+        canScheduleExactAlarm: Boolean,
+        scheduleAction: () -> Unit
+    ): AlarmScheduleResult {
+        if (!canScheduleExactAlarm) return AlarmScheduleResult.PermissionRequired
 
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            nextTrigger.timeInMillis,
-            pendingIntent
-        )
+        return try {
+            scheduleAction()
+            AlarmScheduleResult.Scheduled(triggerAtMillis)
+        } catch (_: SecurityException) {
+            AlarmScheduleResult.PermissionRequired
+        } catch (e: Exception) {
+            AlarmScheduleResult.Failure(e)
+        }
     }
 
     fun cancel(context: Context, alarm: Alarm) {

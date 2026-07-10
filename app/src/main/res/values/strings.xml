@@ -73,6 +73,8 @@
         <item quantity="other">%1$d minutes</item>
     </plurals>
     <string name="alarm_set_toast">Alarm set for %1$s from now</string>
+    <string name="exact_alarm_permission_required">Enable Alarms &amp; reminders before enabling this alarm.</string>
+    <string name="alarm_schedule_failed">The alarm could not be scheduled. Please try again.</string>
     <string name="hours_and_minutes_connector">%1$s and %2$s</string>
 
     <!-- Alarm Dismiss Screen -->

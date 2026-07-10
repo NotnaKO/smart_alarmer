@@ -5,9 +5,11 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.ui.main.AlarmItemCard
+import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -238,5 +240,41 @@ class AlarmListScreenTest {
         composeTestRule.onNodeWithText("06:00").assertIsDisplayed()
         composeTestRule.onNodeWithText("07:15").assertIsDisplayed()
         composeTestRule.onNodeWithText("08:45").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmEditSheet_withoutShakeSensor_hidesAndSanitizesShakePuzzle() {
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        var savedPuzzles: String? = null
+        var savedPuzzleCount: Int? = null
+
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = testAlarm(puzzlesList = "SHAKE", puzzleCount = 1),
+                    onDismiss = {},
+                    onSave = { _, _, _, puzzles, count, _, _, _ ->
+                        savedPuzzles = puzzles
+                        savedPuzzleCount = count
+                    },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.save))
+            .performScrollTo()
+            .performClick()
+
+        assertEquals("MATH", savedPuzzles)
+        assertEquals(1, savedPuzzleCount)
     }
 }

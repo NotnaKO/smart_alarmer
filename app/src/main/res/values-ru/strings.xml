@@ -77,6 +77,8 @@
         <item quantity="other">%1$d минут</item>
     </plurals>
     <string name="alarm_set_toast">Будильник заведен: прозвенит через %1$s</string>
+    <string name="exact_alarm_permission_required">Разрешите установку будильников и напоминаний, прежде чем включать этот будильник.</string>
+    <string name="alarm_schedule_failed">Не удалось запланировать будильник. Попробуйте ещё раз.</string>
     <string name="hours_and_minutes_connector">%1$s и %2$s</string>
 
     <!-- Alarm Dismiss Screen -->

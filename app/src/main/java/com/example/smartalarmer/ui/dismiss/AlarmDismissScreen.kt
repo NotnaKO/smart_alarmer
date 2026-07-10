@@ -31,20 +31,26 @@ fun AlarmDismissScreen(
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
     shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(androidx.compose.ui.platform.LocalContext.current)
 ) {
-    val puzzles = remember {
-        puzzlesList.split(",")
+    val puzzles = remember(puzzlesList, puzzleCount, shakeProvider.isAvailable) {
+        val configuredPuzzles = puzzlesList.split(",")
             .mapNotNull {
                 runCatching { PuzzleType.valueOf(it.trim().uppercase()) }.getOrNull()
             }
+            .map { puzzle ->
+                if (puzzle == PuzzleType.SHAKE && !shakeProvider.isAvailable) {
+                    PuzzleType.MATH
+                } else {
+                    puzzle
+                }
+            }
+
+        configuredPuzzles
             .shuffled()
-            .take(puzzleCount)
+            .take(puzzleCount.coerceAtLeast(1))
+            .ifEmpty { listOf(PuzzleType.MATH) }
     }
 
-    LaunchedEffect(puzzles) {
-        android.util.Log.d("TEST_DEBUG", "Puzzles: ${puzzles.joinToString(", ")}")
-    }
-
-    var currentTaskIndex by remember { mutableStateOf(0) }
+    var currentTaskIndex by remember(puzzles) { mutableStateOf(0) }
 
     if (currentTaskIndex >= puzzles.size) {
         LaunchedEffect(Unit) {
@@ -120,9 +126,6 @@ fun MathPuzzleView(
         val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
         mathProvider.generate(difficulty)
     }
-    LaunchedEffect(puzzle) {
-        android.util.Log.d("TEST_DEBUG", "Math Puzzle: ${puzzle.equation} = ${puzzle.answer}")
-    }
     var input by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = puzzle.equation, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
@@ -184,9 +187,6 @@ fun TypingPuzzleView(
 ) {
     val quotes = stringArrayResource(R.array.typing_quotes).toList()
     val targetQuote = remember { typingProvider.getRandomQuote(quotes) }
-    LaunchedEffect(targetQuote) {
-        android.util.Log.d("TEST_DEBUG", "Typing Quote: $targetQuote")
-    }
     var input by remember { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.type_sentence_label), color = Color.Gray, fontSize = 14.sp)
@@ -340,9 +340,6 @@ fun MemoryPuzzleView(
             Difficulty.HARD -> 7
         }
         memoryProvider.generateSequence(length)
-    }
-    LaunchedEffect(sequence) {
-        android.util.Log.d("TEST_DEBUG", "Memory Sequence: ${sequence.joinToString(", ")}")
     }
     val userInputs = remember { mutableStateListOf<Int>() }
     var isShowingSequence by remember { mutableStateOf(true) }

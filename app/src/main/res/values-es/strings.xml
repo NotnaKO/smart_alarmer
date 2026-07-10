@@ -73,6 +73,8 @@
         <item quantity="other">%1$d minutos</item>
     </plurals>
     <string name="alarm_set_toast">Alarma programada para dentro de %1$s</string>
+    <string name="exact_alarm_permission_required">Permita alarmas y recordatorios antes de activar esta alarma.</string>
+    <string name="alarm_schedule_failed">No se pudo programar la alarma. Inténtelo de nuevo.</string>
     <string name="hours_and_minutes_connector">%1$s y %2$s</string>
 
     <!-- Alarm Dismiss Screen -->

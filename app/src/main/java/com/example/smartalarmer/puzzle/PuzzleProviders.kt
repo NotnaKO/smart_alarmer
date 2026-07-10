@@ -15,6 +15,9 @@ interface MemoryPuzzleProvider {
 }
 
 interface ShakeSensorProvider {
+    val isAvailable: Boolean
+        get() = true
+
     fun register(onSensorChanged: (Float, Float, Float) -> Unit)
     fun unregister()
 }
@@ -23,6 +26,9 @@ class AndroidShakeSensorProvider(private val context: android.content.Context) :
     private val sensorManager = context.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager
     private val accelerometer = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
     private var eventListener: android.hardware.SensorEventListener? = null
+
+    override val isAvailable: Boolean
+        get() = accelerometer != null
 
     override fun register(onSensorChanged: (Float, Float, Float) -> Unit) {
         eventListener = object : android.hardware.SensorEventListener {

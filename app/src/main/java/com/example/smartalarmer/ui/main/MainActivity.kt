@@ -46,6 +46,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.puzzle.AndroidShakeSensorProvider
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import com.example.smartalarmer.utils.DeviceUtils
@@ -557,7 +558,8 @@ class MainActivity : ComponentActivity() {
       onPickSound: () -> Unit,
       selectedSoundName: String,
       initialLabel: String,
-      pickedSoundUri: String?
+      pickedSoundUri: String?,
+      shakeSensorAvailable: Boolean = AndroidShakeSensorProvider(LocalContext.current).isAvailable
   ) {
       val context = LocalContext.current
       var hour by remember { mutableStateOf(alarm?.hour ?: 8) }
@@ -566,10 +568,24 @@ class MainActivity : ComponentActivity() {
       val initialDays = alarm?.daysOfWeek?.split(",")?.mapNotNull { it.trim().toIntOrNull() }?.toSet() ?: emptySet()
       val selectedDays = remember { mutableStateListOf<Int>().apply { addAll(initialDays) } }
 
-      val initialPuzzles = alarm?.puzzlesList?.split(",")?.map { it.trim().uppercase() }?.toSet() ?: setOf("MATH")
+      val puzzleTypes = remember(shakeSensorAvailable) {
+          buildList {
+              addAll(listOf("MATH", "MEMORY", "TYPING"))
+              if (shakeSensorAvailable) add("SHAKE")
+          }
+      }
+      val initialPuzzles = alarm?.puzzlesList
+          ?.split(",")
+          ?.map { it.trim().uppercase() }
+          ?.filter { it in puzzleTypes }
+          ?.toSet()
+          .orEmpty()
+          .ifEmpty { setOf("MATH") }
       val selectedPuzzles = remember { mutableStateListOf<String>().apply { addAll(initialPuzzles) } }
 
-      var puzzleCount by remember { mutableStateOf(alarm?.puzzleCount ?: 1) }
+      var puzzleCount by remember {
+          mutableStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
+      }
       var isGradualVolume by remember { mutableStateOf(alarm?.isGradualVolume ?: true) }
 
       val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -706,7 +722,6 @@ class MainActivity : ComponentActivity() {
                       horizontalArrangement = Arrangement.spacedBy(8.dp),
                       verticalArrangement = Arrangement.spacedBy(8.dp)
                   ) {
-                      val puzzleTypes = listOf("MATH", "MEMORY", "TYPING", "SHAKE")
                       puzzleTypes.forEach { type ->
                           val isSelected = selectedPuzzles.contains(type)
                           val displayName = when (type) {
