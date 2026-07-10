@@ -28,7 +28,7 @@ class ReceiverTest {
 
         try {
             receiver.onReceive(context, intent)
-            Thread.sleep(500)
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
 
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 val resumedActivities = ActivityLifecycleMonitorRegistry.getInstance()

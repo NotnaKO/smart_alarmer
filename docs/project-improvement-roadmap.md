@@ -66,7 +66,7 @@ missing convenience feature.
   targets, and support large fonts, landscape, and larger screens.
 - [ ] Collect flows with lifecycle awareness and preserve edit/puzzle state
   across recreation where appropriate.
-- [ ] Remove puzzle solutions from production logs.
+- [x] Remove puzzle solutions from production logs.
 - [ ] Resolve localization lint warnings and remaining hard-coded UI strings.
 - [ ] Keep `docs/README.md` and `AGENTS.md` aligned with the implementation,
   including the SHAKE puzzle, DAO signatures, and preview behavior.
