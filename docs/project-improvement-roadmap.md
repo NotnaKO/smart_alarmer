@@ -40,7 +40,7 @@ missing convenience feature.
   of the ViewModel.
 - [x] Enable Room schema export and add migration tests for versions 1 -> 2 ->
   3.
-- [ ] Define backup/restore behavior. Restored enabled alarms must be reconciled
+- [x] Define backup/restore behavior. Restored enabled alarms must be reconciled
   with `AlarmManager`, or operational alarm state should be excluded from backup.
 - [ ] Replace raw day/puzzle CSV parsing with validated domain values while
   retaining a compatible database migration.

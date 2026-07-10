@@ -131,6 +131,11 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
 | `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 3. Versioned schemas are committed under `app/schemas/`. |
 
+Alarm database files are deliberately excluded from cloud backup and device
+transfer. Alarm rows contain operational enabled/disabled state, while Android
+does not restore the matching `AlarmManager` registrations; excluding them
+prevents a restored alarm from appearing enabled without actually being armed.
+
 ### Puzzle Engines
 
 | File | Purpose |
