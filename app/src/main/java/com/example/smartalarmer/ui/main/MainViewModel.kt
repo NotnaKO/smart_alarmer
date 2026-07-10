@@ -1,22 +1,33 @@
 package com.example.smartalarmer.ui.main
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.smartalarmer.scheduler.AlarmScheduleResult
-import com.example.smartalarmer.scheduler.AlarmScheduler
 import com.example.smartalarmer.data.Alarm
-import com.example.smartalarmer.data.AlarmDao
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.StateFlow
+import com.example.smartalarmer.data.AlarmRepository
+import com.example.smartalarmer.scheduler.AlarmScheduleResult
+import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import android.content.Context
 
-class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
+sealed interface MainUiEvent {
+    data class AlarmScheduled(val triggerAtMillis: Long) : MainUiEvent
+    data object ExactAlarmPermissionRequired : MainUiEvent
+    data class AlarmScheduleFailed(val exception: Exception) : MainUiEvent
+}
 
-    val alarms: StateFlow<List<Alarm>> = alarmDao.getAllAlarms()
+class MainViewModel(
+    private val alarmRepository: AlarmRepository,
+    private val alarmScheduler: AlarmSchedulingGateway
+) : ViewModel() {
+
+    val alarms: StateFlow<List<Alarm>> = alarmRepository.alarms
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -29,6 +40,9 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
     private val _editingAlarm = MutableStateFlow<Alarm?>(null)
     val editingAlarm = _editingAlarm.asStateFlow()
 
+    private val _uiEvents = Channel<MainUiEvent>(Channel.BUFFERED)
+    val uiEvents = _uiEvents.receiveAsFlow()
+
     fun openEditSheet(alarm: Alarm? = null) {
         _editingAlarm.value = alarm
         _isBottomSheetVisible.value = true
@@ -40,7 +54,6 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
     }
 
     fun saveAlarm(
-        context: Context,
         hour: Int,
         minute: Int,
         daysOfWeek: String,
@@ -64,15 +77,7 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
                     soundUri = soundUri,
                     isEnabled = true
                 )
-                val result = AlarmScheduler.schedule(context, candidate)
-                val savedAlarm = if (result is AlarmScheduleResult.Scheduled) {
-                    candidate
-                } else {
-                    AlarmScheduler.cancel(context, candidate)
-                    candidate.copy(isEnabled = false)
-                }
-                alarmDao.updateAlarm(savedAlarm)
-                result
+                scheduleAndPersist(candidate)
             } else {
                 val draft = Alarm(
                     hour = hour,
@@ -85,102 +90,68 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
                     soundUri = soundUri,
                     isEnabled = false
                 )
-                val generatedId = alarmDao.insertAlarm(draft).toInt()
-                val candidate = draft.copy(id = generatedId, isEnabled = true)
-                val result = AlarmScheduler.schedule(context, candidate)
-                val savedAlarm = if (result is AlarmScheduleResult.Scheduled) {
-                    candidate
-                } else {
-                    AlarmScheduler.cancel(context, candidate)
-                    candidate.copy(isEnabled = false)
-                }
-                alarmDao.updateAlarm(savedAlarm)
-                result
+                val inserted = alarmRepository.insertAlarm(draft)
+                scheduleAndPersist(inserted.copy(isEnabled = true))
             }
 
-            when (scheduleResult) {
-                is AlarmScheduleResult.Scheduled -> {
-                    showScheduledToast(context, scheduleResult.triggerAtMillis)
-                }
-                AlarmScheduleResult.PermissionRequired -> {
-                    showToast(context, com.example.smartalarmer.R.string.exact_alarm_permission_required)
-                }
-                is AlarmScheduleResult.Failure -> {
-                    android.util.Log.e("MainViewModel", "Unable to schedule alarm", scheduleResult.exception)
-                    showToast(context, com.example.smartalarmer.R.string.alarm_schedule_failed)
-                }
-            }
-
+            publishScheduleResult(scheduleResult)
             closeEditSheet()
         }
     }
 
-    fun toggleAlarm(context: Context, alarm: Alarm, isChecked: Boolean) {
+    fun toggleAlarm(alarm: Alarm, isChecked: Boolean) {
         viewModelScope.launch {
             val updated = alarm.copy(isEnabled = isChecked)
             if (isChecked) {
-                when (val result = AlarmScheduler.schedule(context, updated)) {
-                    is AlarmScheduleResult.Scheduled -> alarmDao.updateAlarm(updated)
-                    AlarmScheduleResult.PermissionRequired -> {
-                        AlarmScheduler.cancel(context, updated)
-                        alarmDao.updateAlarm(updated.copy(isEnabled = false))
-                        showToast(context, com.example.smartalarmer.R.string.exact_alarm_permission_required)
-                    }
-                    is AlarmScheduleResult.Failure -> {
-                        AlarmScheduler.cancel(context, updated)
-                        alarmDao.updateAlarm(updated.copy(isEnabled = false))
-                        android.util.Log.e("MainViewModel", "Unable to enable alarm", result.exception)
-                        showToast(context, com.example.smartalarmer.R.string.alarm_schedule_failed)
-                    }
+                val result = scheduleAndPersist(updated)
+                if (result !is AlarmScheduleResult.Scheduled) {
+                    publishScheduleResult(result)
                 }
             } else {
-                alarmDao.updateAlarm(updated)
-                AlarmScheduler.cancel(context, updated)
+                alarmRepository.updateAlarm(updated)
+                alarmScheduler.cancel(updated)
             }
         }
     }
 
-    fun deleteAlarm(context: Context, alarm: Alarm) {
+    fun deleteAlarm(alarm: Alarm) {
         viewModelScope.launch {
-            AlarmScheduler.cancel(context, alarm)
-            alarmDao.deleteAlarm(alarm)
+            alarmScheduler.cancel(alarm)
+            alarmRepository.deleteAlarm(alarm)
         }
     }
 
-    private fun showScheduledToast(context: Context, triggerAtMillis: Long) {
-        val diffMs = (triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0)
-        val hours = diffMs / (3600 * 1000)
-        val minutes = (diffMs % (3600 * 1000)) / (60 * 1000)
-
-        val hoursText = if (hours > 0) {
-            context.resources.getQuantityString(
-                com.example.smartalarmer.R.plurals.hours_plural,
-                hours.toInt(),
-                hours.toInt()
-            )
+    private suspend fun scheduleAndPersist(candidate: Alarm): AlarmScheduleResult {
+        val result = alarmScheduler.schedule(candidate)
+        val savedAlarm = if (result is AlarmScheduleResult.Scheduled) {
+            candidate
         } else {
-            ""
+            alarmScheduler.cancel(candidate)
+            candidate.copy(isEnabled = false)
         }
-        val minutesText = context.resources.getQuantityString(
-            com.example.smartalarmer.R.plurals.minutes_plural,
-            minutes.toInt(),
-            minutes.toInt()
-        )
-        val timeText = if (hours > 0) {
-            context.getString(
-                com.example.smartalarmer.R.string.hours_and_minutes_connector,
-                hoursText,
-                minutesText
-            )
-        } else {
-            minutesText
-        }
-
-        val message = context.getString(com.example.smartalarmer.R.string.alarm_set_toast, timeText)
-        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+        alarmRepository.updateAlarm(savedAlarm)
+        return result
     }
 
-    private fun showToast(context: Context, messageRes: Int) {
-        android.widget.Toast.makeText(context, messageRes, android.widget.Toast.LENGTH_LONG).show()
+    private suspend fun publishScheduleResult(result: AlarmScheduleResult) {
+        val event = when (result) {
+            is AlarmScheduleResult.Scheduled -> MainUiEvent.AlarmScheduled(result.triggerAtMillis)
+            AlarmScheduleResult.PermissionRequired -> MainUiEvent.ExactAlarmPermissionRequired
+            is AlarmScheduleResult.Failure -> MainUiEvent.AlarmScheduleFailed(result.exception)
+        }
+        _uiEvents.send(event)
+    }
+
+    class Factory(
+        private val alarmRepository: AlarmRepository,
+        private val alarmScheduler: AlarmSchedulingGateway
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+                return MainViewModel(alarmRepository, alarmScheduler) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        }
     }
 }

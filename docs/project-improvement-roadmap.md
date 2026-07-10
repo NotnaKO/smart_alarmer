@@ -7,7 +7,7 @@ missing convenience feature.
 
 ## Validation baseline
 
-- `./gradlew testDebugUnitTest`: 22 tests passed.
+- `./gradlew testDebugUnitTest`: 27 tests passed.
 - `./gradlew lintDebug`: passed with warnings.
 - `./gradlew connectedDebugAndroidTest`: 56 tests passed on the
   `medium_phone (AVD) - 16` emulator.
@@ -35,7 +35,7 @@ missing convenience feature.
 
 ## Phase 2: Scheduling and persistence
 
-- [ ] Use lifecycle-managed `MainViewModel` creation and inject repository and
+- [x] Use lifecycle-managed `MainViewModel` creation and inject repository and
   scheduler abstractions. Keep Android `Context`, Toasts, and system calls out
   of the ViewModel.
 - [ ] Enable Room schema export and add migration tests for versions 1 -> 2 ->

@@ -95,7 +95,7 @@ All puzzle engines implement the same interface pattern via DI:
 
 ### Database Queries
 - Room queries use Flow for reactive updates; always `collect()` in a coroutine
-- `AlarmDao.getEnabledAlarms()` returns Flow; UI state is driven by this stream
+- `AlarmDao.getAllAlarms()` returns Flow for UI state; `getEnabledAlarms()` is a suspend snapshot query used for rescheduling
 - **Avoid blocking calls** on the main thread; use `runTest` in unit tests
 
 ---
@@ -104,7 +104,7 @@ All puzzle engines implement the same interface pattern via DI:
 
 ### Unit Tests (`src/test/`)
 - **JUnit 4** + kotlinx-coroutines-test framework
-- **Scope**: AlarmScheduler (pure logic, no Android context), all 3 puzzle engines, MainViewModel
+- **Scope**: AlarmScheduler (pure logic, no Android context), puzzle engines and sensor selection, MainViewModel
 - **Pattern**: Use `runTest` block for coroutine tests; assert state changes via Flow assertions
 - No mocking framework; tests focus on direct logic verification
 
@@ -158,8 +158,8 @@ All puzzle engines implement the same interface pattern via DI:
 - Assert foreground notification is posted within 10 seconds
 
 ### UI State Updates
-- Observe `MainViewModel.uiState` StateFlow in Compose
-- Query changes flow through `AlarmDao` → Room → MainViewModel → UI
+- Observe `MainViewModel.alarms` and sheet StateFlows in Compose
+- Query changes flow through `AlarmDao` → `RoomAlarmRepository` → MainViewModel → UI
 - Test with in-memory Room database; inject via `ApplicationProvider.getApplicationContext()`
 
 ---

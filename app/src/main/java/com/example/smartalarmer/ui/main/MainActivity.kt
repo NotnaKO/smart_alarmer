@@ -41,22 +41,87 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.data.RoomAlarmRepository
 import com.example.smartalarmer.puzzle.AndroidShakeSensorProvider
+import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import com.example.smartalarmer.utils.DeviceUtils
 
+private fun handleMainUiEvent(context: Context, event: MainUiEvent) {
+    when (event) {
+        is MainUiEvent.AlarmScheduled -> showScheduledToast(context, event.triggerAtMillis)
+        MainUiEvent.ExactAlarmPermissionRequired -> {
+            Toast.makeText(
+                context,
+                com.example.smartalarmer.R.string.exact_alarm_permission_required,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        is MainUiEvent.AlarmScheduleFailed -> {
+            android.util.Log.e("MainActivity", "Unable to schedule alarm", event.exception)
+            Toast.makeText(
+                context,
+                com.example.smartalarmer.R.string.alarm_schedule_failed,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+}
+
+private fun showScheduledToast(context: Context, triggerAtMillis: Long) {
+    val diffMs = (triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0)
+    val hours = diffMs / (3600 * 1000)
+    val minutes = (diffMs % (3600 * 1000)) / (60 * 1000)
+
+    val hoursText = if (hours > 0) {
+        context.resources.getQuantityString(
+            com.example.smartalarmer.R.plurals.hours_plural,
+            hours.toInt(),
+            hours.toInt()
+        )
+    } else {
+        ""
+    }
+    val minutesText = context.resources.getQuantityString(
+        com.example.smartalarmer.R.plurals.minutes_plural,
+        minutes.toInt(),
+        minutes.toInt()
+    )
+    val timeText = if (hours > 0) {
+        context.getString(
+            com.example.smartalarmer.R.string.hours_and_minutes_connector,
+            hoursText,
+            minutesText
+        )
+    } else {
+        minutesText
+    }
+
+    val message = context.getString(com.example.smartalarmer.R.string.alarm_set_toast, timeText)
+    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+}
+
 class MainActivity : ComponentActivity() {
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModel.Factory(
+            alarmRepository = RoomAlarmRepository(
+                AlarmDatabase.getDatabase(applicationContext).alarmDao()
+            ),
+            alarmScheduler = AndroidAlarmSchedulingGateway(applicationContext)
+        )
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val database = AlarmDatabase.getDatabase(this)
-        val viewModel = MainViewModel(database.alarmDao())
 
         setContent {
             SmartAlarmerTheme {
@@ -93,6 +158,12 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(editingAlarm) {
                     pickedSoundUri = editingAlarm?.soundUri
                     labelInput = editingAlarm?.label ?: ""
+                }
+
+                LaunchedEffect(viewModel) {
+                    viewModel.uiEvents.collect { event ->
+                        handleMainUiEvent(context, event)
+                    }
                 }
 
                 val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -356,10 +427,10 @@ class MainActivity : ComponentActivity() {
                                           AlarmItemCard(
                                               alarm = alarm,
                                               onToggle = { isChecked ->
-                                                  viewModel.toggleAlarm(context, alarm, isChecked)
+                                                  viewModel.toggleAlarm(alarm, isChecked)
                                               },
                                               onDelete = {
-                                                  viewModel.deleteAlarm(context, alarm)
+                                                  viewModel.deleteAlarm(alarm)
                                               },
                                               onEdit = {
                                                   viewModel.openEditSheet(alarm)
@@ -390,7 +461,7 @@ class MainActivity : ComponentActivity() {
                                   alarm = editingAlarm,
                                   onDismiss = { viewModel.closeEditSheet() },
                                   onSave = { hour, minute, days, puzzles, count, isGradual, lbl, sound ->
-                                      viewModel.saveAlarm(context, hour, minute, days, puzzles, count, isGradual, lbl, sound)
+                                      viewModel.saveAlarm(hour, minute, days, puzzles, count, isGradual, lbl, sound)
                                   },
                                   onPickSound = {
                                       val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
