@@ -49,6 +49,12 @@ import androidx.core.content.ContextCompat
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
+import com.example.smartalarmer.domain.AlarmDay
+import com.example.smartalarmer.domain.AlarmDays
+import com.example.smartalarmer.domain.PuzzleSelection
+import com.example.smartalarmer.domain.PuzzleType
+import com.example.smartalarmer.domain.puzzleSelection
+import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.puzzle.AndroidShakeSensorProvider
 import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
 import com.example.smartalarmer.ui.theme.*
@@ -496,12 +502,12 @@ class MainActivity : ComponentActivity() {
       onTest: () -> Unit = {}
   ) {
       val context = LocalContext.current
-      val daysList = alarm.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
+      val daysList = alarm.repeatDays.values.sortedBy(AlarmDay::isoValue)
       val daysSummary = when {
           daysList.isEmpty() -> stringResource(com.example.smartalarmer.R.string.one_time)
           daysList.size == 7 -> stringResource(com.example.smartalarmer.R.string.every_day)
-          daysList.containsAll(listOf(1, 2, 3, 4, 5)) && daysList.size == 5 -> stringResource(com.example.smartalarmer.R.string.weekdays)
-          daysList.containsAll(listOf(6, 7)) && daysList.size == 2 -> stringResource(com.example.smartalarmer.R.string.weekends)
+          daysList.containsAll(AlarmDay.entries.take(5)) && daysList.size == 5 -> stringResource(com.example.smartalarmer.R.string.weekdays)
+          daysList.containsAll(AlarmDay.entries.takeLast(2)) && daysList.size == 2 -> stringResource(com.example.smartalarmer.R.string.weekends)
           else -> {
               val names = listOf(
                   stringResource(com.example.smartalarmer.R.string.day_mon),
@@ -512,18 +518,17 @@ class MainActivity : ComponentActivity() {
                   stringResource(com.example.smartalarmer.R.string.day_sat),
                   stringResource(com.example.smartalarmer.R.string.day_sun)
               )
-              daysList.sorted().joinToString(", ") { names[it - 1] }
+              daysList.joinToString(", ") { names[it.isoValue - 1] }
           }
       }
 
-      val puzzlesText = alarm.puzzlesList.split(",")
-          .map { puzzleId ->
-              val resId = when (puzzleId.trim().uppercase()) {
-                  "MATH" -> com.example.smartalarmer.R.string.puzzle_math
-                  "MEMORY" -> com.example.smartalarmer.R.string.puzzle_memory
-                  "TYPING" -> com.example.smartalarmer.R.string.puzzle_typing
-                  "SHAKE" -> com.example.smartalarmer.R.string.puzzle_shake
-                  else -> com.example.smartalarmer.R.string.puzzle_math
+      val puzzlesText = alarm.puzzleSelection.values
+          .map { puzzle ->
+              val resId = when (puzzle) {
+                  PuzzleType.MATH -> com.example.smartalarmer.R.string.puzzle_math
+                  PuzzleType.MEMORY -> com.example.smartalarmer.R.string.puzzle_memory
+                  PuzzleType.TYPING -> com.example.smartalarmer.R.string.puzzle_typing
+                  PuzzleType.SHAKE -> com.example.smartalarmer.R.string.puzzle_shake
               }
               stringResource(resId)
           }
@@ -636,23 +641,21 @@ class MainActivity : ComponentActivity() {
       var hour by remember { mutableStateOf(alarm?.hour ?: 8) }
       var minute by remember { mutableStateOf(alarm?.minute ?: 0) }
       
-      val initialDays = alarm?.daysOfWeek?.split(",")?.mapNotNull { it.trim().toIntOrNull() }?.toSet() ?: emptySet()
-      val selectedDays = remember { mutableStateListOf<Int>().apply { addAll(initialDays) } }
+      val initialDays = alarm?.repeatDays?.values.orEmpty()
+      val selectedDays = remember { mutableStateListOf<AlarmDay>().apply { addAll(initialDays) } }
 
       val puzzleTypes = remember(shakeSensorAvailable) {
           buildList {
-              addAll(listOf("MATH", "MEMORY", "TYPING"))
-              if (shakeSensorAvailable) add("SHAKE")
+              addAll(listOf(PuzzleType.MATH, PuzzleType.MEMORY, PuzzleType.TYPING))
+              if (shakeSensorAvailable) add(PuzzleType.SHAKE)
           }
       }
-      val initialPuzzles = alarm?.puzzlesList
-          ?.split(",")
-          ?.map { it.trim().uppercase() }
+      val initialPuzzles = alarm?.puzzleSelection?.values
           ?.filter { it in puzzleTypes }
           ?.toSet()
           .orEmpty()
-          .ifEmpty { setOf("MATH") }
-      val selectedPuzzles = remember { mutableStateListOf<String>().apply { addAll(initialPuzzles) } }
+          .ifEmpty { setOf(PuzzleType.MATH) }
+      val selectedPuzzles = remember { mutableStateListOf<PuzzleType>().apply { addAll(initialPuzzles) } }
 
       var puzzleCount by remember {
           mutableStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
@@ -762,8 +765,8 @@ class MainActivity : ComponentActivity() {
                           stringResource(com.example.smartalarmer.R.string.day_sa),
                           stringResource(com.example.smartalarmer.R.string.day_su)
                       )
-                      for (i in 1..7) {
-                          val isSelected = selectedDays.contains(i)
+                      AlarmDay.entries.forEachIndexed { index, day ->
+                          val isSelected = selectedDays.contains(day)
                           Box(
                               modifier = Modifier
                                   .size(40.dp)
@@ -772,12 +775,12 @@ class MainActivity : ComponentActivity() {
                                       CircleShape
                                   )
                                   .clickable {
-                                      if (isSelected) selectedDays.remove(i) else selectedDays.add(i)
+                                      if (isSelected) selectedDays.remove(day) else selectedDays.add(day)
                                   },
                               contentAlignment = Alignment.Center
                           ) {
                               Text(
-                                  text = dayLabels[i - 1],
+                                  text = dayLabels[index],
                                   color = if (isSelected) Color.White else Color.Gray,
                                   fontWeight = FontWeight.Bold
                               )
@@ -796,11 +799,10 @@ class MainActivity : ComponentActivity() {
                       puzzleTypes.forEach { type ->
                           val isSelected = selectedPuzzles.contains(type)
                           val displayName = when (type) {
-                              "MATH" -> stringResource(com.example.smartalarmer.R.string.puzzle_math)
-                              "MEMORY" -> stringResource(com.example.smartalarmer.R.string.puzzle_memory)
-                              "TYPING" -> stringResource(com.example.smartalarmer.R.string.puzzle_typing)
-                              "SHAKE" -> stringResource(com.example.smartalarmer.R.string.puzzle_shake)
-                              else -> type
+                              PuzzleType.MATH -> stringResource(com.example.smartalarmer.R.string.puzzle_math)
+                              PuzzleType.MEMORY -> stringResource(com.example.smartalarmer.R.string.puzzle_memory)
+                              PuzzleType.TYPING -> stringResource(com.example.smartalarmer.R.string.puzzle_typing)
+                              PuzzleType.SHAKE -> stringResource(com.example.smartalarmer.R.string.puzzle_shake)
                           }
                           FilterChip(
                               selected = isSelected,
@@ -900,8 +902,8 @@ class MainActivity : ComponentActivity() {
                   }
                   Button(
                       onClick = {
-                          val daysCsv = selectedDays.sorted().joinToString(",")
-                          val puzzlesCsv = selectedPuzzles.joinToString(",")
+                          val daysCsv = AlarmDays.of(selectedDays).encoded
+                          val puzzlesCsv = PuzzleSelection.of(selectedPuzzles).encoded
                           onSave(hour, minute, daysCsv, puzzlesCsv, puzzleCount, isGradualVolume, label, pickedSoundUri)
                       },
                       modifier = Modifier.weight(1f),

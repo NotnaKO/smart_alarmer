@@ -58,13 +58,16 @@ Alarm repeat days are stored as **comma-separated ISO-8601 integers** (1=Monday,
 - Single day: `"3"` (Wednesday)
 - No value = one-time alarm
 
-**When modifying alarm queries or filters**, expect `repeatDays` as CSV string, not a Set/List.
+**When modifying alarm queries or filters**, use `Alarm.repeatDays`; parse or
+encode CSV only at persistence and Intent boundaries.
 
 ### Puzzle Type Encoding
 Puzzle types in config are stored as **comma-separated string values**:
 - `"MATH,TYPING,MEMORY"` = all three types
 - `"MATH"` = only math puzzles
 - Shuffle and limit in AlarmDismissScreen; order from config is ignored
+- Use `Alarm.puzzleSelection` / `PuzzleSelection.parse()` so malformed legacy
+  values receive the solvable Math fallback.
 
 ### Preview Mode Flag
 - `IS_PREVIEW = true` in AlarmService/Activity → safe testing mode

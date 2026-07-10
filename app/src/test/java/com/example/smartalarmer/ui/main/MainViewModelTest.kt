@@ -107,6 +107,28 @@ class MainViewModelTest {
         }
 
     @Test
+    fun saveNewAlarm_normalizesMalformedLegacyConfiguration() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val viewModel = createViewModel()
+
+            viewModel.saveAlarm(
+                hour = 8,
+                minute = 0,
+                daysOfWeek = "7,1,1,invalid,9",
+                puzzlesList = "shake,unknown,math,shake",
+                puzzleCount = 2,
+                isGradualVolume = true,
+                label = "",
+                soundUri = null
+            )
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertEquals("1,7", saved.daysOfWeek)
+            assertEquals("MATH,SHAKE", saved.puzzlesList)
+        }
+
+    @Test
     fun toggleAlarm_scheduleFailure_keepsAlarmDisabledAndPublishesFailure() =
         runTest(mainDispatcherRule.dispatcher) {
             val existing = alarm(id = 9, isEnabled = false)

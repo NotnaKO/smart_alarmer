@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.receiver.AlarmReceiver
 import com.example.smartalarmer.ui.main.MainActivity
 import java.util.Calendar
@@ -25,10 +26,9 @@ object AlarmScheduler {
             set(Calendar.MILLISECOND, 0)
         }
 
-        val activeDays = alarm.daysOfWeek.split(",")
-            .mapNotNull { it.trim().toIntOrNull() }
-            .mapNotNull { day ->
-                when (day) {
+        val activeDays = alarm.repeatDays.values
+            .map { day ->
+                when (day.isoValue) {
                     1 -> Calendar.MONDAY
                     2 -> Calendar.TUESDAY
                     3 -> Calendar.WEDNESDAY
@@ -36,7 +36,7 @@ object AlarmScheduler {
                     5 -> Calendar.FRIDAY
                     6 -> Calendar.SATURDAY
                     7 -> Calendar.SUNDAY
-                    else -> null
+                    else -> error("Unsupported ISO day ${day.isoValue}")
                 }
             }
             .toSet()

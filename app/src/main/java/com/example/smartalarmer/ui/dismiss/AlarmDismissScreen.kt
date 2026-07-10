@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.sp
 import com.example.smartalarmer.puzzle.*
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.R
+import com.example.smartalarmer.domain.PuzzleSelection
+import com.example.smartalarmer.domain.PuzzleType
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-
-enum class PuzzleType { MATH, TYPING, MEMORY, SHAKE }
 
 @Composable
 fun AlarmDismissScreen(
@@ -32,10 +32,7 @@ fun AlarmDismissScreen(
     shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(androidx.compose.ui.platform.LocalContext.current)
 ) {
     val puzzles = remember(puzzlesList, puzzleCount, shakeProvider.isAvailable) {
-        val configuredPuzzles = puzzlesList.split(",")
-            .mapNotNull {
-                runCatching { PuzzleType.valueOf(it.trim().uppercase()) }.getOrNull()
-            }
+        val configuredPuzzles = PuzzleSelection.parse(puzzlesList).values
             .map { puzzle ->
                 if (puzzle == PuzzleType.SHAKE && !shakeProvider.isAvailable) {
                     PuzzleType.MATH

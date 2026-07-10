@@ -163,7 +163,10 @@ Alarm days are stored as a comma-separated string of ISO-8601 integers:
 
 Example: `"1,2,3,4,5"` = weekdays only. An empty string means a one-time alarm.
 
-`AlarmScheduler.calculateNextTriggerTime()` maps these values to Java `Calendar.MONDAY` … `Calendar.SUNDAY` constants and iterates up to 7 days ahead to find the next active future time.
+The persisted CSV columns remain compatible with database versions 1–3, but
+application code consumes them through `AlarmDays` and `PuzzleSelection`.
+Those domain values discard unknown legacy values, remove duplicates, produce
+canonical ordering, and guarantee a Math fallback for an invalid puzzle list.
 
 ---
 

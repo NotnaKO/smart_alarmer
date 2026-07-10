@@ -42,7 +42,7 @@ missing convenience feature.
   3.
 - [x] Define backup/restore behavior. Restored enabled alarms must be reconciled
   with `AlarmManager`, or operational alarm state should be excluded from backup.
-- [ ] Replace raw day/puzzle CSV parsing with validated domain values while
+- [x] Replace raw day/puzzle CSV parsing with validated domain values while
   retaining a compatible database migration.
 - [ ] Reschedule wall-clock alarms after time or time-zone changes. Prefer
   `java.time` with injected `Clock` and `ZoneId`, including DST tests.

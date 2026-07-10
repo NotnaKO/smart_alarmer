@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmRepository
+import com.example.smartalarmer.domain.AlarmDays
+import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
 import kotlinx.coroutines.channels.Channel
@@ -64,13 +66,15 @@ class MainViewModel(
         soundUri: String?
     ) {
         viewModelScope.launch {
+            val normalizedDays = AlarmDays.parse(daysOfWeek).encoded
+            val normalizedPuzzles = PuzzleSelection.parse(puzzlesList).encoded
             val current = _editingAlarm.value
             val scheduleResult = if (current != null) {
                 val candidate = current.copy(
                     hour = hour,
                     minute = minute,
-                    daysOfWeek = daysOfWeek,
-                    puzzlesList = puzzlesList,
+                    daysOfWeek = normalizedDays,
+                    puzzlesList = normalizedPuzzles,
                     puzzleCount = puzzleCount,
                     isGradualVolume = isGradualVolume,
                     label = label,
@@ -82,8 +86,8 @@ class MainViewModel(
                 val draft = Alarm(
                     hour = hour,
                     minute = minute,
-                    daysOfWeek = daysOfWeek,
-                    puzzlesList = puzzlesList,
+                    daysOfWeek = normalizedDays,
+                    puzzlesList = normalizedPuzzles,
                     puzzleCount = puzzleCount,
                     isGradualVolume = isGradualVolume,
                     label = label,
