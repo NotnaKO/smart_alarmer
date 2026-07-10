@@ -8,7 +8,8 @@ import android.content.Intent
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.receiver.AlarmReceiver
 import com.example.smartalarmer.ui.main.MainActivity
-import java.util.Calendar
+import java.time.Clock
+import java.time.ZoneId
 
 sealed interface AlarmScheduleResult {
     data class Scheduled(val triggerAtMillis: Long) : AlarmScheduleResult
@@ -17,62 +18,16 @@ sealed interface AlarmScheduleResult {
 }
 
 object AlarmScheduler {
-    fun calculateNextTriggerTime(alarm: Alarm, now: Calendar): Calendar {
-        val calendar = (now.clone() as Calendar).apply {
-            set(Calendar.HOUR_OF_DAY, alarm.hour)
-            set(Calendar.MINUTE, alarm.minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        val activeDays = alarm.daysOfWeek.split(",")
-            .mapNotNull { it.trim().toIntOrNull() }
-            .mapNotNull { day ->
-                when (day) {
-                    1 -> Calendar.MONDAY
-                    2 -> Calendar.TUESDAY
-                    3 -> Calendar.WEDNESDAY
-                    4 -> Calendar.THURSDAY
-                    5 -> Calendar.FRIDAY
-                    6 -> Calendar.SATURDAY
-                    7 -> Calendar.SUNDAY
-                    else -> null
-                }
-            }
-            .toSet()
-
-        if (activeDays.isNotEmpty()) {
-            var found = false
-            for (i in 0..7) {
-                val checkTime = (calendar.clone() as Calendar).apply {
-                    add(Calendar.DATE, i)
-                }
-                val dayOfWeek = checkTime.get(Calendar.DAY_OF_WEEK)
-                if (activeDays.contains(dayOfWeek)) {
-                    if (checkTime.after(now)) {
-                        calendar.add(Calendar.DATE, i)
-                        found = true
-                        break
-                    }
-                }
-            }
-            if (!found && calendar.before(now)) {
-                calendar.add(Calendar.DATE, 1)
-            }
-        } else {
-            // One-time alarm
-            if (calendar.before(now)) {
-                calendar.add(Calendar.DATE, 1)
-            }
-        }
-        return calendar
-    }
-
     @SuppressLint("ScheduleExactAlarm")
-    fun schedule(context: Context, alarm: Alarm): AlarmScheduleResult {
+    fun schedule(
+        context: Context,
+        alarm: Alarm,
+        clock: Clock = Clock.systemUTC(),
+        zoneId: ZoneId = ZoneId.systemDefault()
+    ): AlarmScheduleResult {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val nextTrigger = calculateNextTriggerTime(alarm, Calendar.getInstance())
+            val nextTriggerMillis = AlarmTimeCalculator(clock, zoneId).nextTrigger(alarm).toEpochMilli()
             val canScheduleExactAlarm = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S ||
                 alarmManager.canScheduleExactAlarms()
 
@@ -95,11 +50,11 @@ object AlarmScheduler {
             )
 
             scheduleExact(
-                triggerAtMillis = nextTrigger.timeInMillis,
+                triggerAtMillis = nextTriggerMillis,
                 canScheduleExactAlarm = canScheduleExactAlarm
             ) {
                 alarmManager.setAlarmClock(
-                    AlarmManager.AlarmClockInfo(nextTrigger.timeInMillis, showIntent),
+                    AlarmManager.AlarmClockInfo(nextTriggerMillis, showIntent),
                     pendingIntent
                 )
             }

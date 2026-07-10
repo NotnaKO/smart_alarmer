@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.service.AlarmService
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmScheduler
@@ -45,7 +46,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     val alarmDao = database.alarmDao()
                     val alarm = alarmDao.getAlarmById(alarmId)
                     if (alarm != null) {
-                        if (alarm.daysOfWeek.isNotEmpty()) {
+                        if (!alarm.repeatDays.isOneTime) {
                             // Recurring alarm: schedule next occurrence
                             when (val result = AlarmScheduler.schedule(context, alarm)) {
                                 AlarmScheduleResult.PermissionRequired -> android.util.Log.w(

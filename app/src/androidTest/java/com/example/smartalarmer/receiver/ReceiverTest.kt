@@ -1,15 +1,15 @@
 package com.example.smartalarmer.receiver
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
-import androidx.test.runner.lifecycle.Stage
 import com.example.smartalarmer.service.AlarmService
-import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -17,8 +17,20 @@ import org.junit.runner.RunWith
 class ReceiverTest {
 
     @Test
-    fun alarmReceiver_onReceiveALARM_TRIGGER_runsWithoutCrashing() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+    fun alarmReceiver_previewTrigger_forwardsSafeServiceIntent() {
+        val baseContext = ApplicationProvider.getApplicationContext<Context>()
+        var capturedServiceIntent: Intent? = null
+        val context = object : ContextWrapper(baseContext) {
+            override fun startForegroundService(service: Intent): ComponentName? {
+                capturedServiceIntent = service
+                return service.component
+            }
+
+            override fun startService(service: Intent): ComponentName? {
+                capturedServiceIntent = service
+                return service.component
+            }
+        }
         val receiver = AlarmReceiver()
         val intent = Intent("com.example.smartalarmer.ALARM_TRIGGER").apply {
             putExtra("PUZZLES_LIST", "MATH")
@@ -26,20 +38,10 @@ class ReceiverTest {
             putExtra("IS_PREVIEW", true)
         }
 
-        try {
-            receiver.onReceive(context, intent)
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        receiver.onReceive(context, intent)
 
-            InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                val resumedActivities = ActivityLifecycleMonitorRegistry.getInstance()
-                    .getActivitiesInStage(Stage.RESUMED)
-                assertFalse(
-                    "Receiver preview mode must not launch AlarmDismissActivity",
-                    resumedActivities.any { it is AlarmDismissActivity }
-                )
-            }
-        } finally {
-            context.stopService(Intent(context, AlarmService::class.java))
-        }
+        assertNotNull(capturedServiceIntent)
+        assertEquals(AlarmService::class.java.name, capturedServiceIntent?.component?.className)
+        assertTrue(capturedServiceIntent?.getBooleanExtra("IS_PREVIEW", false) == true)
     }
 }

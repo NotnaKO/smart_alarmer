@@ -58,13 +58,16 @@ Alarm repeat days are stored as **comma-separated ISO-8601 integers** (1=Monday,
 - Single day: `"3"` (Wednesday)
 - No value = one-time alarm
 
-**When modifying alarm queries or filters**, expect `repeatDays` as CSV string, not a Set/List.
+**When modifying alarm queries or filters**, use `Alarm.repeatDays`; parse or
+encode CSV only at persistence and Intent boundaries.
 
 ### Puzzle Type Encoding
 Puzzle types in config are stored as **comma-separated string values**:
 - `"MATH,TYPING,MEMORY"` = all three types
 - `"MATH"` = only math puzzles
 - Shuffle and limit in AlarmDismissScreen; order from config is ignored
+- Use `Alarm.puzzleSelection` / `PuzzleSelection.parse()` so malformed legacy
+  values receive the solvable Math fallback.
 
 ### Preview Mode Flag
 - `IS_PREVIEW = true` in AlarmService/Activity → safe testing mode
@@ -80,7 +83,8 @@ Puzzle types in config are stored as **comma-separated string values**:
 - **Exact alarm permission** (`SCHEDULE_EXACT_ALARM`) is critical; fallback to `setAndAllow...` on older APIs
 - **Foreground service** requires `POST_NOTIFICATIONS` (Android 13+)
 - **Full-screen intent** for AlarmDismissActivity requires `USE_FULL_SCREEN_INTENT`
-- Device reboot triggers BootReceiver to reschedule all enabled alarms; test this flow
+- Device reboot, app replacement, time changes, and time-zone changes trigger
+  BootReceiver to reschedule all enabled alarms; test these flows
 
 ### Foreground Service Lifecycle
 - AlarmService must post notification within 10 seconds of start (Android 14+)
@@ -95,7 +99,7 @@ All puzzle engines implement the same interface pattern via DI:
 
 ### Database Queries
 - Room queries use Flow for reactive updates; always `collect()` in a coroutine
-- `AlarmDao.getEnabledAlarms()` returns Flow; UI state is driven by this stream
+- `AlarmDao.getAllAlarms()` returns Flow for UI state; `getEnabledAlarms()` is a suspend snapshot query used for rescheduling
 - **Avoid blocking calls** on the main thread; use `runTest` in unit tests
 
 ---
@@ -104,15 +108,16 @@ All puzzle engines implement the same interface pattern via DI:
 
 ### Unit Tests (`src/test/`)
 - **JUnit 4** + kotlinx-coroutines-test framework
-- **Scope**: AlarmScheduler (pure logic, no Android context), all 3 puzzle engines, MainViewModel
+- **Scope**: AlarmScheduler (pure logic, no Android context), puzzle engines and sensor selection, MainViewModel
 - **Pattern**: Use `runTest` block for coroutine tests; assert state changes via Flow assertions
 - No mocking framework; tests focus on direct logic verification
 
 ### Instrumented Tests (`src/androidTest/`)
 - **AndroidJUnit4** runner with Compose UI testing framework
-- **Scope**: Room DAO operations (in-memory database), Compose screens (AlarmDismissScreen, AlarmListScreen)
+- **Scope**: Room DAO operations, exported-schema migration coverage, Compose screens (AlarmDismissScreen, AlarmListScreen)
 - **Setup**: Room database created with `allowMainThreadQueries()` for simplicity
 - **Context injection**: Use `ApplicationProvider.getApplicationContext()` for Room and system services
+- **Schema changes**: Commit generated files under `app/schemas/` and extend `AlarmMigrationTest` across every supported upgrade path
 
 ### Test Fixtures
 - Use `IS_PREVIEW = true` flag in test mode to avoid loud audio and back-button traps
@@ -148,9 +153,10 @@ All puzzle engines implement the same interface pattern via DI:
 5. Add instrumented UI test in `src/androidTest/ui/`
 
 ### Scheduling Recurring Alarms
-- Use `AlarmScheduler.calculateNextTriggerTime()` to compute next trigger (pure logic)
+- Use `AlarmTimeCalculator` with an injected `Clock` and `ZoneId` to compute the
+  next trigger as an `Instant`
 - Call `AlarmScheduler.schedule()` to register with AlarmManager
-- Test with fixed "now" times to avoid flakiness; use `runTest` block
+- Test with fixed clocks and explicit zones, including DST gaps and overlaps
 
 ### Testing AlarmService Behavior
 - Create a PendingIntent with `is_preview = true` extra
@@ -158,8 +164,8 @@ All puzzle engines implement the same interface pattern via DI:
 - Assert foreground notification is posted within 10 seconds
 
 ### UI State Updates
-- Observe `MainViewModel.uiState` StateFlow in Compose
-- Query changes flow through `AlarmDao` → Room → MainViewModel → UI
+- Observe `MainViewModel.alarms` and sheet StateFlows in Compose
+- Query changes flow through `AlarmDao` → `RoomAlarmRepository` → MainViewModel → UI
 - Test with in-memory Room database; inject via `ApplicationProvider.getApplicationContext()`
 
 ---
