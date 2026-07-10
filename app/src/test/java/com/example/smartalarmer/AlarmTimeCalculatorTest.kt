@@ -27,12 +27,44 @@ class AlarmTimeCalculatorTest {
     }
 
     @Test
+    fun oneTimeAlarmUsesTomorrowWhenNowExactlyMatchesAlarmTime() {
+        val result = calculator("2026-06-18T10:00:00Z").nextTrigger(alarm(10, 0))
+
+        assertEquals(Instant.parse("2026-06-19T10:00:00Z"), result)
+    }
+
+    @Test
+    fun oneTimeAlarmCrossesLeapYearBoundary() {
+        val result = calculator("2028-02-29T23:59:59Z").nextTrigger(alarm(23, 59))
+
+        assertEquals(Instant.parse("2028-03-01T23:59:00Z"), result)
+    }
+
+    @Test
     fun recurringAlarmFindsNextConfiguredWeekday() {
         val result = calculator("2026-06-18T10:00:00Z").nextTrigger(
             alarm(hour = 9, minute = 30, days = "1,4")
         )
 
         assertEquals(Instant.parse("2026-06-22T09:30:00Z"), result)
+    }
+
+    @Test
+    fun recurringAlarmUsesTodayWhenConfiguredTimeIsFuture() {
+        val result = calculator("2026-06-18T10:00:00Z").nextTrigger(
+            alarm(hour = 10, minute = 1, days = "4")
+        )
+
+        assertEquals(Instant.parse("2026-06-18T10:01:00Z"), result)
+    }
+
+    @Test
+    fun malformedRepeatDaysFallBackToOneTimeScheduling() {
+        val result = calculator("2026-06-18T10:00:00Z").nextTrigger(
+            alarm(hour = 11, minute = 0, days = "invalid,0,8")
+        )
+
+        assertEquals(Instant.parse("2026-06-18T11:00:00Z"), result)
     }
 
     @Test
@@ -65,6 +97,23 @@ class AlarmTimeCalculatorTest {
                 LocalDateTime.of(2026, 11, 1, 1, 30),
                 zone,
                 ZoneOffset.ofHours(-5)
+            ).toInstant(),
+            result
+        )
+    }
+
+    @Test
+    fun fallDstOverlapUsesFirstOccurrenceWhenBothAreFuture() {
+        val zone = ZoneId.of("America/New_York")
+        val result = calculator("2026-11-01T04:00:00Z", zone).nextTrigger(
+            alarm(hour = 1, minute = 30, days = "7")
+        )
+
+        assertEquals(
+            ZonedDateTime.ofLocal(
+                LocalDateTime.of(2026, 11, 1, 1, 30),
+                zone,
+                ZoneOffset.ofHours(-4)
             ).toInstant(),
             result
         )

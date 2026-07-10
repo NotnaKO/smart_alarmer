@@ -107,6 +107,82 @@ class MainViewModelTest {
         }
 
     @Test
+    fun saveNewAlarm_scheduleFailure_persistsDisabledAndPublishesFailure() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val viewModel = createViewModel()
+            val exception = IllegalStateException("alarm manager unavailable")
+            scheduler.nextResult = AlarmScheduleResult.Failure(exception)
+            val event = async { viewModel.uiEvents.first() }
+
+            saveDefaultAlarm(viewModel)
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertFalse(saved.isEnabled)
+            assertEquals(saved.id, scheduler.cancelled.single().id)
+            assertTrue(scheduler.cancelled.single().isEnabled)
+            assertEquals(MainUiEvent.AlarmScheduleFailed(exception), event.await())
+            assertFalse(viewModel.isBottomSheetVisible.value)
+        }
+
+    @Test
+    fun saveEditedAlarm_success_updatesSameRowAndEnablesAlarm() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val existing = alarm(id = 8, isEnabled = false)
+            repository.seed(existing)
+            val viewModel = createViewModel()
+            viewModel.openEditSheet(existing)
+            val event = async { viewModel.uiEvents.first() }
+
+            viewModel.saveAlarm(
+                hour = 9,
+                minute = 45,
+                daysOfWeek = "7,1",
+                puzzlesList = "typing,memory",
+                puzzleCount = 3,
+                isGradualVolume = false,
+                label = "Updated",
+                soundUri = "content://alarm/sound"
+            )
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertEquals(8, saved.id)
+            assertEquals(9, saved.hour)
+            assertEquals(45, saved.minute)
+            assertEquals("1,7", saved.daysOfWeek)
+            assertEquals("TYPING,MEMORY", saved.puzzlesList)
+            assertEquals(3, saved.puzzleCount)
+            assertFalse(saved.isGradualVolume)
+            assertEquals("Updated", saved.label)
+            assertEquals("content://alarm/sound", saved.soundUri)
+            assertTrue(saved.isEnabled)
+            assertEquals(saved, scheduler.scheduled.single())
+            assertEquals(MainUiEvent.AlarmScheduled(1L), event.await())
+        }
+
+    @Test
+    fun saveEditedAlarm_permissionDenied_disablesExistingRow() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val existing = alarm(id = 8, isEnabled = true)
+            repository.seed(existing)
+            scheduler.nextResult = AlarmScheduleResult.PermissionRequired
+            val viewModel = createViewModel()
+            viewModel.openEditSheet(existing)
+            val event = async { viewModel.uiEvents.first() }
+
+            saveDefaultAlarm(viewModel)
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertEquals(8, saved.id)
+            assertFalse(saved.isEnabled)
+            assertEquals(saved.id, scheduler.cancelled.single().id)
+            assertTrue(scheduler.cancelled.single().isEnabled)
+            assertEquals(MainUiEvent.ExactAlarmPermissionRequired, event.await())
+        }
+
+    @Test
     fun saveNewAlarm_normalizesMalformedLegacyConfiguration() =
         runTest(mainDispatcherRule.dispatcher) {
             val viewModel = createViewModel()
@@ -147,6 +223,57 @@ class MainViewModelTest {
         }
 
     @Test
+    fun toggleAlarm_enableSuccess_persistsEnabledAlarmWithoutFailureEvent() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val existing = alarm(id = 10, isEnabled = false)
+            repository.seed(existing)
+            val viewModel = createViewModel()
+
+            viewModel.toggleAlarm(existing, isChecked = true)
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertTrue(saved.isEnabled)
+            assertEquals(saved, scheduler.scheduled.single())
+            assertTrue(scheduler.cancelled.isEmpty())
+        }
+
+    @Test
+    fun toggleAlarm_permissionDenied_keepsAlarmDisabledAndPublishesPermissionEvent() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val existing = alarm(id = 10, isEnabled = false)
+            repository.seed(existing)
+            scheduler.nextResult = AlarmScheduleResult.PermissionRequired
+            val viewModel = createViewModel()
+            val event = async { viewModel.uiEvents.first() }
+
+            viewModel.toggleAlarm(existing, isChecked = true)
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertFalse(saved.isEnabled)
+            assertEquals(saved.id, scheduler.cancelled.single().id)
+            assertTrue(scheduler.cancelled.single().isEnabled)
+            assertEquals(MainUiEvent.ExactAlarmPermissionRequired, event.await())
+        }
+
+    @Test
+    fun toggleAlarm_disable_persistsDisabledAlarmAndCancelsSchedule() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val existing = alarm(id = 10, isEnabled = true)
+            repository.seed(existing)
+            val viewModel = createViewModel()
+
+            viewModel.toggleAlarm(existing, isChecked = false)
+            advanceUntilIdle()
+
+            val saved = repository.alarms.value.single()
+            assertFalse(saved.isEnabled)
+            assertEquals(saved, scheduler.cancelled.single())
+            assertTrue(scheduler.scheduled.isEmpty())
+        }
+
+    @Test
     fun deleteAlarm_cancelsAndDeletesPersistedAlarm() = runTest(mainDispatcherRule.dispatcher) {
         val existing = alarm(id = 11)
         repository.seed(existing)
@@ -160,6 +287,19 @@ class MainViewModelTest {
     }
 
     private fun createViewModel() = MainViewModel(repository, scheduler)
+
+    private fun saveDefaultAlarm(viewModel: MainViewModel) {
+        viewModel.saveAlarm(
+            hour = 7,
+            minute = 30,
+            daysOfWeek = "1,2,3,4,5",
+            puzzlesList = "MATH",
+            puzzleCount = 1,
+            isGradualVolume = true,
+            label = "Morning",
+            soundUri = null
+        )
+    }
 
     private fun alarm(id: Int, isEnabled: Boolean = true) = Alarm(
         id = id,

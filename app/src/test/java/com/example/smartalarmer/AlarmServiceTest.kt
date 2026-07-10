@@ -40,11 +40,37 @@ class AlarmServiceTest {
     }
 
     @Test
+    fun concurrentDistinctAlarms_replaceTheActiveSession() {
+        val alarmIds = listOf(41, 42, 43)
+
+        assertTrue(
+            alarmIds.zipWithNext().all { (active, incoming) ->
+                AlarmService.shouldReplaceActiveAlarm(active, incoming)
+            }
+        )
+    }
+
+    @Test
+    fun redeliveredAlarm_doesNotRestartTheSameSession() {
+        assertFalse(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = 42))
+    }
+
+    @Test
     fun notificationIds_areStableAndUniquePerAlarm() {
         val first = AlarmService.notificationIdForAlarm(42)
 
         assertEquals(first, AlarmService.notificationIdForAlarm(42))
         assertNotEquals(first, AlarmService.notificationIdForAlarm(43))
         assertNotEquals(first, AlarmService.notificationIdForAlarm(42, isPreview = true))
+    }
+
+    @Test
+    fun notificationIds_supportNegativeAndLargeAlarmIds() {
+        val negative = AlarmService.notificationIdForAlarm(-1)
+        val large = AlarmService.notificationIdForAlarm(Int.MAX_VALUE)
+
+        assertTrue(negative >= 10_000)
+        assertTrue(large >= 10_000)
+        assertNotEquals(negative, large)
     }
 }

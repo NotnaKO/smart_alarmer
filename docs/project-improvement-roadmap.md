@@ -49,13 +49,13 @@ missing convenience feature.
 
 ## Phase 3: Testing and release readiness
 
-- [ ] Expand JVM tests around save/toggle/delete behavior, permission denial,
+- [x] Expand JVM tests around save/toggle/delete behavior, permission denial,
   service restart/re-entry, malformed data, concurrent alarms, and time edges.
-- [ ] Run device tests on modern Android behavior in CI (at least API 31 and an
+- [x] Run device tests on modern Android behavior in CI (at least API 31 and an
   API 34+ image), not only API 29.
-- [ ] Configure production signing, a non-example application ID, versioning,
+- [x] Configure production signing, a non-example application ID, versioning,
   R8, and resource shrinking. Never ship the debug signing key.
-- [ ] Remove unused Navigation 3 and serialization dependencies and migrate
+- [x] Remove unused Navigation 3 and serialization dependencies and migrate
   Room code generation from kapt to KSP.
 
 ## Phase 4: UI, accessibility, and maintainability
