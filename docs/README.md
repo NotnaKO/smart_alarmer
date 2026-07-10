@@ -94,7 +94,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 
 ┌─────────────────────────────────────────────────────────────┐
 │                     BootReceiver                              │
-│  ACTION_BOOT_COMPLETED → queries enabled alarms from DB      │
+│  Boot/time/time-zone/app update → query enabled alarms       │
 │  → reschedules each via AlarmScheduler.schedule()            │
 └─────────────────────────────────────────────────────────────┘
 ```

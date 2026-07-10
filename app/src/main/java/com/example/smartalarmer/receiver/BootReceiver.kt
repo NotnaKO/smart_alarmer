@@ -14,15 +14,16 @@ import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val isBootCompleted = intent.action == Intent.ACTION_BOOT_COMPLETED
-        val isExactAlarmPermissionGranted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        val isExactAlarmPermissionEvent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             intent.action == AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED
+        val canScheduleExactAlarms = if (isExactAlarmPermissionEvent) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true
+        }
 
-        if (isBootCompleted || isExactAlarmPermissionGranted) {
-            if (isExactAlarmPermissionGranted) {
-                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                if (!alarmManager.canScheduleExactAlarms()) return
-            }
+        if (shouldReschedule(intent.action, canScheduleExactAlarms)) {
 
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
@@ -48,6 +49,20 @@ class BootReceiver : BroadcastReceiver() {
                 } finally {
                     pendingResult.finish()
                 }
+            }
+        }
+    }
+
+    companion object {
+        internal fun shouldReschedule(action: String?, canScheduleExactAlarms: Boolean): Boolean {
+            return when (action) {
+                Intent.ACTION_BOOT_COMPLETED,
+                Intent.ACTION_MY_PACKAGE_REPLACED,
+                Intent.ACTION_TIME_CHANGED,
+                Intent.ACTION_TIMEZONE_CHANGED -> true
+                AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED ->
+                    canScheduleExactAlarms
+                else -> false
             }
         }
     }

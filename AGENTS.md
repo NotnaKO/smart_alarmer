@@ -83,7 +83,8 @@ Puzzle types in config are stored as **comma-separated string values**:
 - **Exact alarm permission** (`SCHEDULE_EXACT_ALARM`) is critical; fallback to `setAndAllow...` on older APIs
 - **Foreground service** requires `POST_NOTIFICATIONS` (Android 13+)
 - **Full-screen intent** for AlarmDismissActivity requires `USE_FULL_SCREEN_INTENT`
-- Device reboot triggers BootReceiver to reschedule all enabled alarms; test this flow
+- Device reboot, app replacement, time changes, and time-zone changes trigger
+  BootReceiver to reschedule all enabled alarms; test these flows
 
 ### Foreground Service Lifecycle
 - AlarmService must post notification within 10 seconds of start (Android 14+)
