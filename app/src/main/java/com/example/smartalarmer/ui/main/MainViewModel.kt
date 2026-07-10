@@ -2,6 +2,7 @@ package com.example.smartalarmer.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmScheduler
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDao
@@ -51,8 +52,8 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
     ) {
         viewModelScope.launch {
             val current = _editingAlarm.value
-            val scheduledAlarm = if (current != null) {
-                val updated = current.copy(
+            val scheduleResult = if (current != null) {
+                val candidate = current.copy(
                     hour = hour,
                     minute = minute,
                     daysOfWeek = daysOfWeek,
@@ -63,11 +64,17 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
                     soundUri = soundUri,
                     isEnabled = true
                 )
-                alarmDao.updateAlarm(updated)
-                AlarmScheduler.schedule(context, updated)
-                updated
+                val result = AlarmScheduler.schedule(context, candidate)
+                val savedAlarm = if (result is AlarmScheduleResult.Scheduled) {
+                    candidate
+                } else {
+                    AlarmScheduler.cancel(context, candidate)
+                    candidate.copy(isEnabled = false)
+                }
+                alarmDao.updateAlarm(savedAlarm)
+                result
             } else {
-                val newAlarm = Alarm(
+                val draft = Alarm(
                     hour = hour,
                     minute = minute,
                     daysOfWeek = daysOfWeek,
@@ -76,34 +83,33 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
                     isGradualVolume = isGradualVolume,
                     label = label,
                     soundUri = soundUri,
-                    isEnabled = true
+                    isEnabled = false
                 )
-                val generatedId = alarmDao.insertAlarm(newAlarm).toInt()
-                val scheduled = newAlarm.copy(id = generatedId)
-                AlarmScheduler.schedule(context, scheduled)
-                scheduled
+                val generatedId = alarmDao.insertAlarm(draft).toInt()
+                val candidate = draft.copy(id = generatedId, isEnabled = true)
+                val result = AlarmScheduler.schedule(context, candidate)
+                val savedAlarm = if (result is AlarmScheduleResult.Scheduled) {
+                    candidate
+                } else {
+                    AlarmScheduler.cancel(context, candidate)
+                    candidate.copy(isEnabled = false)
+                }
+                alarmDao.updateAlarm(savedAlarm)
+                result
             }
 
-            // Show Toast with remaining time
-            val nextTrigger = AlarmScheduler.calculateNextTriggerTime(scheduledAlarm, java.util.Calendar.getInstance())
-            val diffMs = nextTrigger.timeInMillis - System.currentTimeMillis()
-            val hours = diffMs / (3600 * 1000)
-            val minutes = (diffMs % (3600 * 1000)) / (60 * 1000)
-            
-            val hoursText = if (hours > 0) {
-                context.resources.getQuantityString(com.example.smartalarmer.R.plurals.hours_plural, hours.toInt(), hours.toInt())
-            } else ""
-            
-            val minutesText = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.minutes_plural, minutes.toInt(), minutes.toInt())
-            
-            val timeText = if (hours > 0) {
-                context.getString(com.example.smartalarmer.R.string.hours_and_minutes_connector, hoursText, minutesText)
-            } else {
-                minutesText
+            when (scheduleResult) {
+                is AlarmScheduleResult.Scheduled -> {
+                    showScheduledToast(context, scheduleResult.triggerAtMillis)
+                }
+                AlarmScheduleResult.PermissionRequired -> {
+                    showToast(context, com.example.smartalarmer.R.string.exact_alarm_permission_required)
+                }
+                is AlarmScheduleResult.Failure -> {
+                    android.util.Log.e("MainViewModel", "Unable to schedule alarm", scheduleResult.exception)
+                    showToast(context, com.example.smartalarmer.R.string.alarm_schedule_failed)
+                }
             }
-            
-            val toastMsg = context.getString(com.example.smartalarmer.R.string.alarm_set_toast, timeText)
-            android.widget.Toast.makeText(context, toastMsg, android.widget.Toast.LENGTH_LONG).show()
 
             closeEditSheet()
         }
@@ -112,10 +118,23 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
     fun toggleAlarm(context: Context, alarm: Alarm, isChecked: Boolean) {
         viewModelScope.launch {
             val updated = alarm.copy(isEnabled = isChecked)
-            alarmDao.updateAlarm(updated)
             if (isChecked) {
-                AlarmScheduler.schedule(context, updated)
+                when (val result = AlarmScheduler.schedule(context, updated)) {
+                    is AlarmScheduleResult.Scheduled -> alarmDao.updateAlarm(updated)
+                    AlarmScheduleResult.PermissionRequired -> {
+                        AlarmScheduler.cancel(context, updated)
+                        alarmDao.updateAlarm(updated.copy(isEnabled = false))
+                        showToast(context, com.example.smartalarmer.R.string.exact_alarm_permission_required)
+                    }
+                    is AlarmScheduleResult.Failure -> {
+                        AlarmScheduler.cancel(context, updated)
+                        alarmDao.updateAlarm(updated.copy(isEnabled = false))
+                        android.util.Log.e("MainViewModel", "Unable to enable alarm", result.exception)
+                        showToast(context, com.example.smartalarmer.R.string.alarm_schedule_failed)
+                    }
+                }
             } else {
+                alarmDao.updateAlarm(updated)
                 AlarmScheduler.cancel(context, updated)
             }
         }
@@ -126,5 +145,42 @@ class MainViewModel(private val alarmDao: AlarmDao) : ViewModel() {
             AlarmScheduler.cancel(context, alarm)
             alarmDao.deleteAlarm(alarm)
         }
+    }
+
+    private fun showScheduledToast(context: Context, triggerAtMillis: Long) {
+        val diffMs = (triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0)
+        val hours = diffMs / (3600 * 1000)
+        val minutes = (diffMs % (3600 * 1000)) / (60 * 1000)
+
+        val hoursText = if (hours > 0) {
+            context.resources.getQuantityString(
+                com.example.smartalarmer.R.plurals.hours_plural,
+                hours.toInt(),
+                hours.toInt()
+            )
+        } else {
+            ""
+        }
+        val minutesText = context.resources.getQuantityString(
+            com.example.smartalarmer.R.plurals.minutes_plural,
+            minutes.toInt(),
+            minutes.toInt()
+        )
+        val timeText = if (hours > 0) {
+            context.getString(
+                com.example.smartalarmer.R.string.hours_and_minutes_connector,
+                hoursText,
+                minutesText
+            )
+        } else {
+            minutesText
+        }
+
+        val message = context.getString(com.example.smartalarmer.R.string.alarm_set_toast, timeText)
+        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    private fun showToast(context: Context, messageRes: Int) {
+        android.widget.Toast.makeText(context, messageRes, android.widget.Toast.LENGTH_LONG).show()
     }
 }

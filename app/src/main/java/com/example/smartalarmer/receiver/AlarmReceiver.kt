@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.service.AlarmService
+import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +47,18 @@ class AlarmReceiver : BroadcastReceiver() {
                     if (alarm != null) {
                         if (alarm.daysOfWeek.isNotEmpty()) {
                             // Recurring alarm: schedule next occurrence
-                            AlarmScheduler.schedule(context, alarm)
+                            when (val result = AlarmScheduler.schedule(context, alarm)) {
+                                AlarmScheduleResult.PermissionRequired -> android.util.Log.w(
+                                    "AlarmReceiver",
+                                    "Exact alarm permission is required to reschedule alarm $alarmId"
+                                )
+                                is AlarmScheduleResult.Failure -> android.util.Log.e(
+                                    "AlarmReceiver",
+                                    "Unable to reschedule alarm $alarmId",
+                                    result.exception
+                                )
+                                is AlarmScheduleResult.Scheduled -> Unit
+                            }
                         } else {
                             // One-time alarm: disable it
                             val updated = alarm.copy(isEnabled = false)

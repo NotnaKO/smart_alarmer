@@ -7,7 +7,7 @@ missing convenience feature.
 
 ## Validation baseline
 
-- `./gradlew testDebugUnitTest`: 16 tests passed.
+- `./gradlew testDebugUnitTest`: 20 tests passed.
 - `./gradlew lintDebug`: passed with warnings.
 - `./gradlew connectedDebugAndroidTest`: 52 tests passed on the
   `medium_phone (AVD) - 16` emulator.
@@ -22,7 +22,7 @@ missing convenience feature.
   volume, use a full-screen intent, or launch the activity automatically.
 - [x] Add `MODIFY_AUDIO_SETTINGS`, request transient audio focus, restore the
   previous alarm volume, and release every playback fallback resource.
-- [ ] Make exact-alarm scheduling return a result instead of assuming success.
+- [x] Make exact-alarm scheduling return a result instead of assuming success.
   Check `canScheduleExactAlarms()`, handle `SecurityException`, select one exact
   alarm permission deliberately, and reschedule after permission is granted.
 - [ ] Replace automatic dismissal for an invalid/empty puzzle configuration

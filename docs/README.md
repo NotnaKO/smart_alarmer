@@ -48,7 +48,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 ┌─────────────────────────────────────────────────────────────┐
 │                     AlarmScheduler                           │
 │  calculateNextTriggerTime(alarm, now) → Calendar             │
-│  schedule(context, alarm) → AlarmManager.setExactAndAllow...│
+│  schedule(context, alarm) → AlarmManager.setAlarmClock()    │
 │  cancel(context, alarm)                                      │
 └────────────────────────┬────────────────────────────────────┘
                          │ RTC_WAKEUP broadcast
@@ -107,12 +107,12 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 
 | File | Purpose |
 |------|---------|
-| `AlarmScheduler.kt` | Calculates the next trigger time and registers exact alarms via `AlarmManager`. The core calculation logic is in `calculateNextTriggerTime()`, which is pure and unit-testable. |
+| `AlarmScheduler.kt` | Calculates the next trigger time and registers user-visible exact alarms via `AlarmManager.setAlarmClock()`. Scheduling returns a typed result for success, missing permission, or system failure. |
 | `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Starts the foreground `AlarmService` and automatically reschedules recurring alarms for the next active day. Disables one-time alarms. |
 | `AlarmService.kt` | Foreground service that plays the alarm tone at max volume, locks the volume stream, shows a notification with full-screen intent, and launches the dismiss overlay. |
 | `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI. Handles normal alarm security locks or safe `IS_PREVIEW` test executions. |
 | `AlarmDismissScreen.kt` | Compose screen that orchestrates puzzle progression (Task 1 of N → Task N of N). Delegates to individual puzzle views. |
-| `BootReceiver.kt` | Listens for `ACTION_BOOT_COMPLETED` and reschedules all enabled alarms from the Room database. Uses `goAsync()` for safe coroutine work in a receiver. |
+| `BootReceiver.kt` | Reschedules enabled alarms after boot and after exact-alarm access is granted. Uses `goAsync()` for safe coroutine work in a receiver. |
 
 ### UI & Architecture Layer
 
@@ -171,10 +171,11 @@ Declared in `AndroidManifest.xml`:
 | `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Required `foregroundServiceType` for audio on Android 14+ |
 | `USE_FULL_SCREEN_INTENT` | Launch dismiss activity from the notification |
 | `SCHEDULE_EXACT_ALARM` | Schedule exact alarms (user-grantable on Android 12+) |
-| `USE_EXACT_ALARM` | Unconditional exact alarm permission for clock apps (Android 13+) |
 | `WAKE_LOCK` | Keep CPU alive during alarm processing |
+| `MODIFY_AUDIO_SETTINGS` | Apply gradual alarm volume and restore the previous level after dismissal |
 | `POST_NOTIFICATIONS` | Show foreground service notification |
 | `RECEIVE_BOOT_COMPLETED` | Trigger `BootReceiver` after device restart |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Open the system exemption request for reliable OEM background execution |
 
 > **Note on Android 14+ (SDK 34+):** The `SCHEDULE_EXACT_ALARM` permission is revoked by default. On physical devices users must enable "Alarms & reminders" in Special App Access settings. On emulators, run:
 > ```bash
