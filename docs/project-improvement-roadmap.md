@@ -55,7 +55,7 @@ missing convenience feature.
   API 34+ image), not only API 29.
 - [x] Configure production signing, a non-example application ID, versioning,
   R8, and resource shrinking. Never ship the debug signing key.
-- [ ] Remove unused Navigation 3 and serialization dependencies and migrate
+- [x] Remove unused Navigation 3 and serialization dependencies and migrate
   Room code generation from kapt to KSP.
 
 ## Phase 4: UI, accessibility, and maintainability

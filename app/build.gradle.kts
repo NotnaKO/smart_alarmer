@@ -1,8 +1,8 @@
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
-  alias(libs.plugins.kotlin.serialization)
-  alias(libs.plugins.legacy.kapt)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.room)
 }
 
 val releaseVersionCode = providers.environmentVariable("SMART_ALARMER_VERSION_CODE")
@@ -40,11 +40,6 @@ android {
         versionCode = releaseVersionCode
         versionName = releaseVersionName
 
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments["room.schemaLocation"] = "$projectDir/schemas"
-            }
-        }
     }
 
     signingConfigs {
@@ -83,6 +78,10 @@ android {
         excludes += "/META-INF/{AL2.0,LGPL2.1}"
       }
     }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 kotlin {
@@ -128,13 +127,8 @@ dependencies {
   androidTestImplementation(libs.androidx.test.espresso.core)
   androidTestImplementation(libs.androidx.uiautomator)
 
-  // Navigation
-  implementation(libs.androidx.navigation3.ui)
-  implementation(libs.androidx.navigation3.runtime)
-  implementation(libs.androidx.lifecycle.viewmodel.navigation3)
-
   // Room Database
   implementation(libs.room.runtime)
   implementation(libs.room.ktx)
-  kapt(libs.room.compiler)
+  ksp(libs.room.compiler)
 }
