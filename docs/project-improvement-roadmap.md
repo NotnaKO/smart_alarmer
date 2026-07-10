@@ -51,7 +51,7 @@ missing convenience feature.
 
 - [x] Expand JVM tests around save/toggle/delete behavior, permission denial,
   service restart/re-entry, malformed data, concurrent alarms, and time edges.
-- [ ] Run device tests on modern Android behavior in CI (at least API 31 and an
+- [x] Run device tests on modern Android behavior in CI (at least API 31 and an
   API 34+ image), not only API 29.
 - [ ] Configure production signing, a non-example application ID, versioning,
   R8, and resource shrinking. Never ship the debug signing key.
