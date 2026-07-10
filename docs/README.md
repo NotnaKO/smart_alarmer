@@ -47,7 +47,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     AlarmScheduler                           │
-│  calculateNextTriggerTime(alarm, now) → Calendar             │
+│  AlarmTimeCalculator(Clock, ZoneId) → next Instant           │
 │  schedule(context, alarm) → AlarmManager.setAlarmClock()    │
 │  cancel(context, alarm)                                      │
 └────────────────────────┬────────────────────────────────────┘
@@ -108,6 +108,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | File | Purpose |
 |------|---------|
 | `AlarmScheduler.kt` | Calculates the next trigger time and registers user-visible exact alarms via `AlarmManager.setAlarmClock()`. Scheduling returns a typed result for success, missing permission, or system failure. |
+| `AlarmTimeCalculator.kt` | Pure `java.time` wall-clock calculation with injected `Clock` and `ZoneId`, including deterministic DST gap/overlap behavior. |
 | `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Starts the foreground `AlarmService` and automatically reschedules recurring alarms for the next active day. Disables one-time alarms. |
 | `AlarmService.kt` | Owns one active alarm session, asynchronously prepares fallback audio, manages volume/audio focus, uses alarm-specific notification identities, and safely replaces overlapping alarms. |
 | `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI, accepts replacement alarm intents, and handles normal alarm security locks or safe `IS_PREVIEW` executions. |
@@ -240,7 +241,8 @@ These run on the host JVM with no Android framework required.
 | `MathEngineTest` | Verifies puzzle generation at all three difficulty levels: correct difficulty field, operator presence, and answer range. |
 | `TypingEngineTest` | Tests exact string matching (including whitespace trimming) and non-empty quote generation. |
 | `MemoryEngineTest` | Tests sequence generation (correct length, valid indices 0–8) and step-by-step verification (correct prefix, wrong prefix, overflow). |
-| `AlarmSchedulerTest` | Tests `calculateNextTriggerTime()` against a mock `Calendar` for scheduling combinations. |
+| `AlarmTimeCalculatorTest` | Tests one-time/recurring wall-clock calculations with fixed clocks, explicit zones, and DST gap/overlap transitions. |
+| `AlarmSchedulerTest` | Tests exact-alarm permission and failure result handling. |
 | `MainViewModelTest` | Verifies view model state flow, bottom sheet visibility switches, and database save/toggle/delete hooks. |
 
 ### 2. Instrumented UI & Integration Tests (`app/src/androidTest/`)

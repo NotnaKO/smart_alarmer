@@ -153,9 +153,10 @@ All puzzle engines implement the same interface pattern via DI:
 5. Add instrumented UI test in `src/androidTest/ui/`
 
 ### Scheduling Recurring Alarms
-- Use `AlarmScheduler.calculateNextTriggerTime()` to compute next trigger (pure logic)
+- Use `AlarmTimeCalculator` with an injected `Clock` and `ZoneId` to compute the
+  next trigger as an `Instant`
 - Call `AlarmScheduler.schedule()` to register with AlarmManager
-- Test with fixed "now" times to avoid flakiness; use `runTest` block
+- Test with fixed clocks and explicit zones, including DST gaps and overlaps
 
 ### Testing AlarmService Behavior
 - Create a PendingIntent with `is_preview = true` extra

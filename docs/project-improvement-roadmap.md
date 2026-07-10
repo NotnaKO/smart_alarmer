@@ -44,7 +44,7 @@ missing convenience feature.
   with `AlarmManager`, or operational alarm state should be excluded from backup.
 - [x] Replace raw day/puzzle CSV parsing with validated domain values while
   retaining a compatible database migration.
-- [ ] Reschedule wall-clock alarms after time or time-zone changes. Prefer
+- [x] Reschedule wall-clock alarms after time or time-zone changes. Prefer
   `java.time` with injected `Clock` and `ZoneId`, including DST tests.
 
 ## Phase 3: Testing and release readiness
