@@ -189,7 +189,7 @@ Declared in `AndroidManifest.xml`:
 
 > **Note on Android 14+ (SDK 34+):** The `SCHEDULE_EXACT_ALARM` permission is revoked by default. On physical devices users must enable "Alarms & reminders" in Special App Access settings. On emulators, run:
 > ```bash
-> adb shell appops set com.example.smartalarmer SCHEDULE_EXACT_ALARM allow
+> adb shell appops set com.notnako.smartalarmer SCHEDULE_EXACT_ALARM allow
 > ```
 
 ---
@@ -212,6 +212,28 @@ Declared in `AndroidManifest.xml`:
 
 After building, the APK file can be retrieved at:
 `app/build/outputs/apk/debug/app-debug.apk`
+
+### Release builds
+
+Production builds use the application ID `com.notnako.smartalarmer`, semantic
+version `1.0.0` by default, and R8 code/resource shrinking. Override versioning
+in CI or a release shell with `SMART_ALARMER_VERSION_CODE` and
+`SMART_ALARMER_VERSION_NAME`.
+
+Release signing never falls back to the Android debug key. Set all four signing
+variables to produce a signed artifact:
+
+```bash
+export SMART_ALARMER_KEYSTORE_FILE=/secure/path/smart-alarmer.jks
+export SMART_ALARMER_KEYSTORE_PASSWORD='...'
+export SMART_ALARMER_KEY_ALIAS='smart-alarmer'
+export SMART_ALARMER_KEY_PASSWORD='...'
+./gradlew bundleRelease
+```
+
+With no signing variables, `assembleRelease`/`bundleRelease` creates an
+unsigned, minified artifact suitable for build verification only. Keystores are
+ignored by Git and should be stored in a secret manager, outside this repository.
 
 ---
 

@@ -5,16 +5,40 @@ plugins {
   alias(libs.plugins.legacy.kapt)
 }
 
+val releaseVersionCode = providers.environmentVariable("SMART_ALARMER_VERSION_CODE")
+    .orElse("1")
+    .get()
+    .toIntOrNull()
+    ?: error("SMART_ALARMER_VERSION_CODE must be a positive integer")
+require(releaseVersionCode > 0) { "SMART_ALARMER_VERSION_CODE must be a positive integer" }
+
+val releaseVersionName = providers.environmentVariable("SMART_ALARMER_VERSION_NAME")
+    .orElse("1.0.0")
+    .get()
+val releaseStorePath = providers.environmentVariable("SMART_ALARMER_KEYSTORE_FILE").orNull
+val releaseStorePassword = providers.environmentVariable("SMART_ALARMER_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("SMART_ALARMER_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("SMART_ALARMER_KEY_PASSWORD").orNull
+val releaseSigningValues = listOf(
+    releaseStorePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+)
+val hasReleaseSigning = releaseSigningValues.all { !it.isNullOrBlank() }
+require(releaseSigningValues.all { it.isNullOrBlank() } || hasReleaseSigning) {
+    "Release signing requires all SMART_ALARMER_KEYSTORE_* and SMART_ALARMER_KEY_* variables"
+}
 
 android {
     namespace = "com.example.smartalarmer"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.smartalarmer"
+        applicationId = "com.notnako.smartalarmer"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -23,11 +47,23 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseStorePath))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {
