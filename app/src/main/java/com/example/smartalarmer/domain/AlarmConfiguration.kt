@@ -1,6 +1,7 @@
 package com.example.smartalarmer.domain
 
 import com.example.smartalarmer.data.Alarm
+import java.util.Locale
 
 enum class AlarmDay(val isoValue: Int) {
     MONDAY(1),
@@ -76,7 +77,9 @@ class PuzzleSelection private constructor(val values: Set<PuzzleType>) {
             if (encoded.isNullOrBlank()) return DEFAULT
             return of(
                 encoded.split(",").mapNotNull { token ->
-                    runCatching { PuzzleType.valueOf(token.trim().uppercase()) }.getOrNull()
+                    runCatching {
+                        PuzzleType.valueOf(token.trim().uppercase(Locale.ROOT))
+                    }.getOrNull()
                 }
             )
         }

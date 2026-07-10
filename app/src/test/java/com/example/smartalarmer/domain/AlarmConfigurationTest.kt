@@ -2,6 +2,7 @@ package com.example.smartalarmer.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.Locale
 
 class AlarmConfigurationTest {
     @Test
@@ -28,5 +29,20 @@ class AlarmConfigurationTest {
     @Test
     fun puzzleSelection_invalidCsvFallsBackToSolvableMath() {
         assertEquals(PuzzleSelection.DEFAULT, PuzzleSelection.parse("unknown,invalid"))
+    }
+
+    @Test
+    fun puzzleSelection_parsingIsIndependentOfDefaultLocale() {
+        val previousLocale = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+
+            assertEquals(
+                setOf(PuzzleType.TYPING),
+                PuzzleSelection.parse("typing").values
+            )
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
     }
 }
