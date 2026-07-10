@@ -38,7 +38,7 @@ missing convenience feature.
 - [x] Use lifecycle-managed `MainViewModel` creation and inject repository and
   scheduler abstractions. Keep Android `Context`, Toasts, and system calls out
   of the ViewModel.
-- [ ] Enable Room schema export and add migration tests for versions 1 -> 2 ->
+- [x] Enable Room schema export and add migration tests for versions 1 -> 2 ->
   3.
 - [ ] Define backup/restore behavior. Restored enabled alarms must be reconciled
   with `AlarmManager`, or operational alarm state should be excluded from backup.

@@ -129,7 +129,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `data/Alarm.kt` | Room `@Entity`. Fields: `id`, `hour`, `minute`, `daysOfWeek` (CSV of ISO-8601 day numbers), `isEnabled`, `puzzlesList` (CSV of puzzle types), `puzzleCount`. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 3. Versioned schemas are committed under `app/schemas/`. |
 
 ### Puzzle Engines
 
@@ -242,6 +242,7 @@ These run on a real device or emulator and require the Android runtime.
 | Test Class | What It Covers |
 |------------|---------------|
 | `AlarmDatabaseTest` | Creates an in-memory Room database, inserts alarms, reads them back, and validates CRUD operations. |
+| `AlarmMigrationTest` | Creates a version 1 database, runs 1→2→3 migrations, lets Room validate the final schema, and checks data/default preservation. |
 | `AlarmListScreenTest` | Tests Composable settings cards, dynamic weekdays text generation, play/test trigger callbacks, and edit clicks. |
 | `AlarmDismissScreenTest` | Verifies correctness of Compose states in individual Math, Memory, and Typing puzzle screens. |
 | `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |

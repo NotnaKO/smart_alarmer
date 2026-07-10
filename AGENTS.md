@@ -110,9 +110,10 @@ All puzzle engines implement the same interface pattern via DI:
 
 ### Instrumented Tests (`src/androidTest/`)
 - **AndroidJUnit4** runner with Compose UI testing framework
-- **Scope**: Room DAO operations (in-memory database), Compose screens (AlarmDismissScreen, AlarmListScreen)
+- **Scope**: Room DAO operations, exported-schema migration coverage, Compose screens (AlarmDismissScreen, AlarmListScreen)
 - **Setup**: Room database created with `allowMainThreadQueries()` for simplicity
 - **Context injection**: Use `ApplicationProvider.getApplicationContext()` for Room and system services
+- **Schema changes**: Commit generated files under `app/schemas/` and extend `AlarmMigrationTest` across every supported upgrade path
 
 ### Test Fixtures
 - Use `IS_PREVIEW = true` flag in test mode to avoid loud audio and back-button traps
