@@ -10,6 +10,7 @@ import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
 import com.example.smartalarmer.ui.dismiss.ShakePuzzleView
 import com.example.smartalarmer.ui.dismiss.VirtualKeyboard
 import com.example.smartalarmer.puzzle.*
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -417,7 +418,7 @@ class AlarmDismissScreenTest {
     }
 
     @Test
-    fun alarmDismissScreen_invalidPuzzleList_callsDismissImmediately() {
+    fun alarmDismissScreen_invalidPuzzleList_fallsBackToMath() {
         var dismissed = false
         composeTestRule.setContent {
             AlarmDismissScreen(
@@ -431,8 +432,52 @@ class AlarmDismissScreenTest {
             )
         }
 
-        composeTestRule.waitUntil(timeoutMillis = 5_000) { dismissed }
-        assertTrue("onDismissComplete should be called when there are no valid puzzles", dismissed)
+        composeTestRule.onNodeWithText("5 + 3").assertIsDisplayed()
+        assertFalse("Invalid configuration must not dismiss the alarm", dismissed)
+    }
+
+    @Test
+    fun alarmDismissScreen_zeroPuzzleCount_fallsBackToMath() {
+        var dismissed = false
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "",
+                puzzleCount = 0,
+                onDismissComplete = { dismissed = true },
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
+            )
+        }
+
+        composeTestRule.onNodeWithText("5 + 3").assertIsDisplayed()
+        assertFalse("Empty configuration must not dismiss the alarm", dismissed)
+    }
+
+    @Test
+    fun alarmDismissScreen_unavailableShakeSensor_fallsBackToMath() {
+        val unavailableShake = object : ShakeSensorProvider {
+            override val isAvailable = false
+            override fun register(onSensorChanged: (Float, Float, Float) -> Unit) = Unit
+            override fun unregister() = Unit
+        }
+        var dismissed = false
+
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "SHAKE",
+                puzzleCount = 1,
+                onDismissComplete = { dismissed = true },
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = unavailableShake,
+            )
+        }
+
+        composeTestRule.onNodeWithText("5 + 3").assertIsDisplayed()
+        assertFalse("Missing sensor must not dismiss the alarm", dismissed)
     }
 
     @Test

@@ -31,20 +31,30 @@ fun AlarmDismissScreen(
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
     shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(androidx.compose.ui.platform.LocalContext.current)
 ) {
-    val puzzles = remember {
-        puzzlesList.split(",")
+    val puzzles = remember(puzzlesList, puzzleCount, shakeProvider.isAvailable) {
+        val configuredPuzzles = puzzlesList.split(",")
             .mapNotNull {
                 runCatching { PuzzleType.valueOf(it.trim().uppercase()) }.getOrNull()
             }
+            .map { puzzle ->
+                if (puzzle == PuzzleType.SHAKE && !shakeProvider.isAvailable) {
+                    PuzzleType.MATH
+                } else {
+                    puzzle
+                }
+            }
+
+        configuredPuzzles
             .shuffled()
-            .take(puzzleCount)
+            .take(puzzleCount.coerceAtLeast(1))
+            .ifEmpty { listOf(PuzzleType.MATH) }
     }
 
     LaunchedEffect(puzzles) {
         android.util.Log.d("TEST_DEBUG", "Puzzles: ${puzzles.joinToString(", ")}")
     }
 
-    var currentTaskIndex by remember { mutableStateOf(0) }
+    var currentTaskIndex by remember(puzzles) { mutableStateOf(0) }
 
     if (currentTaskIndex >= puzzles.size) {
         LaunchedEffect(Unit) {

@@ -9,7 +9,7 @@ missing convenience feature.
 
 - `./gradlew testDebugUnitTest`: 20 tests passed.
 - `./gradlew lintDebug`: passed with warnings.
-- `./gradlew connectedDebugAndroidTest`: 52 tests passed on the
+- `./gradlew connectedDebugAndroidTest`: 54 tests passed on the
   `medium_phone (AVD) - 16` emulator.
 - Instrumented logs showed that preview receiver/service tests started real
   alarm playback twice and launched two dismissal activities. Passing tests did
@@ -25,9 +25,9 @@ missing convenience feature.
 - [x] Make exact-alarm scheduling return a result instead of assuming success.
   Check `canScheduleExactAlarms()`, handle `SecurityException`, select one exact
   alarm permission deliberately, and reschedule after permission is granted.
-- [ ] Replace automatic dismissal for an invalid/empty puzzle configuration
+- [x] Replace automatic dismissal for an invalid/empty puzzle configuration
   with a known solvable fallback puzzle.
-- [ ] Detect unavailable shake sensors and provide a solvable fallback rather
+- [x] Detect unavailable shake sensors and provide a solvable fallback rather
   than trapping the user.
 - [ ] Make `AlarmService` start/stop idempotent. Handle repeated starts, null
   sticky restarts, overlapping alarms, unique notifications/PendingIntents,
