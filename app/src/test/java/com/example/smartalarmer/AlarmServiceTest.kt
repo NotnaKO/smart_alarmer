@@ -2,6 +2,9 @@ package com.example.smartalarmer
 
 import com.example.smartalarmer.service.AlarmService
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AlarmServiceTest {
@@ -26,5 +29,22 @@ class AlarmServiceTest {
 
         // Beyond crescendo (75s) -> max volume 7
         assertEquals(7, AlarmService.calculateGradualVolume(75L, maxVolume))
+    }
+
+    @Test
+    fun repeatedAlarmStart_onlyReplacesDifferentOrInvalidAlarm() {
+        assertFalse(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = 42))
+        assertTrue(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = 43))
+        assertTrue(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = null, incomingAlarmId = 42))
+        assertTrue(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = -1))
+    }
+
+    @Test
+    fun notificationIds_areStableAndUniquePerAlarm() {
+        val first = AlarmService.notificationIdForAlarm(42)
+
+        assertEquals(first, AlarmService.notificationIdForAlarm(42))
+        assertNotEquals(first, AlarmService.notificationIdForAlarm(43))
+        assertNotEquals(first, AlarmService.notificationIdForAlarm(42, isPreview = true))
     }
 }

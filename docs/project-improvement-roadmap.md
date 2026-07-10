@@ -7,9 +7,9 @@ missing convenience feature.
 
 ## Validation baseline
 
-- `./gradlew testDebugUnitTest`: 20 tests passed.
+- `./gradlew testDebugUnitTest`: 22 tests passed.
 - `./gradlew lintDebug`: passed with warnings.
-- `./gradlew connectedDebugAndroidTest`: 55 tests passed on the
+- `./gradlew connectedDebugAndroidTest`: 56 tests passed on the
   `medium_phone (AVD) - 16` emulator.
 - Instrumented logs showed that preview receiver/service tests started real
   alarm playback twice and launched two dismissal activities. Passing tests did
@@ -29,7 +29,7 @@ missing convenience feature.
   with a known solvable fallback puzzle.
 - [x] Detect unavailable shake sensors, hide SHAKE from the editor, and provide
   a solvable fallback for existing configurations rather than trapping the user.
-- [ ] Make `AlarmService` start/stop idempotent. Handle repeated starts, null
+- [x] Make `AlarmService` start/stop idempotent. Handle repeated starts, null
   sticky restarts, overlapping alarms, unique notifications/PendingIntents,
   asynchronous media preparation, and `ToneGenerator` ownership.
 
