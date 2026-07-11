@@ -3,6 +3,7 @@ package com.example.smartalarmer.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.ui.main.AlarmEditSheet
@@ -153,7 +154,7 @@ class AlarmListScreenTest {
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
         
-        val expected = "$oneTime • $math (1 puzzles) • $defaultSound"
+        val expected = "$oneTime • $math (1 puzzle) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
@@ -169,7 +170,7 @@ class AlarmListScreenTest {
         val gradual = context.getString(com.example.smartalarmer.R.string.gradual_volume)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
         
-        val expected = "$weekdays • $math (1 puzzles) • $gradual • $defaultSound"
+        val expected = "$weekdays • $math (1 puzzle) • $gradual • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
@@ -277,4 +278,33 @@ class AlarmListScreenTest {
         assertEquals("MATH", savedPuzzles)
         assertEquals(1, savedPuzzleCount)
     }
+
+    @Test
+    fun alarmEditSheet_dayAndStepperControlsMeetTouchTargetMinimum() {
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = null,
+                    onDismiss = {},
+                    onSave = { _, _, _, _, _, _, _, _ -> },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.day_mon))
+            .assertHasClickAction()
+            .assertHeightIsAtLeast(48.dp)
+        composeTestRule
+            .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.increase_puzzle_count))
+            .performScrollTo()
+            .assertHeightIsAtLeast(48.dp)
+    }
+
 }

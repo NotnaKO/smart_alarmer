@@ -82,14 +82,10 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 ┌─────────────────────────────────────────────────────────────┐
 │                   AlarmDismissScreen                          │
 │  Puzzle sequence: shuffled, N-of-M from config               │
-│  ┌──────────────┬──────────────┬──────────────┐              │
-│  │ MathPuzzleView│TypingPuzzle │MemoryPuzzle  │              │
-│  │              │  View       │  View         │              │
-│  └──────┬───────┴──────┬──────┴──────┬────────┘              │
-│         │              │             │                        │
-│    MathEngine    TypingEngine   MemoryEngine                 │
-│   (MathPuzzle    (TypingPuzzle  (MemoryPuzzle                │
-│    Provider)      Provider)      Provider)                   │
+│  MathPuzzleView · TypingPuzzleView · MemoryPuzzleView         │
+│  ShakePuzzleView · VirtualKeyboard                            │
+│         │              │             │          │             │
+│    MathEngine    TypingEngine   MemoryEngine  ShakeSensor    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -112,7 +108,9 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Starts the foreground `AlarmService` and automatically reschedules recurring alarms for the next active day. Disables one-time alarms. |
 | `AlarmService.kt` | Owns one active alarm session, asynchronously prepares fallback audio, manages volume/audio focus, uses alarm-specific notification identities, and safely replaces overlapping alarms. |
 | `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI, accepts replacement alarm intents, and handles normal alarm security locks or safe `IS_PREVIEW` executions. |
-| `AlarmDismissScreen.kt` | Compose screen that orchestrates puzzle progression (Task 1 of N → Task N of N). Delegates to individual puzzle views. |
+| `AlarmDismissScreen.kt` | Saveable puzzle-sequence orchestration (Task 1 of N → Task N of N), including rotation-safe progress. |
+| `MathPuzzleView.kt`, `TypingPuzzleView.kt`, `MemoryPuzzleView.kt`, `ShakePuzzleView.kt` | Focused, accessible puzzle controls with injectable providers. |
+| `VirtualKeyboard.kt` | Localized 48 dp virtual keyboard with labeled shift, backspace, and space controls. |
 | `BootReceiver.kt` | Reschedules enabled alarms after boot and after exact-alarm access is granted. Uses `goAsync()` for safe coroutine work in a receiver. |
 
 ### UI & Architecture Layer
@@ -120,7 +118,9 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | File | Purpose |
 |------|---------|
 | `ui/main/MainViewModel.kt` | Lifecycle-managed state holder that coordinates injected repository and scheduling abstractions and emits one-shot UI events without retaining Android `Context`. |
-| `MainActivity.kt` | Displays the Glassmorphic alarm settings dashboard and hosts the slide-up `AlarmEditSheet` bottom drawer editor. |
+| `MainActivity.kt` | Activity wiring, lifecycle-aware state collection, permission refresh, and dashboard orchestration. |
+| `AlarmItemCard.kt` | Accessible alarm summary and alarm actions. |
+| `AlarmEditSheet.kt` | Saveable, scrollable alarm editor with sensor-aware puzzle selection. |
 | `theme/` | Material 3 dark theme configuration. |
 
 ### Data Layer
@@ -276,7 +276,7 @@ These run on a real device or emulator and require the Android runtime.
 | `AlarmDatabaseTest` | Creates an in-memory Room database, inserts alarms, reads them back, and validates CRUD operations. |
 | `AlarmMigrationTest` | Creates a version 1 database, runs 1→2→3 migrations, lets Room validate the final schema, and checks data/default preservation. |
 | `AlarmListScreenTest` | Tests Composable settings cards, dynamic weekdays text generation, play/test trigger callbacks, and edit clicks. |
-| `AlarmDismissScreenTest` | Verifies correctness of Compose states in individual Math, Memory, and Typing puzzle screens. |
+| `AlarmDismissScreenTest` | Verifies Math, Memory, Typing, and Shake behavior, accessibility semantics, saved puzzle input, and rotation-safe task progression. |
 | `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |
 
 ---

@@ -32,6 +32,14 @@
     <string name="sound_label">Sonido de alarma</string>
     <string name="sound_default">Alarma predeterminada</string>
     <string name="label_placeholder">Etiqueta de alarma (ej. Trabajo)</string>
+    <string name="select_alarm_sound">Seleccionar sonido de alarma</string>
+    <string name="decrease_puzzle_count">Reducir número de acertijos</string>
+    <string name="increase_puzzle_count">Aumentar número de acertijos</string>
+    <plurals name="puzzles_plural">
+        <item quantity="one">%1$d acertijo</item>
+        <item quantity="many">%1$d acertijos</item>
+        <item quantity="other">%1$d acertijos</item>
+    </plurals>
 
     <!-- Day Summary Labels -->
     <string name="one_time">Una vez</string>
@@ -67,10 +75,12 @@
     <plurals name="hours_plural">
         <item quantity="one">%1$d hora</item>
         <item quantity="other">%1$d horas</item>
+        <item quantity="many">%1$d horas</item>
     </plurals>
     <plurals name="minutes_plural">
         <item quantity="one">%1$d minuto</item>
         <item quantity="other">%1$d minutos</item>
+        <item quantity="many">%1$d minutos</item>
     </plurals>
     <string name="alarm_set_toast">Alarma programada para dentro de %1$s</string>
     <string name="exact_alarm_permission_required">Permita alarmas y recordatorios antes de activar esta alarma.</string>
@@ -86,6 +96,13 @@
     <string name="repeat_pattern">¡Repite el patrón!</string>
     <string name="shake_device">¡Agita el dispositivo!</string>
     <string name="shakes_remaining">Sacudidas restantes: %1$d</string>
+    <string name="backspace_desc">Retroceso</string>
+    <string name="confirm_answer_desc">Confirmar respuesta</string>
+    <string name="shift_key_desc">Mayúsculas</string>
+    <string name="shift_on">Activado</string>
+    <string name="shift_off">Desactivado</string>
+    <string name="space_key">Espacio</string>
+    <string name="memory_cell_desc">Casilla de memoria %1$d</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Alarma activa</string>

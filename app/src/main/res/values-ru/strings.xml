@@ -32,6 +32,15 @@
     <string name="sound_label">Звук будильника</string>
     <string name="sound_default">По умолчанию</string>
     <string name="label_placeholder">Название будильника (например, Работа)</string>
+    <string name="select_alarm_sound">Выбрать звук будильника</string>
+    <string name="decrease_puzzle_count">Уменьшить число заданий</string>
+    <string name="increase_puzzle_count">Увеличить число заданий</string>
+    <plurals name="puzzles_plural">
+        <item quantity="one">%1$d задание</item>
+        <item quantity="few">%1$d задания</item>
+        <item quantity="many">%1$d заданий</item>
+        <item quantity="other">%1$d задания</item>
+    </plurals>
 
     <!-- Day Summary Labels -->
     <string name="one_time">Однократно</string>
@@ -90,6 +99,13 @@
     <string name="repeat_pattern">Повторите узор!</string>
     <string name="shake_device">Встряхните устройство!</string>
     <string name="shakes_remaining">Осталось встряхиваний: %1$d</string>
+    <string name="backspace_desc">Удалить символ</string>
+    <string name="confirm_answer_desc">Подтвердить ответ</string>
+    <string name="shift_key_desc">Регистр</string>
+    <string name="shift_on">Включён</string>
+    <string name="shift_off">Выключен</string>
+    <string name="space_key">Пробел</string>
+    <string name="memory_cell_desc">Ячейка памяти %1$d</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Активный будильник</string>

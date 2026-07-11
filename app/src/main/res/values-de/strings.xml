@@ -32,6 +32,13 @@
     <string name="sound_label">Alarmton</string>
     <string name="sound_default">Standard-Alarm</string>
     <string name="label_placeholder">Alarm-Label (z. B. Arbeit)</string>
+    <string name="select_alarm_sound">Alarmton auswählen</string>
+    <string name="decrease_puzzle_count">Anzahl der Rätsel verringern</string>
+    <string name="increase_puzzle_count">Anzahl der Rätsel erhöhen</string>
+    <plurals name="puzzles_plural">
+        <item quantity="one">%1$d Rätsel</item>
+        <item quantity="other">%1$d Rätsel</item>
+    </plurals>
 
     <!-- Day Summary Labels -->
     <string name="one_time">Einmalig</string>
@@ -86,6 +93,13 @@
     <string name="repeat_pattern">Muster wiederholen!</string>
     <string name="shake_device">Gerät schütteln!</string>
     <string name="shakes_remaining">Verbleibende Erschütterungen: %1$d</string>
+    <string name="backspace_desc">Rücktaste</string>
+    <string name="confirm_answer_desc">Antwort bestätigen</string>
+    <string name="shift_key_desc">Umschalttaste</string>
+    <string name="shift_on">Ein</string>
+    <string name="shift_off">Aus</string>
+    <string name="space_key">Leertaste</string>
+    <string name="memory_cell_desc">Gedächtnisfeld %1$d</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Aktiver Alarm</string>
