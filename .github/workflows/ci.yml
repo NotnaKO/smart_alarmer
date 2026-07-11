@@ -105,7 +105,7 @@ jobs:
           path: app/build/reports/androidTests/connected/
 
   build:
-    name: Build APKs
+    name: Build Debug APK
     if: github.event_name == 'push'
     needs: [lint, test, instrumented-test]
     runs-on: ubuntu-latest
@@ -122,11 +122,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6  
 
-      - name: Build Debug & Release APKs
-        run: ./gradlew assembleDebug assembleRelease -x connectedAndroidTest --no-daemon
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug -x connectedAndroidTest --no-daemon
 
-      - name: Upload APKs
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v6
         with:
-          name: built-apks
-          path: app/build/outputs/apk/
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

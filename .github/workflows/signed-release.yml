@@ -1,0 +1,125 @@
+name: Signed Android Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Release version name, for example 1.0.1'
+        required: true
+        type: string
+      version_code:
+        description: 'Optional Play version code; defaults to 100000 + workflow run number'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: signed-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-signed-aab:
+    name: Build signed AAB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Resolve release version
+        env:
+          DISPATCH_VERSION_NAME: ${{ inputs.version_name }}
+          DISPATCH_VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            version_name="${GITHUB_REF_NAME#v}"
+            version_code=$((100000 + GITHUB_RUN_NUMBER))
+          else
+            version_name="$DISPATCH_VERSION_NAME"
+            version_code="${DISPATCH_VERSION_CODE:-$((100000 + GITHUB_RUN_NUMBER))}"
+          fi
+
+          if [[ ! "$version_name" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version name must look like 1.2.3 or 1.2.3-beta.1"
+            exit 1
+          fi
+
+          if [[ ! "$version_code" =~ ^[1-9][0-9]*$ ]] || (( version_code > 2100000000 )); then
+            echo "::error::Version code must be between 1 and 2100000000"
+            exit 1
+          fi
+
+          echo "SMART_ALARMER_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+          echo "SMART_ALARMER_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "Building Smart Alarmer $version_name ($version_code)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SMART_ALARMER_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SMART_ALARMER_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SMART_ALARMER_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SMART_ALARMER_KEY_PASSWORD }}
+        run: |
+          for value in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!value}" ]]; then
+              echo "::error::Required GitHub secret is missing: SMART_ALARMER_${value}"
+              exit 1
+            fi
+          done
+
+      - name: Restore upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SMART_ALARMER_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/smart-alarmer-upload.jks"
+          chmod 600 "$RUNNER_TEMP/smart-alarmer-upload.jks"
+
+      - name: Test, lint, and build signed bundle
+        env:
+          SMART_ALARMER_KEYSTORE_FILE: ${{ runner.temp }}/smart-alarmer-upload.jks
+          SMART_ALARMER_KEYSTORE_PASSWORD: ${{ secrets.SMART_ALARMER_KEYSTORE_PASSWORD }}
+          SMART_ALARMER_KEY_ALIAS: ${{ secrets.SMART_ALARMER_KEY_ALIAS }}
+          SMART_ALARMER_KEY_PASSWORD: ${{ secrets.SMART_ALARMER_KEY_PASSWORD }}
+        run: ./gradlew test :app:lintDebug :app:bundleRelease --no-daemon
+
+      - name: Verify and package release files
+        run: |
+          aab="app/build/outputs/bundle/release/app-release.aab"
+          verify_output="$(LC_ALL=C jarsigner -verify "$aab" 2>&1)"
+          if [[ "$verify_output" != *"jar verified."* ]]; then
+            echo "::error::The generated Android App Bundle is not signed correctly"
+            echo "$verify_output"
+            exit 1
+          fi
+
+          output_dir="app/build/outputs/play-release"
+          output_name="smart-alarmer-${SMART_ALARMER_VERSION_NAME}-${SMART_ALARMER_VERSION_CODE}"
+          mkdir -p "$output_dir"
+          cp "$aab" "$output_dir/$output_name.aab"
+          cp app/build/outputs/mapping/release/mapping.txt "$output_dir/$output_name-mapping.txt"
+          sha256sum "$output_dir/$output_name.aab" > "$output_dir/$output_name.aab.sha256"
+
+      - name: Upload signed release artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: smart-alarmer-signed-release
+          path: app/build/outputs/play-release/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove restored keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/smart-alarmer-upload.jks"

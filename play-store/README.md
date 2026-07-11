@@ -56,6 +56,9 @@ Upload `app/build/outputs/bundle/release/app-release.aab` to the internal testin
 track and enroll in Play App Signing. Each later upload needs a larger
 `SMART_ALARMER_VERSION_CODE`.
 
+For signed CI builds, configure the GitHub Actions secrets and triggers in
+[`ci-signed-release.md`](ci-signed-release.md).
+
 ## Store listing files
 
 - Listing copy is under `listings/en-US/`.
