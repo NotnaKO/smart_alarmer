@@ -110,7 +110,10 @@ jobs:
           mkdir -p "$output_dir"
           cp "$aab" "$output_dir/$output_name.aab"
           cp app/build/outputs/mapping/release/mapping.txt "$output_dir/$output_name-mapping.txt"
-          sha256sum "$output_dir/$output_name.aab" > "$output_dir/$output_name.aab.sha256"
+          (
+            cd "$output_dir"
+            sha256sum "$output_name.aab" > "$output_name.aab.sha256"
+          )
 
       - name: Upload signed release artifact
         uses: actions/upload-artifact@v6
