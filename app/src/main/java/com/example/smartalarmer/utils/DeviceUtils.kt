@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import java.lang.reflect.Method
 
@@ -35,11 +34,6 @@ object DeviceUtils {
                !getSystemProperty("ro.hyper.os.version.code").isNullOrBlank()
     }
 
-    fun isIgnoringBatteryOptimizations(context: Context): Boolean {
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-        return powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
-    }
-
     fun getMiuiPermissionIntent(context: Context): Intent {
         if (!isXiaomi()) {
             return getStandardAppInfoIntent(context)
@@ -50,12 +44,6 @@ object DeviceUtils {
                 "com.miui.permcenter.permissions.PermissionsEditorActivity"
             )
             putExtra("extra_pkgname", context.packageName)
-        }
-    }
-
-    fun getBatteryOptimizationIntent(context: Context): Intent {
-        return Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = Uri.parse("package:${context.packageName}")
         }
     }
 

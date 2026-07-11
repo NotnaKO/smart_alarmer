@@ -185,7 +185,6 @@ Declared in `AndroidManifest.xml`:
 | `MODIFY_AUDIO_SETTINGS` | Apply gradual alarm volume and restore the previous level after dismissal |
 | `POST_NOTIFICATIONS` | Show foreground service notification |
 | `RECEIVE_BOOT_COMPLETED` | Trigger `BootReceiver` after device restart |
-| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Open the system exemption request for reliable OEM background execution |
 
 > **Note on Android 14+ (SDK 34+):** The `SCHEDULE_EXACT_ALARM` permission is revoked by default. On physical devices users must enable "Alarms & reminders" in Special App Access settings. On emulators, run:
 > ```bash

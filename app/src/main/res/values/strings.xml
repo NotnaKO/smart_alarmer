@@ -5,7 +5,6 @@
     <!-- Main Screen Settings / Errors -->
     <string name="bg_execution_settings">Background Execution Settings</string>
     <string name="bg_execution_desc">To ensure alarms trigger reliably in deep sleep and display over the lockscreen, please verify background settings:</string>
-    <string name="disable_battery_limits">Disable Battery Limits</string>
     <string name="xiaomi_settings">Xiaomi Settings</string>
     <string name="dismiss">Dismiss</string>
     <string name="permissions_required">Permissions Required</string>
@@ -17,6 +16,9 @@
     <string name="test_btn">Test</string>
     <string name="delete_alarm_desc">Delete Alarm</string>
     <string name="add_alarm_desc">Add Alarm</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="close">Close</string>
+    <string name="privacy_policy_body">Effective date: July 11, 2026\n\nSmart Alarmer is developed by Anton Kopanov. The app stores alarm times, labels, repeat schedules, puzzle settings, and selected ringtone references locally on your device. This information is used only to schedule and operate alarms.\n\nSmart Alarmer does not create user accounts, display ads, use analytics or tracking SDKs, transmit user data, or sell or share personal information. Shake-puzzle motion readings are processed temporarily on the device while that puzzle is active and are not stored or transmitted.\n\nThe app requests notification, exact-alarm, full-screen-intent, foreground-service, wake-lock, boot, and audio-setting access only to schedule alarms, play alarm audio, wake the screen, display the alarm over the lock screen, restore schedules after a restart, and control alarm volume.\n\nAlarm data remains on the device until you delete an alarm, clear the app data, or uninstall the app. The alarm database is excluded from cloud backup and device transfer.\n\nFor privacy questions or deletion assistance, contact the developer through https://github.com/NotnaKO/smart_alarmer/issues. Because the app does not operate an account or remote data service, uninstalling the app or clearing its storage deletes all app data.\n\nThis policy may be updated when the app’s behavior changes. The current policy is available from the app and its Google Play listing.</string>
 
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">New Alarm</string>
