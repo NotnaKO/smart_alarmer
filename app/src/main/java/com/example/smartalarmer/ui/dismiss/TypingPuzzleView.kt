@@ -43,7 +43,7 @@ fun TypingPuzzleView(
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = targetQuote, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         TextField(
             value = input,
             onValueChange = { /* readOnly handles input */ },
@@ -57,12 +57,12 @@ fun TypingPuzzleView(
             )
         )
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         VirtualKeyboard(
             onKeyClick = { input += it },
             onBackspace = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
@@ -76,4 +76,3 @@ fun TypingPuzzleView(
         }
     }
 }
-

@@ -85,7 +85,7 @@ import java.util.Locale
       val context = LocalContext.current
       var hour by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.hour ?: 8) }
       var minute by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.minute ?: 0) }
-      
+
       val initialDays = alarm?.repeatDays?.values.orEmpty()
       val selectedDays = rememberSaveable(
           alarm?.id,

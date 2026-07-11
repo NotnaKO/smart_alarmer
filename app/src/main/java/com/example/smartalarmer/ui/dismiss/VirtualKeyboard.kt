@@ -119,7 +119,6 @@ fun VirtualKeyboard(
     }
 }
 
-
 @Composable
 fun KeyButton(
     text: String,
@@ -138,4 +137,3 @@ fun KeyButton(
         Text(text = text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
-
