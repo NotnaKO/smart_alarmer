@@ -2,6 +2,7 @@ package com.example.smartalarmer.ui
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
 import com.example.smartalarmer.ui.dismiss.MathPuzzleView
@@ -121,6 +122,21 @@ class AlarmDismissScreenTest {
         // input should be "8"
         val yourAnswer8 = context.getString(com.example.smartalarmer.R.string.your_answer_format, "8")
         composeTestRule.onNodeWithText(yourAnswer8).assertIsDisplayed()
+    }
+
+    @Test
+    fun mathPuzzle_recreationPreservesEnteredAnswer() {
+        val restorationTester = StateRestorationTester(composeTestRule)
+        restorationTester.setContent {
+            MathPuzzleView(onComplete = {}, mathProvider = fakeMath)
+        }
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+
+        composeTestRule.onNodeWithText("8").performClick()
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        val enteredAnswer = context.getString(com.example.smartalarmer.R.string.your_answer_format, "8")
+        composeTestRule.onNodeWithText(enteredAnswer).assertIsDisplayed()
     }
 
     @Test

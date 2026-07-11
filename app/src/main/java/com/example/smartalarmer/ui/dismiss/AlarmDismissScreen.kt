@@ -6,6 +6,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.mapSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,7 +34,15 @@ fun AlarmDismissScreen(
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
     shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(androidx.compose.ui.platform.LocalContext.current)
 ) {
-    val puzzles = remember(puzzlesList, puzzleCount, shakeProvider.isAvailable) {
+    val puzzles = rememberSaveable(
+        puzzlesList,
+        puzzleCount,
+        shakeProvider.isAvailable,
+        saver = listSaver(
+            save = { puzzleTypes -> puzzleTypes.map(PuzzleType::name) },
+            restore = { names -> names.map(PuzzleType::valueOf) }
+        )
+    ) {
         val configuredPuzzles = PuzzleSelection.parse(puzzlesList).values
             .map { puzzle ->
                 if (puzzle == PuzzleType.SHAKE && !shakeProvider.isAvailable) {
@@ -47,7 +58,7 @@ fun AlarmDismissScreen(
             .ifEmpty { listOf(PuzzleType.MATH) }
     }
 
-    var currentTaskIndex by remember(puzzles) { mutableStateOf(0) }
+    var currentTaskIndex by rememberSaveable(puzzles) { mutableStateOf(0) }
 
     if (currentTaskIndex >= puzzles.size) {
         LaunchedEffect(Unit) {
@@ -119,11 +130,28 @@ fun MathPuzzleView(
     onComplete: () -> Unit,
     mathProvider: MathPuzzleProvider = MathEngine,
 ) {
-    val puzzle = remember {
+    val puzzle = rememberSaveable(
+        saver = mapSaver(
+            save = { generated ->
+                mapOf(
+                    "equation" to generated.equation,
+                    "answer" to generated.answer,
+                    "difficulty" to generated.difficulty.name
+                )
+            },
+            restore = { saved ->
+                MathPuzzle(
+                    equation = saved.getValue("equation") as String,
+                    answer = saved.getValue("answer") as Int,
+                    difficulty = Difficulty.valueOf(saved.getValue("difficulty") as String)
+                )
+            }
+        )
+    ) {
         val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
         mathProvider.generate(difficulty)
     }
-    var input by remember { mutableStateOf("") }
+    var input by rememberSaveable { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = puzzle.equation, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
@@ -183,8 +211,8 @@ fun TypingPuzzleView(
     typingProvider: TypingPuzzleProvider = TypingEngine,
 ) {
     val quotes = stringArrayResource(R.array.typing_quotes).toList()
-    val targetQuote = remember { typingProvider.getRandomQuote(quotes) }
-    var input by remember { mutableStateOf("") }
+    val targetQuote = rememberSaveable { typingProvider.getRandomQuote(quotes) }
+    var input by rememberSaveable { mutableStateOf("") }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.type_sentence_label), color = Color.Gray, fontSize = 14.sp)
         Spacer(modifier = Modifier.height(8.dp))
@@ -230,7 +258,7 @@ fun VirtualKeyboard(
     onBackspace: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isShifted by remember { mutableStateOf(false) }
+    var isShifted by rememberSaveable { mutableStateOf(false) }
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val locale = configuration.locales[0] ?: java.util.Locale.getDefault()
     val language = locale.language
@@ -329,7 +357,7 @@ fun MemoryPuzzleView(
     onComplete: () -> Unit,
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
 ) {
-    val sequence = remember {
+    val sequence = rememberSaveable {
         val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
         val length = when (difficulty) {
             Difficulty.EASY -> 3
@@ -338,9 +366,14 @@ fun MemoryPuzzleView(
         }
         memoryProvider.generateSequence(length)
     }
-    val userInputs = remember { mutableStateListOf<Int>() }
-    var isShowingSequence by remember { mutableStateOf(true) }
-    var activeFlashIndex by remember { mutableStateOf(-1) }
+    val userInputs = rememberSaveable(
+        saver = listSaver(
+            save = { inputs -> inputs.toList() },
+            restore = { inputs -> mutableStateListOf<Int>().apply { addAll(inputs) } }
+        )
+    ) { mutableStateListOf<Int>() }
+    var isShowingSequence by rememberSaveable { mutableStateOf(true) }
+    var activeFlashIndex by rememberSaveable { mutableStateOf(-1) }
 
     LaunchedEffect(isShowingSequence) {
         if (isShowingSequence) {
@@ -402,7 +435,7 @@ fun ShakePuzzleView(
     onComplete: () -> Unit,
     shakeProvider: ShakeSensorProvider
 ) {
-    var shakeCount by remember { mutableStateOf(30) }
+    var shakeCount by rememberSaveable { mutableStateOf(30) }
     val targetShakes = 30
 
     DisposableEffect(key1 = shakeProvider) {

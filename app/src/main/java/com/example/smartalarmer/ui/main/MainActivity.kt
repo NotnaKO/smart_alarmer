@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -46,6 +48,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
@@ -132,16 +135,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             SmartAlarmerTheme {
                 val context = LocalContext.current
-                val alarms by viewModel.alarms.collectAsState(initial = emptyList())
-                val isSheetVisible by viewModel.isBottomSheetVisible.collectAsState()
-                val editingAlarm by viewModel.editingAlarm.collectAsState()
+                val alarms by viewModel.alarms.collectAsStateWithLifecycle()
+                val isSheetVisible by viewModel.isBottomSheetVisible.collectAsStateWithLifecycle()
+                val editingAlarm by viewModel.editingAlarm.collectAsStateWithLifecycle()
 
-                var hasNotificationPermission by remember { mutableStateOf(true) }
-                var hasExactAlarmPermission by remember { mutableStateOf(true) }
-                var hasFullScreenIntentPermission by remember { mutableStateOf(true) }
+                var hasNotificationPermission by rememberSaveable { mutableStateOf(true) }
+                var hasExactAlarmPermission by rememberSaveable { mutableStateOf(true) }
+                var hasFullScreenIntentPermission by rememberSaveable { mutableStateOf(true) }
                 val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
-                var isXiaomiDismissed by remember { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
-                var isIgnoringBatteryOptimizations by remember { mutableStateOf(DeviceUtils.isIgnoringBatteryOptimizations(context)) }
+                var isXiaomiDismissed by rememberSaveable { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
+                var isIgnoringBatteryOptimizations by rememberSaveable { mutableStateOf(DeviceUtils.isIgnoringBatteryOptimizations(context)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
 
                 val requestNotificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -149,8 +152,8 @@ class MainActivity : ComponentActivity() {
                     onResult = { hasNotificationPermission = it }
                 )
 
-                var pickedSoundUri by remember { mutableStateOf<String?>(null) }
-                var labelInput by remember { mutableStateOf("") }
+                var pickedSoundUri by rememberSaveable { mutableStateOf<String?>(null) }
+                var labelInput by rememberSaveable { mutableStateOf("") }
 
                 val ringtonePickerLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.StartActivityForResult()
@@ -638,11 +641,17 @@ class MainActivity : ComponentActivity() {
       shakeSensorAvailable: Boolean = AndroidShakeSensorProvider(LocalContext.current).isAvailable
   ) {
       val context = LocalContext.current
-      var hour by remember { mutableStateOf(alarm?.hour ?: 8) }
-      var minute by remember { mutableStateOf(alarm?.minute ?: 0) }
+      var hour by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.hour ?: 8) }
+      var minute by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.minute ?: 0) }
       
       val initialDays = alarm?.repeatDays?.values.orEmpty()
-      val selectedDays = remember { mutableStateListOf<AlarmDay>().apply { addAll(initialDays) } }
+      val selectedDays = rememberSaveable(
+          alarm?.id,
+          saver = listSaver(
+              save = { days -> days.map(AlarmDay::name) },
+              restore = { names -> mutableStateListOf<AlarmDay>().apply { addAll(names.map(AlarmDay::valueOf)) } }
+          )
+      ) { mutableStateListOf<AlarmDay>().apply { addAll(initialDays) } }
 
       val puzzleTypes = remember(shakeSensorAvailable) {
           buildList {
@@ -655,12 +664,18 @@ class MainActivity : ComponentActivity() {
           ?.toSet()
           .orEmpty()
           .ifEmpty { setOf(PuzzleType.MATH) }
-      val selectedPuzzles = remember { mutableStateListOf<PuzzleType>().apply { addAll(initialPuzzles) } }
+      val selectedPuzzles = rememberSaveable(
+          alarm?.id,
+          saver = listSaver(
+              save = { puzzles -> puzzles.map(PuzzleType::name) },
+              restore = { names -> mutableStateListOf<PuzzleType>().apply { addAll(names.map(PuzzleType::valueOf)) } }
+          )
+      ) { mutableStateListOf<PuzzleType>().apply { addAll(initialPuzzles) } }
 
-      var puzzleCount by remember {
+      var puzzleCount by rememberSaveable(alarm?.id) {
           mutableStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
       }
-      var isGradualVolume by remember { mutableStateOf(alarm?.isGradualVolume ?: true) }
+      var isGradualVolume by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.isGradualVolume ?: true) }
 
       val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -685,7 +700,7 @@ class MainActivity : ComponentActivity() {
                   color = Color.White
               )
 
-              var label by remember { mutableStateOf(initialLabel) }
+              var label by rememberSaveable(alarm?.id) { mutableStateOf(initialLabel) }
               OutlinedTextField(
                   value = label,
                   onValueChange = { label = it },

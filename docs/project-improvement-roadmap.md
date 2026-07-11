@@ -64,7 +64,7 @@ missing convenience feature.
   components, and state holders.
 - [ ] Add semantic labels and state to puzzle controls, use at least 48 dp touch
   targets, and support large fonts, landscape, and larger screens.
-- [ ] Collect flows with lifecycle awareness and preserve edit/puzzle state
+- [x] Collect flows with lifecycle awareness and preserve edit/puzzle state
   across recreation where appropriate.
 - [x] Remove puzzle solutions from production logs.
 - [ ] Resolve localization lint warnings and remaining hard-coded UI strings.
