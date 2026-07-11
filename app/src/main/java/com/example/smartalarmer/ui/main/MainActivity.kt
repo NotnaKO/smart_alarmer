@@ -166,7 +166,15 @@ class MainActivity : ComponentActivity() {
                     contract = ActivityResultContracts.StartActivityForResult()
                 ) { result ->
                     if (result.resultCode == RESULT_OK) {
-                        val uri = result.data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            result.data?.getParcelableExtra(
+                                RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+                                Uri::class.java
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                        }
                         pickedSoundUri = uri?.toString()
                     }
                 }
