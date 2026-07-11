@@ -149,9 +149,9 @@ class MainActivity : ComponentActivity() {
                 var hasNotificationPermission by rememberSaveable { mutableStateOf(true) }
                 var hasExactAlarmPermission by rememberSaveable { mutableStateOf(true) }
                 var hasFullScreenIntentPermission by rememberSaveable { mutableStateOf(true) }
+                var showPrivacyPolicy by rememberSaveable { mutableStateOf(false) }
                 val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
                 var isXiaomiDismissed by rememberSaveable { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
-                var isIgnoringBatteryOptimizations by rememberSaveable { mutableStateOf(DeviceUtils.isIgnoringBatteryOptimizations(context)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
 
                 val requestNotificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -216,8 +216,6 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 true
                             }
-                            
-                            isIgnoringBatteryOptimizations = DeviceUtils.isIgnoringBatteryOptimizations(context)
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
@@ -251,7 +249,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
                             val showXiaomiWarning = isXiaomiDevice && !isXiaomiDismissed
-                            if (!isIgnoringBatteryOptimizations || showXiaomiWarning) {
+                            if (showXiaomiWarning) {
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -278,28 +276,6 @@ class MainActivity : ComponentActivity() {
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            if (!isIgnoringBatteryOptimizations) {
-                                                Button(
-                                                    onClick = {
-                                                        val intent = DeviceUtils.getBatteryOptimizationIntent(context)
-                                                        try {
-                                                            context.startActivity(intent)
-                                                        } catch (e: Exception) {
-                                                            // Fallback to general settings if action cannot be started
-                                                            val fallback = DeviceUtils.getStandardAppInfoIntent(context)
-                                                            context.startActivity(fallback)
-                                                        }
-                                                    },
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = OrangeWarning,
-                                                        contentColor = Color.Black
-                                                    ),
-                                                    shape = RoundedCornerShape(8.dp),
-                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                                                ) {
-                                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.disable_battery_limits), fontSize = 11.sp)
-                                                }
-                                            }
                                             if (showXiaomiWarning) {
                                                 Button(
                                                     onClick = {
@@ -418,13 +394,23 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
 
-                            Text(
-                                text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.app_name),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.padding(vertical = 16.dp)
-                              )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.app_name),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = 16.dp)
+                                )
+                                TextButton(onClick = { showPrivacyPolicy = true }) {
+                                    Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.privacy_policy))
+                                }
+                            }
 
                               if (alarms.isEmpty()) {
                                   Box(
@@ -503,6 +489,10 @@ class MainActivity : ComponentActivity() {
                                   initialLabel = labelInput,
                                   pickedSoundUri = pickedSoundUri
                               )
+                          }
+
+                          if (showPrivacyPolicy) {
+                              PrivacyPolicyDialog(onDismiss = { showPrivacyPolicy = false })
                           }
                       }
                   }

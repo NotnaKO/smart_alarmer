@@ -5,7 +5,6 @@
     <!-- Main Screen Settings / Errors -->
     <string name="bg_execution_settings">Ajustes de ejecución en segundo plano</string>
     <string name="bg_execution_desc">Para garantizar que las alarmas se activen de forma fiable en modo de suspensión profunda y se muestren en la pantalla de bloqueo, verifique los ajustes de segundo plano:</string>
-    <string name="disable_battery_limits">Desactivar límites de batería</string>
     <string name="xiaomi_settings">Ajustes de Xiaomi</string>
     <string name="dismiss">Descartar</string>
     <string name="permissions_required">Permisos requeridos</string>
@@ -17,6 +16,9 @@
     <string name="test_btn">Probar</string>
     <string name="delete_alarm_desc">Eliminar alarma</string>
     <string name="add_alarm_desc">Añadir alarma</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="close">Cerrar</string>
+    <string name="privacy_policy_body">Fecha de entrada en vigor: 11 de julio de 2026\n\nSmart Alarmer está desarrollado por Anton Kopanov. La aplicación guarda las horas, etiquetas, repeticiones, ajustes de puzzles y referencias de tonos seleccionados localmente en su dispositivo. Esta información se utiliza únicamente para programar y ejecutar alarmas.\n\nSmart Alarmer no crea cuentas de usuario, no muestra anuncios, no utiliza SDK de análisis o seguimiento, no transmite datos del usuario ni vende o comparte información personal. Las lecturas de movimiento del puzzle de agitar se procesan temporalmente en el dispositivo mientras el puzzle está activo y no se guardan ni transmiten.\n\nLa aplicación solicita acceso a notificaciones, alarmas exactas, intentos de pantalla completa, servicios en primer plano, bloqueo de activación, arranque y ajustes de audio únicamente para programar alarmas, reproducir su sonido, activar la pantalla, mostrar la alarma sobre la pantalla de bloqueo, restaurar la programación tras un reinicio y controlar el volumen.\n\nLos datos de las alarmas permanecen en el dispositivo hasta que elimine una alarma, borre los datos de la aplicación o desinstale la aplicación. La base de datos de alarmas está excluida de las copias de seguridad en la nube y de la transferencia entre dispositivos.\n\nPara preguntas sobre privacidad o ayuda con la eliminación, contacte con el desarrollador en https://github.com/NotnaKO/smart_alarmer/issues. Como la aplicación no utiliza cuentas ni servicios remotos de datos, al borrar su almacenamiento o desinstalarla se eliminan todos sus datos.\n\nEsta política puede actualizarse cuando cambie el comportamiento de la aplicación. La versión actual está disponible en la aplicación y en su ficha de Google Play.</string>
 
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">Nueva alarma</string>

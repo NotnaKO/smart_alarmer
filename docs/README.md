@@ -185,7 +185,6 @@ Declared in `AndroidManifest.xml`:
 | `MODIFY_AUDIO_SETTINGS` | Apply gradual alarm volume and restore the previous level after dismissal |
 | `POST_NOTIFICATIONS` | Show foreground service notification |
 | `RECEIVE_BOOT_COMPLETED` | Trigger `BootReceiver` after device restart |
-| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Open the system exemption request for reliable OEM background execution |
 
 > **Note on Android 14+ (SDK 34+):** The `SCHEDULE_EXACT_ALARM` permission is revoked by default. On physical devices users must enable "Alarms & reminders" in Special App Access settings. On emulators, run:
 > ```bash
@@ -216,7 +215,7 @@ After building, the APK file can be retrieved at:
 ### Release builds
 
 Production builds use the application ID `com.notnako.smartalarmer`, semantic
-version `1.0.0` by default, and R8 code/resource shrinking. Override versioning
+version `0.1.0-alpha.1` by default, and R8 code/resource shrinking. Override versioning
 in CI or a release shell with `SMART_ALARMER_VERSION_CODE` and
 `SMART_ALARMER_VERSION_NAME`.
 

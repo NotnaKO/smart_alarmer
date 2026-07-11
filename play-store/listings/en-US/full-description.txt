@@ -1,0 +1,23 @@
+Smart Alarmer helps you get out of bed by making you complete a short puzzle sequence before an alarm can be dismissed.
+
+BUILD YOUR WAKE-UP CHALLENGE
+
+Choose from math, typing, memory, and shake puzzles. Select the puzzle types and number of tasks for each alarm.
+
+FLEXIBLE ALARMS
+
+• Create one-time or repeating alarms
+• Add labels such as Work, Gym, or Medication
+• Choose a custom alarm sound
+• Enable gradual volume
+• Preview the puzzle sequence safely before relying on it
+
+DESIGNED FOR RELIABLE ALARMS
+
+Smart Alarmer uses Android's alarm-clock capabilities, foreground notifications, and lock-screen alarm display. Enabled alarms are restored after a device restart or time-zone change.
+
+PRIVATE BY DESIGN
+
+Alarm settings stay on your device. Smart Alarmer has no accounts, ads, analytics, or tracking and does not transmit or share user data.
+
+Important: Android may ask you to allow notifications, alarms and reminders, and full-screen alarm display. These permissions are used only for alarms you create.
