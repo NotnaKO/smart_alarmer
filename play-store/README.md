@@ -27,7 +27,7 @@ The easiest local option is the included helper, which prompts for passwords
 without saving them or placing them in shell history:
 
 ```bash
-./build_release.sh 1 1.0.0
+./build_release.sh 1 0.1.0-alpha.1
 ```
 
 Alternatively, provide all signing values through environment variables or CI
@@ -39,7 +39,7 @@ export SMART_ALARMER_KEYSTORE_PASSWORD="..."
 export SMART_ALARMER_KEY_ALIAS="upload"
 export SMART_ALARMER_KEY_PASSWORD="..."
 export SMART_ALARMER_VERSION_CODE="1"
-export SMART_ALARMER_VERSION_NAME="1.0.0"
+export SMART_ALARMER_VERSION_NAME="0.1.0-alpha.1"
 ```
 
 Do not commit the keystore or its passwords.

@@ -215,7 +215,7 @@ After building, the APK file can be retrieved at:
 ### Release builds
 
 Production builds use the application ID `com.notnako.smartalarmer`, semantic
-version `1.0.0` by default, and R8 code/resource shrinking. Override versioning
+version `0.1.0-alpha.1` by default, and R8 code/resource shrinking. Override versioning
 in CI or a release shell with `SMART_ALARMER_VERSION_CODE` and
 `SMART_ALARMER_VERSION_NAME`.
 

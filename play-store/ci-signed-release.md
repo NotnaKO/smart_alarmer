@@ -33,8 +33,8 @@ in commands, workflow files, repository variables, issue comments, or PR text.
 Push a semantic-version tag:
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v0.1.0-alpha.1
+git push origin v0.1.0-alpha.1
 ```
 
 The tag becomes `versionName`. The workflow uses `100000 + workflow run number`

@@ -13,7 +13,7 @@ val releaseVersionCode = providers.environmentVariable("SMART_ALARMER_VERSION_CO
 require(releaseVersionCode > 0) { "SMART_ALARMER_VERSION_CODE must be a positive integer" }
 
 val releaseVersionName = providers.environmentVariable("SMART_ALARMER_VERSION_NAME")
-    .orElse("1.0.0")
+    .orElse("0.1.0-alpha.1")
     .get()
 val releaseStorePath = providers.environmentVariable("SMART_ALARMER_KEYSTORE_FILE").orNull
 val releaseStorePassword = providers.environmentVariable("SMART_ALARMER_KEYSTORE_PASSWORD").orNull
