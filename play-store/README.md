@@ -3,7 +3,7 @@
 ## Before creating the Play Console app
 
 1. Confirm that `com.notnako.smartalarmer` is the permanent package ID.
-2. The public developer name is **Anton Kopanov** and is reflected in the web
+2. The public developer name is **NotnaKO** and is reflected in the web
    and in-app privacy policies.
 3. Enable GitHub Pages for this repository with the `/docs` directory as its
    source. Confirm that the privacy-policy URL in `declarations.md` is public.
