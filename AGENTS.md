@@ -9,11 +9,11 @@ This Android alarm clock app forces wake-ups by requiring cognitive puzzles to b
 **See [docs/README.md](docs/README.md)** for complete architecture diagram and feature overview.
 
 **Key packages** (`app/src/main/java/com/example/smartalarmer/`):
-- **`ui/main/`** — MainActivity, MainViewModel, Compose screens (alarm list, config sheet)
-- **`ui/dismiss/`** — AlarmDismissActivity, AlarmDismissScreen, puzzle UI components
+- **`ui/main/`** — MainActivity wiring, MainViewModel, AlarmItemCard, and AlarmEditSheet
+- **`ui/dismiss/`** — AlarmDismissActivity, sequence screen, keyboard, and focused puzzle views
 - **`ui/theme/`** — Glassmorphic dark theme styling
 - **`data/`** — Room entities, DAO, database setup, coroutine-driven queries
-- **`puzzle/`** — Abstract `PuzzleProvider` interfaces and 3 engine implementations
+- **`puzzle/`** — Injectable Math, Typing, Memory, and shake-sensor providers
 - **`service/`** — AlarmService (foreground notification, MediaPlayer, volume lock)
 - **`receiver/`** — AlarmReceiver (alarm trigger), BootReceiver (reschedule on device reboot)
 - **`scheduler/`** — AlarmScheduler (pure calculation; no Android context; testable)
@@ -63,7 +63,7 @@ encode CSV only at persistence and Intent boundaries.
 
 ### Puzzle Type Encoding
 Puzzle types in config are stored as **comma-separated string values**:
-- `"MATH,TYPING,MEMORY"` = all three types
+- `"MATH,TYPING,MEMORY,SHAKE"` = all four types
 - `"MATH"` = only math puzzles
 - Shuffle and limit in AlarmDismissScreen; order from config is ignored
 - Use `Alarm.puzzleSelection` / `PuzzleSelection.parse()` so malformed legacy
@@ -72,7 +72,7 @@ Puzzle types in config are stored as **comma-separated string values**:
 ### Preview Mode Flag
 - `IS_PREVIEW = true` in AlarmService/Activity → safe testing mode
 - Disables: loud sound, max-volume locks, back-button disable, full-screen overlay
-- Enable via PendingIntent extra `"is_preview"` boolean when testing
+- Enable via Intent extra `"IS_PREVIEW"` boolean when testing
 - Always use preview mode for test fixtures; only real mode for instrumented tests when needed
 
 ---
@@ -80,7 +80,7 @@ Puzzle types in config are stored as **comma-separated string values**:
 ## ⚠️ Important Constraints & Pitfalls
 
 ### Permissions & Manifest
-- **Exact alarm permission** (`SCHEDULE_EXACT_ALARM`) is critical; fallback to `setAndAllow...` on older APIs
+- **Exact alarm permission** (`SCHEDULE_EXACT_ALARM`) is critical; scheduling uses `setAlarmClock()` and returns a typed failure when exact access is unavailable
 - **Foreground service** requires `POST_NOTIFICATIONS` (Android 13+)
 - **Full-screen intent** for AlarmDismissActivity requires `USE_FULL_SCREEN_INTENT`
 - Device reboot, app replacement, time changes, and time-zone changes trigger
@@ -92,9 +92,9 @@ Puzzle types in config are stored as **comma-separated string values**:
 - Volume lock runs on a 1-second timer loop; don't block the main thread
 
 ### Puzzle Engine Interfaces
-All puzzle engines implement the same interface pattern via DI:
-- `MathPuzzleProvider`, `TypingPuzzleProvider`, `MemoryPuzzleProvider`
-- Each provides `generatePuzzle()` and `isPuzzleSolved(answer)` methods
+Puzzle behavior is provided through small injectable interfaces:
+- `MathPuzzleProvider`, `TypingPuzzleProvider`, `MemoryPuzzleProvider`, `ShakeSensorProvider`
+- Each exposes only the generation/validation or sensor lifecycle operations its UI needs
 - **No hard dependency on implementation**; inject for testing or alternative implementations
 
 ### Database Queries
@@ -133,10 +133,9 @@ All puzzle engines implement the same interface pattern via DI:
 | **UI Framework** | Jetpack Compose | Latest BOM (2026.03.01) | Material 3 theme, Glassmorphic design |
 | **Language** | Kotlin | 2.0.21 | JVM target 17; new compiler required |
 | **Persistence** | Room | 2.8.4 | Coroutine support, auto-migrations |
-| **Navigation** | Navigation 3 | Latest | Fragment-free; composable-first |
 | **Async** | Coroutines + Flow | 1.10.2 | No Rx; pure Flow for reactivity |
 | **Compilation** | Compose Compiler | Latest | Plugin alias via version catalog |
-| **Serialization** | Kotlin Serialization | Latest | Declared; not actively used yet |
+| **Code generation** | KSP | 2.3.9 | Room compiler; schemas exported by Room Gradle plugin |
 | **Build Config** | Version Catalog | `gradle/libs.versions.toml` | Central dependency management |
 
 **Notably absent**: No Hilt/Dagger DI framework, no networking, no analytics—kept minimal.
@@ -159,12 +158,13 @@ All puzzle engines implement the same interface pattern via DI:
 - Test with fixed clocks and explicit zones, including DST gaps and overlaps
 
 ### Testing AlarmService Behavior
-- Create a PendingIntent with `is_preview = true` extra
+- Create an Intent with `IS_PREVIEW = true` extra
 - Launch via Intent; service runs in safe mode (no loud audio, no back-button trap)
 - Assert foreground notification is posted within 10 seconds
 
 ### UI State Updates
-- Observe `MainViewModel.alarms` and sheet StateFlows in Compose
+- Observe `MainViewModel.alarms` and sheet StateFlows with `collectAsStateWithLifecycle()`
+- Keep user-entered editor and puzzle progress in `rememberSaveable` state so configuration changes do not reset or skip tasks
 - Query changes flow through `AlarmDao` → `RoomAlarmRepository` → MainViewModel → UI
 - Test with in-memory Room database; inject via `ApplicationProvider.getApplicationContext()`
 
@@ -182,7 +182,7 @@ All puzzle engines implement the same interface pattern via DI:
 ## 🚀 Quick Start for AI Agents
 
 1. **Understand flow**: Alarm fires → AlarmReceiver → AlarmService (notification + audio) → AlarmDismissActivity (puzzle UI)
-2. **Know the data**: Days as CSV ints, puzzle types as CSV strings; no enums for encoding
+2. **Know the data**: Persistence uses CSV, while application code uses `AlarmDays`, `PuzzleSelection`, and their enums
 3. **Test approach**: Use `runTest` for unit tests, in-memory Room for instrumented, preview mode for UI safety
 4. **Before committing**: Run `./gradlew build && ./gradlew test && ./gradlew connectedAndroidTest` (if emulator running)
 5. **Review manifest** when modifying permissions, services, or receivers

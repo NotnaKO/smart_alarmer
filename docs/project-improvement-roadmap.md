@@ -68,7 +68,7 @@ missing convenience feature.
   across recreation where appropriate.
 - [x] Remove puzzle solutions from production logs.
 - [x] Resolve localization lint warnings and remaining hard-coded UI strings.
-- [ ] Keep `docs/README.md` and `AGENTS.md` aligned with the implementation,
+- [x] Keep `docs/README.md` and `AGENTS.md` aligned with the implementation,
   including the SHAKE puzzle, DAO signatures, and preview behavior.
 
 ## Working agreement
