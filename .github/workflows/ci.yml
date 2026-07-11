@@ -31,7 +31,7 @@ jobs:
 
       - name: Upload Lint Report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lint-results-debug
           path: app/build/reports/lint-results-debug.html
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload Test Report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-reports
           path: app/build/reports/tests/testDebugUnitTest/
@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload Instrumented Test Reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: instrumented-test-reports-api-${{ matrix.api-level }}
           path: app/build/reports/androidTests/connected/
@@ -126,7 +126,7 @@ jobs:
         run: ./gradlew assembleDebug assembleRelease -x connectedAndroidTest --no-daemon
 
       - name: Upload APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: built-apks
           path: app/build/outputs/apk/
