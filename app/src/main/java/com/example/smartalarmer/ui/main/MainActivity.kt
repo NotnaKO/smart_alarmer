@@ -33,6 +33,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.Manifest
@@ -63,6 +68,7 @@ import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import com.example.smartalarmer.utils.DeviceUtils
+import java.util.Locale
 
 private fun handleMainUiEvent(context: Context, event: MainUiEvent) {
     when (event) {
@@ -135,6 +141,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SmartAlarmerTheme {
                 val context = LocalContext.current
+                val selectAlarmSoundTitle = stringResource(com.example.smartalarmer.R.string.select_alarm_sound)
                 val alarms by viewModel.alarms.collectAsStateWithLifecycle()
                 val isSheetVisible by viewModel.isBottomSheetVisible.collectAsStateWithLifecycle()
                 val editingAlarm by viewModel.editingAlarm.collectAsStateWithLifecycle()
@@ -259,7 +266,7 @@ class MainActivity : ComponentActivity() {
                                             fontSize = 13.sp
                                         )
                                         Spacer(modifier = Modifier.height(12.dp))
-                                        Row(
+                                        FlowRow(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
@@ -346,7 +353,7 @@ class MainActivity : ComponentActivity() {
                                             fontSize = 13.sp
                                         )
                                         Spacer(modifier = Modifier.height(12.dp))
-                                        Row(
+                                        FlowRow(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
@@ -475,7 +482,7 @@ class MainActivity : ComponentActivity() {
                                   onPickSound = {
                                       val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
                                           putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE)
-                                          putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+                                          putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, selectAlarmSoundTitle)
                                           putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
                                           putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
                                           pickedSoundUri?.let {
@@ -537,6 +544,11 @@ class MainActivity : ComponentActivity() {
           }
           .joinToString(", ")
       val gradualText = if (alarm.isGradualVolume) " • " + stringResource(com.example.smartalarmer.R.string.gradual_volume) else ""
+      val puzzleCountText = context.resources.getQuantityString(
+          com.example.smartalarmer.R.plurals.puzzles_plural,
+          alarm.puzzleCount,
+          alarm.puzzleCount
+      )
 
       Card(
           modifier = Modifier
@@ -563,14 +575,14 @@ class MainActivity : ComponentActivity() {
                       )
                       Spacer(modifier = Modifier.height(2.dp))
                       Text(
-                          text = String.format("%02d:%02d", alarm.hour, alarm.minute),
+                          text = String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute),
                           fontSize = 18.sp,
                           fontWeight = FontWeight.Medium,
                           color = Color.LightGray
                       )
                   } else {
                       Text(
-                          text = String.format("%02d:%02d", alarm.hour, alarm.minute),
+                          text = String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute),
                           fontSize = 32.sp,
                           fontWeight = FontWeight.Bold,
                           color = Color.White
@@ -583,15 +595,18 @@ class MainActivity : ComponentActivity() {
                       }.getOrNull()
                   } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
                   Text(
-                      text = "$daysSummary • $puzzlesText (${alarm.puzzleCount} puzzles)$gradualText • $soundName",
+                      text = "$daysSummary • $puzzlesText ($puzzleCountText)$gradualText • $soundName",
                       fontSize = 13.sp,
                       color = Color.LightGray
                   )
               }
-              Row(verticalAlignment = Alignment.CenterVertically) {
+              FlowRow(
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  verticalArrangement = Arrangement.spacedBy(8.dp)
+              ) {
                   OutlinedButton(
                       onClick = onTest,
-                      modifier = Modifier.padding(end = 8.dp),
+                      modifier = Modifier,
                       colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenSuccess),
                       border = BorderStroke(1.dp, GreenSuccess.copy(alpha = 0.5f)),
                       shape = RoundedCornerShape(12.dp),
@@ -737,7 +752,7 @@ class MainActivity : ComponentActivity() {
               ) {
                   Text(androidx.compose.ui.res.stringResource(com.example.smartalarmer.R.string.time_label), color = Color.LightGray, fontSize = 16.sp)
                   Text(
-                      text = String.format("%02d:%02d", hour, minute),
+                      text = String.format(Locale.getDefault(), "%02d:%02d", hour, minute),
                       color = Color.White,
                       fontSize = 20.sp,
                       fontWeight = FontWeight.Bold
@@ -780,17 +795,31 @@ class MainActivity : ComponentActivity() {
                           stringResource(com.example.smartalarmer.R.string.day_sa),
                           stringResource(com.example.smartalarmer.R.string.day_su)
                       )
+                      val dayNames = listOf(
+                          stringResource(com.example.smartalarmer.R.string.day_mon),
+                          stringResource(com.example.smartalarmer.R.string.day_tue),
+                          stringResource(com.example.smartalarmer.R.string.day_wed),
+                          stringResource(com.example.smartalarmer.R.string.day_thu),
+                          stringResource(com.example.smartalarmer.R.string.day_fri),
+                          stringResource(com.example.smartalarmer.R.string.day_sat),
+                          stringResource(com.example.smartalarmer.R.string.day_sun)
+                      )
                       AlarmDay.entries.forEachIndexed { index, day ->
                           val isSelected = selectedDays.contains(day)
                           Box(
                               modifier = Modifier
-                                  .size(40.dp)
+                                  .size(48.dp)
                                   .background(
                                       if (isSelected) IndigoPrimary else KeyButtonBg,
                                       CircleShape
                                   )
                                   .clickable {
                                       if (isSelected) selectedDays.remove(day) else selectedDays.add(day)
+                                  }
+                                  .semantics {
+                                      contentDescription = dayNames[index]
+                                      selected = isSelected
+                                      role = Role.Checkbox
                                   },
                               contentAlignment = Alignment.Center
                           ) {
@@ -846,6 +875,8 @@ class MainActivity : ComponentActivity() {
               }
 
               // Puzzle Count Stepper
+              val decreasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.decrease_puzzle_count)
+              val increasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.increase_puzzle_count)
               Row(
                   modifier = Modifier.fillMaxWidth(),
                   horizontalArrangement = Arrangement.SpaceBetween,
@@ -860,7 +891,9 @@ class MainActivity : ComponentActivity() {
                           onClick = { if (puzzleCount > 1) puzzleCount-- },
                           colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
                           contentPadding = PaddingValues(0.dp),
-                          modifier = Modifier.size(36.dp),
+                          modifier = Modifier.size(48.dp).semantics {
+                              contentDescription = decreasePuzzleCountDescription
+                          },
                           shape = CircleShape
                       ) {
                           Text("-", color = Color.White, fontSize = 18.sp)
@@ -870,7 +903,9 @@ class MainActivity : ComponentActivity() {
                           onClick = { if (puzzleCount < selectedPuzzles.size) puzzleCount++ },
                           colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
                           contentPadding = PaddingValues(0.dp),
-                          modifier = Modifier.size(36.dp),
+                          modifier = Modifier.size(48.dp).semantics {
+                              contentDescription = increasePuzzleCountDescription
+                          },
                           shape = CircleShape
                       ) {
                           Text("+", color = Color.White, fontSize = 18.sp)

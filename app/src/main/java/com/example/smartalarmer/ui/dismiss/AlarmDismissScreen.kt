@@ -1,6 +1,8 @@
 package com.example.smartalarmer.ui.dismiss
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
@@ -22,6 +24,11 @@ import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.domain.PuzzleType
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 
 @Composable
 fun AlarmDismissScreen(
@@ -73,6 +80,8 @@ fun AlarmDismissScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBgScreen)
+            .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -102,7 +111,7 @@ fun AlarmDismissScreen(
         )
 
         // Active Puzzle View
-        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (currentPuzzle) {
                 PuzzleType.MATH -> MathPuzzleView(
                     onComplete = { currentTaskIndex++ },
@@ -152,6 +161,8 @@ fun MathPuzzleView(
         mathProvider.generate(difficulty)
     }
     var input by rememberSaveable { mutableStateOf("") }
+    val backspaceDescription = stringResource(R.string.backspace_desc)
+    val confirmDescription = stringResource(R.string.confirm_answer_desc)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = puzzle.equation, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
@@ -164,7 +175,10 @@ fun MathPuzzleView(
                     row.forEach { num ->
                         Button(
                             onClick = { input += num.toString() },
-                            modifier = Modifier.padding(4.dp).size(64.dp),
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .size(64.dp)
+                                .semantics { contentDescription = num.toString() },
                             colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                         ) {
                             Text(text = num.toString(), color = Color.White, fontSize = 20.sp)
@@ -175,14 +189,18 @@ fun MathPuzzleView(
             Row {
                 Button(
                     onClick = { if (input.isNotEmpty()) input = input.dropLast(1) },
-                    modifier = Modifier.padding(4.dp).size(64.dp),
+                    modifier = Modifier.padding(4.dp).size(64.dp).semantics {
+                        contentDescription = backspaceDescription
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
                 ) {
                     Text(text = "⌫", color = Color.White, fontSize = 20.sp)
                 }
                 Button(
                     onClick = { input += "0" },
-                    modifier = Modifier.padding(4.dp).size(64.dp),
+                    modifier = Modifier.padding(4.dp).size(64.dp).semantics {
+                        contentDescription = "0"
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                 ) {
                     Text(text = "0", color = Color.White, fontSize = 20.sp)
@@ -195,7 +213,9 @@ fun MathPuzzleView(
                             input = ""
                         }
                     },
-                    modifier = Modifier.padding(4.dp).size(64.dp),
+                    modifier = Modifier.padding(4.dp).size(64.dp).semantics {
+                        contentDescription = confirmDescription
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = GreenSuccess)
                 ) {
                     Text(text = "✔", color = Color.White, fontSize = 20.sp)
@@ -272,6 +292,10 @@ fun VirtualKeyboard(
             }
         }
     }
+    val shiftDescription = stringResource(R.string.shift_key_desc)
+    val shiftedState = stringResource(if (isShifted) R.string.shift_on else R.string.shift_off)
+    val backspaceDescription = stringResource(R.string.backspace_desc)
+    val spaceLabel = stringResource(R.string.space_key)
 
     Column(
         modifier = modifier
@@ -303,7 +327,10 @@ fun VirtualKeyboard(
                 text = "⇧",
                 onClick = { isShifted = !isShifted },
                 containerColor = if (isShifted) IndigoPrimary else KeyButtonBgActive,
-                modifier = Modifier.weight(1.5f)
+                modifier = Modifier.weight(1.5f).semantics {
+                    contentDescription = shiftDescription
+                    stateDescription = shiftedState
+                }
             )
 
             rows[2].forEach { char ->
@@ -314,7 +341,9 @@ fun VirtualKeyboard(
                 text = "⌫",
                 onClick = onBackspace,
                 containerColor = KeyButtonBgActive,
-                modifier = Modifier.weight(1.5f)
+                modifier = Modifier.weight(1.5f).semantics {
+                    contentDescription = backspaceDescription
+                }
             )
         }
 
@@ -324,7 +353,7 @@ fun VirtualKeyboard(
             horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
         ) {
             KeyButton(
-                text = "Space",
+                text = spaceLabel,
                 onClick = { onKeyClick(' ') },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -343,7 +372,7 @@ fun KeyButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(44.dp),
+        modifier = modifier.heightIn(min = 48.dp).semantics { role = Role.Button },
         colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = contentColor),
         shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(0.dp)
@@ -374,6 +403,7 @@ fun MemoryPuzzleView(
     ) { mutableStateListOf<Int>() }
     var isShowingSequence by rememberSaveable { mutableStateOf(true) }
     var activeFlashIndex by rememberSaveable { mutableStateOf(-1) }
+    val memoryCellDescriptions = (1..9).map { stringResource(R.string.memory_cell_desc, it) }
 
     LaunchedEffect(isShowingSequence) {
         if (isShowingSequence) {
@@ -417,7 +447,9 @@ fun MemoryPuzzleView(
                                     }
                                 }
                             },
-                            modifier = Modifier.padding(6.dp).size(72.dp),
+                            modifier = Modifier.padding(6.dp).size(72.dp).semantics {
+                                contentDescription = memoryCellDescriptions[index]
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isFlashed) OrangeWarning else DarkGreyButton
                             ),

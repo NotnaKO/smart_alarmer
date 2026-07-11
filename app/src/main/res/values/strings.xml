@@ -32,6 +32,13 @@
     <string name="sound_label">Alarm Sound</string>
     <string name="sound_default">Default Alarm</string>
     <string name="label_placeholder">Alarm Label (e.g. Work)</string>
+    <string name="select_alarm_sound">Select Alarm Sound</string>
+    <string name="decrease_puzzle_count">Decrease puzzle count</string>
+    <string name="increase_puzzle_count">Increase puzzle count</string>
+    <plurals name="puzzles_plural">
+        <item quantity="one">%1$d puzzle</item>
+        <item quantity="other">%1$d puzzles</item>
+    </plurals>
 
     <!-- Day Summary Labels -->
     <string name="one_time">One-time</string>
@@ -86,6 +93,13 @@
     <string name="repeat_pattern">Repeat Pattern!</string>
     <string name="shake_device">Shake the device!</string>
     <string name="shakes_remaining">Shakes remaining: %1$d</string>
+    <string name="backspace_desc">Backspace</string>
+    <string name="confirm_answer_desc">Confirm answer</string>
+    <string name="shift_key_desc">Shift</string>
+    <string name="shift_on">On</string>
+    <string name="shift_off">Off</string>
+    <string name="space_key">Space</string>
+    <string name="memory_cell_desc">Memory cell %1$d</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Active Alarm</string>

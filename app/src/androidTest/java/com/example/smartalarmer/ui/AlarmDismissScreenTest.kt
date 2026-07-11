@@ -3,6 +3,7 @@ package com.example.smartalarmer.ui
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
 import com.example.smartalarmer.ui.dismiss.MathPuzzleView
@@ -137,6 +138,23 @@ class AlarmDismissScreenTest {
 
         val enteredAnswer = context.getString(com.example.smartalarmer.R.string.your_answer_format, "8")
         composeTestRule.onNodeWithText(enteredAnswer).assertIsDisplayed()
+    }
+
+    @Test
+    fun mathPuzzle_symbolControlsExposeAccessibleActions() {
+        composeTestRule.setContent {
+            MathPuzzleView(onComplete = {}, mathProvider = fakeMath)
+        }
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+
+        composeTestRule
+            .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.backspace_desc))
+            .assertHasClickAction()
+            .assertHeightIsAtLeast(48.dp)
+        composeTestRule
+            .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.confirm_answer_desc))
+            .assertHasClickAction()
+            .assertHeightIsAtLeast(48.dp)
     }
 
     @Test
@@ -310,6 +328,23 @@ class AlarmDismissScreenTest {
         )
     }
 
+    @Test
+    fun memoryPuzzle_gridCellsHaveDistinctSemanticLabels() {
+        composeTestRule.setContent {
+            MemoryPuzzleView(onComplete = {}, memoryProvider = fakeMemory)
+        }
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+
+        (1..9).forEach { cell ->
+            composeTestRule
+                .onNodeWithContentDescription(
+                    context.getString(com.example.smartalarmer.R.string.memory_cell_desc, cell)
+                )
+                .assertExists()
+                .assertHeightIsAtLeast(48.dp)
+        }
+    }
+
     // ── Shake puzzle ──────────────────────────────────────────────────────
 
     @Test
@@ -395,6 +430,46 @@ class AlarmDismissScreenTest {
         val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
         val expectedText = context.getString(com.example.smartalarmer.R.string.task_progress_format, 1, 1)
         composeTestRule.onNodeWithText(expectedText).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmDismissScreen_rotationKeepsCurrentTaskWithoutSkipping() {
+        val restorationTester = StateRestorationTester(composeTestRule)
+        var dismissed = false
+        restorationTester.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH,TYPING",
+                puzzleCount = 2,
+                onDismissComplete = { dismissed = true },
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
+            )
+        }
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val firstTask = context.getString(com.example.smartalarmer.R.string.task_progress_format, 1, 2)
+        val secondTask = context.getString(com.example.smartalarmer.R.string.task_progress_format, 2, 2)
+
+        composeTestRule.onNodeWithText(firstTask).assertIsDisplayed()
+        if (composeTestRule.onAllNodesWithText("5 + 3").fetchSemanticsNodes().isNotEmpty()) {
+            composeTestRule.onNodeWithText("8").performClick()
+            composeTestRule
+                .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.confirm_answer_desc))
+                .performClick()
+        } else {
+            simulateVirtualKeyboardInput("Wake up now")
+            composeTestRule
+                .onNodeWithText(context.getString(com.example.smartalarmer.R.string.submit_btn))
+                .performClick()
+        }
+        composeTestRule.onNodeWithText(secondTask).assertIsDisplayed()
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeTestRule.onNodeWithText(secondTask).assertIsDisplayed()
+        composeTestRule.onNodeWithText(firstTask).assertDoesNotExist()
+        assertFalse("Rotation must not skip the remaining task or dismiss the alarm", dismissed)
     }
 
     @Test

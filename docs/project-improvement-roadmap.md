@@ -62,12 +62,12 @@ missing convenience feature.
 
 - [ ] Split `MainActivity.kt` and `AlarmDismissScreen.kt` into focused screens,
   components, and state holders.
-- [ ] Add semantic labels and state to puzzle controls, use at least 48 dp touch
+- [x] Add semantic labels and state to puzzle controls, use at least 48 dp touch
   targets, and support large fonts, landscape, and larger screens.
 - [x] Collect flows with lifecycle awareness and preserve edit/puzzle state
   across recreation where appropriate.
 - [x] Remove puzzle solutions from production logs.
-- [ ] Resolve localization lint warnings and remaining hard-coded UI strings.
+- [x] Resolve localization lint warnings and remaining hard-coded UI strings.
 - [ ] Keep `docs/README.md` and `AGENTS.md` aligned with the implementation,
   including the SHAKE puzzle, DAO signatures, and preview behavior.
 
