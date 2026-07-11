@@ -60,7 +60,7 @@ missing convenience feature.
 
 ## Phase 4: UI, accessibility, and maintainability
 
-- [ ] Split `MainActivity.kt` and `AlarmDismissScreen.kt` into focused screens,
+- [x] Split `MainActivity.kt` and `AlarmDismissScreen.kt` into focused screens,
   components, and state holders.
 - [x] Add semantic labels and state to puzzle controls, use at least 48 dp touch
   targets, and support large fonts, landscape, and larger screens.
