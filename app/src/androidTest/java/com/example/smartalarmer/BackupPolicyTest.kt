@@ -27,7 +27,9 @@ class BackupPolicyTest {
         assertTrue(databaseExclusions(R.xml.data_extraction_rules) == 2)
     }
 
-    private fun databaseExclusions(@XmlRes resourceId: Int): Int {
+    private fun databaseExclusions(
+        @XmlRes resourceId: Int
+    ): Int {
         val parser = context.resources.getXml(resourceId)
         var exclusions = 0
         while (parser.eventType != XmlPullParser.END_DOCUMENT) {

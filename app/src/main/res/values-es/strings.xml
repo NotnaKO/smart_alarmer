@@ -12,13 +12,17 @@
     <string name="allow_notifications">Permitir notificaciones</string>
     <string name="allow_alarms">Permitir alarmas</string>
     <string name="allow_lockscreen">Permitir visualización en pantalla de bloqueo</string>
+    <string name="notification_settings">Ajustes de notificaciones</string>
     <string name="no_alarms_scheduled">No hay alarmas programadas.\nToque + para añadir una alarma.</string>
     <string name="test_btn">Probar</string>
     <string name="delete_alarm_desc">Eliminar alarma</string>
+    <string name="delete_alarm_title">¿Eliminar alarma?</string>
+    <string name="delete_alarm_confirmation">¿Eliminar «%1$s»? Esta alarma dejará de sonar.</string>
+    <string name="delete">Eliminar</string>
     <string name="add_alarm_desc">Añadir alarma</string>
     <string name="privacy_policy">Política de privacidad</string>
     <string name="close">Cerrar</string>
-    <string name="privacy_policy_body">Fecha de entrada en vigor: 11 de julio de 2026\n\nSmart Alarmer está desarrollado por Anton Kopanov. La aplicación guarda las horas, etiquetas, repeticiones, ajustes de puzzles y referencias de tonos seleccionados localmente en su dispositivo. Esta información se utiliza únicamente para programar y ejecutar alarmas.\n\nSmart Alarmer no crea cuentas de usuario, no muestra anuncios, no utiliza SDK de análisis o seguimiento, no transmite datos del usuario ni vende o comparte información personal. Las lecturas de movimiento del puzzle de agitar se procesan temporalmente en el dispositivo mientras el puzzle está activo y no se guardan ni transmiten.\n\nLa aplicación solicita acceso a notificaciones, alarmas exactas, intentos de pantalla completa, servicios en primer plano, bloqueo de activación, arranque y ajustes de audio únicamente para programar alarmas, reproducir su sonido, activar la pantalla, mostrar la alarma sobre la pantalla de bloqueo, restaurar la programación tras un reinicio y controlar el volumen.\n\nLos datos de las alarmas permanecen en el dispositivo hasta que elimine una alarma, borre los datos de la aplicación o desinstale la aplicación. La base de datos de alarmas está excluida de las copias de seguridad en la nube y de la transferencia entre dispositivos.\n\nPara preguntas sobre privacidad o ayuda con la eliminación, contacte con el desarrollador en https://github.com/NotnaKO/smart_alarmer/issues. Como la aplicación no utiliza cuentas ni servicios remotos de datos, al borrar su almacenamiento o desinstalarla se eliminan todos sus datos.\n\nEsta política puede actualizarse cuando cambie el comportamiento de la aplicación. La versión actual está disponible en la aplicación y en su ficha de Google Play.</string>
+    <string name="privacy_policy_body">Fecha de entrada en vigor: 11 de julio de 2026\n\nSmart Alarmer está desarrollado por NotnaKO. La aplicación guarda las horas, etiquetas, repeticiones, ajustes de puzzles y referencias de tonos seleccionados localmente en su dispositivo. Esta información se utiliza únicamente para programar y ejecutar alarmas.\n\nSmart Alarmer no crea cuentas de usuario, no muestra anuncios, no utiliza SDK de análisis o seguimiento, no transmite datos del usuario ni vende o comparte información personal. Las lecturas de movimiento del puzzle de agitar se procesan temporalmente en el dispositivo mientras el puzzle está activo y no se guardan ni transmiten.\n\nLa aplicación solicita acceso a notificaciones, alarmas exactas, intentos de pantalla completa, servicios en primer plano, bloqueo de activación, arranque y ajustes de audio únicamente para programar alarmas, reproducir su sonido, activar la pantalla, mostrar la alarma sobre la pantalla de bloqueo, restaurar la programación tras un reinicio y controlar el volumen.\n\nLos datos de las alarmas permanecen en el dispositivo hasta que elimine una alarma, borre los datos de la aplicación o desinstale la aplicación. La base de datos de alarmas está excluida de las copias de seguridad en la nube y de la transferencia entre dispositivos.\n\nPara preguntas sobre privacidad o ayuda con la eliminación, contacte con el desarrollador en https://github.com/NotnaKO/smart_alarmer/issues. Como la aplicación no utiliza cuentas ni servicios remotos de datos, al borrar su almacenamiento o desinstalarla se eliminan todos sus datos.\n\nEsta política puede actualizarse cuando cambie el comportamiento de la aplicación. La versión actual está disponible en la aplicación y en su ficha de Google Play.</string>
 
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">Nueva alarma</string>
@@ -87,19 +91,23 @@
     <string name="alarm_set_toast">Alarma programada para dentro de %1$s</string>
     <string name="exact_alarm_permission_required">Permita alarmas y recordatorios antes de activar esta alarma.</string>
     <string name="alarm_schedule_failed">No se pudo programar la alarma. Inténtelo de nuevo.</string>
+    <string name="alarm_operation_failed">No se pudo actualizar la alarma. Se restauró su estado anterior.</string>
     <string name="hours_and_minutes_connector">%1$s y %2$s</string>
+    <string name="next_alarm_format">Siguiente: %1$s</string>
 
     <!-- Alarm Dismiss Screen -->
     <string name="task_progress_format">Tarea %1$d de %2$d</string>
     <string name="your_answer_format">Tu respuesta: %1$s</string>
     <string name="type_sentence_label">Escribe esta frase exacta:</string>
     <string name="submit_btn">Enviar</string>
-    <string name="memorize_pattern">Memoriza el patrón...</string>
+    <string name="memorize_pattern">Memoriza el patrón…</string>
     <string name="repeat_pattern">¡Repite el patrón!</string>
     <string name="shake_device">¡Agita el dispositivo!</string>
     <string name="shakes_remaining">Sacudidas restantes: %1$d</string>
     <string name="backspace_desc">Retroceso</string>
     <string name="confirm_answer_desc">Confirmar respuesta</string>
+    <string name="incorrect_answer">Respuesta incorrecta. Inténtalo de nuevo.</string>
+    <string name="incorrect_pattern">Patrón incorrecto. Obsérvalo de nuevo.</string>
     <string name="shift_key_desc">Mayúsculas</string>
     <string name="shift_on">Activado</string>
     <string name="shift_off">Desactivado</string>

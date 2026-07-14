@@ -7,12 +7,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
-import androidx.core.content.ContextCompat
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import org.junit.Assert.*
 import org.junit.Test
@@ -20,15 +20,15 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmServiceTest {
-
     @Test
     fun alarmService_previewStart_createsChannelWithoutLaunchingDismissActivity() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val intent = Intent(context, AlarmService::class.java).apply {
-            putExtra("PUZZLES_LIST", "MATH")
-            putExtra("PUZZLE_COUNT", 1)
-            putExtra("IS_PREVIEW", true)
-        }
+        val intent =
+            Intent(context, AlarmService::class.java).apply {
+                putExtra("PUZZLES_LIST", "MATH")
+                putExtra("PUZZLE_COUNT", 1)
+                putExtra("IS_PREVIEW", true)
+            }
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val volumeBeforePreview = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
 
@@ -44,8 +44,10 @@ class AlarmServiceTest {
             }
 
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                val resumedActivities = ActivityLifecycleMonitorRegistry.getInstance()
-                    .getActivitiesInStage(Stage.RESUMED)
+                val resumedActivities =
+                    ActivityLifecycleMonitorRegistry
+                        .getInstance()
+                        .getActivitiesInStage(Stage.RESUMED)
                 assertFalse(
                     "Preview mode must not launch AlarmDismissActivity",
                     resumedActivities.any { it is AlarmDismissActivity }
@@ -87,5 +89,11 @@ class AlarmServiceTest {
         assertEquals(5, volMid)
         assertEquals(maxVolume, volEnd)
         assertEquals(maxVolume, volPast)
+    }
+
+    @Test
+    fun alarmService_wakeLockRenewsBeforeItsFailsafeTimeout() {
+        assertTrue(AlarmService.WAKE_LOCK_RENEWAL_INTERVAL_MILLIS > 0)
+        assertTrue(AlarmService.WAKE_LOCK_TIMEOUT_MILLIS > AlarmService.WAKE_LOCK_RENEWAL_INTERVAL_MILLIS)
     }
 }

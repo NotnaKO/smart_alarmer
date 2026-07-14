@@ -9,12 +9,13 @@ import org.junit.Test
 class BootReceiverTest {
     @Test
     fun wallClockAndLifecycleChangesRescheduleEnabledAlarms() {
-        val actions = listOf(
-            Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED,
-            Intent.ACTION_TIME_CHANGED,
-            Intent.ACTION_TIMEZONE_CHANGED
-        )
+        val actions =
+            listOf(
+                Intent.ACTION_BOOT_COMPLETED,
+                Intent.ACTION_MY_PACKAGE_REPLACED,
+                Intent.ACTION_TIME_CHANGED,
+                Intent.ACTION_TIMEZONE_CHANGED
+            )
 
         actions.forEach { action ->
             assertTrue(BootReceiver.shouldReschedule(action, canScheduleExactAlarms = true))

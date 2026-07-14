@@ -1,6 +1,5 @@
 package com.example.smartalarmer
 
-import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmScheduler
 import org.junit.Assert.assertEquals
@@ -14,12 +13,13 @@ class AlarmSchedulerTest {
     fun scheduleExact_permissionUnavailable_doesNotSchedule() {
         var actionCalled = false
 
-        val result = AlarmScheduler.scheduleExact(
-            triggerAtMillis = 1234L,
-            canScheduleExactAlarm = false
-        ) {
-            actionCalled = true
-        }
+        val result =
+            AlarmScheduler.scheduleExact(
+                triggerAtMillis = 1234L,
+                canScheduleExactAlarm = false
+            ) {
+                actionCalled = true
+            }
 
         assertEquals(
             AlarmScheduleResult.PermissionRequired,
@@ -32,12 +32,13 @@ class AlarmSchedulerTest {
     fun scheduleExact_success_returnsTriggerTime() {
         var actionCalled = false
 
-        val result = AlarmScheduler.scheduleExact(
-            triggerAtMillis = 5678L,
-            canScheduleExactAlarm = true
-        ) {
-            actionCalled = true
-        }
+        val result =
+            AlarmScheduler.scheduleExact(
+                triggerAtMillis = 5678L,
+                canScheduleExactAlarm = true
+            ) {
+                actionCalled = true
+            }
 
         assertTrue(actionCalled)
         assertEquals(
@@ -48,12 +49,13 @@ class AlarmSchedulerTest {
 
     @Test
     fun scheduleExact_securityException_requestsPermission() {
-        val result = AlarmScheduler.scheduleExact(
-            triggerAtMillis = 1234L,
-            canScheduleExactAlarm = true
-        ) {
-            throw SecurityException("permission revoked")
-        }
+        val result =
+            AlarmScheduler.scheduleExact(
+                triggerAtMillis = 1234L,
+                canScheduleExactAlarm = true
+            ) {
+                throw SecurityException("permission revoked")
+            }
 
         assertEquals(
             AlarmScheduleResult.PermissionRequired,
@@ -65,12 +67,13 @@ class AlarmSchedulerTest {
     fun scheduleExact_unexpectedFailure_isReturned() {
         val exception = IllegalStateException("alarm manager unavailable")
 
-        val result = AlarmScheduler.scheduleExact(
-            triggerAtMillis = 1234L,
-            canScheduleExactAlarm = true
-        ) {
-            throw exception
-        }
+        val result =
+            AlarmScheduler.scheduleExact(
+                triggerAtMillis = 1234L,
+                canScheduleExactAlarm = true
+            ) {
+                throw exception
+            }
 
         assertTrue(result is AlarmScheduleResult.Failure)
         assertSame(

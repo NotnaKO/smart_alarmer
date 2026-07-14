@@ -35,9 +35,11 @@ class AlarmMigrationTest {
         createVersion1Database()
         migrateAndValidateVersion2()
 
-        val database = Room.databaseBuilder(context, AlarmDatabase::class.java, TEST_DATABASE)
-            .addMigrations(AlarmDatabase.MIGRATION_2_3)
-            .build()
+        val database =
+            Room
+                .databaseBuilder(context, AlarmDatabase::class.java, TEST_DATABASE)
+                .addMigrations(AlarmDatabase.MIGRATION_2_3)
+                .build()
         try {
             val alarm = requireNotNull(database.alarmDao().getAlarmById(7))
             assertEquals(6, alarm.hour)
@@ -57,9 +59,9 @@ class AlarmMigrationTest {
             database.execSQL(VERSION_1_CREATE_SQL)
             database.execSQL(
                 """
-                    INSERT INTO alarms (
-                        id, hour, minute, daysOfWeek, isEnabled, puzzlesList, puzzleCount
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO alarms (
+                    id, hour, minute, daysOfWeek, isEnabled, puzzlesList, puzzleCount
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
                 arrayOf<Any>(7, 6, 45, "1,3,5", 1, "MATH,TYPING", 2)
             )
@@ -67,11 +69,12 @@ class AlarmMigrationTest {
     }
 
     private fun migrateAndValidateVersion2() {
-        val helper = openHelper(version = 2, upgradeCallback = { database, oldVersion, newVersion ->
-            assertEquals(1, oldVersion)
-            assertEquals(2, newVersion)
-            AlarmDatabase.MIGRATION_1_2.migrate(database)
-        })
+        val helper =
+            openHelper(version = 2, upgradeCallback = { database, oldVersion, newVersion ->
+                assertEquals(1, oldVersion)
+                assertEquals(2, newVersion)
+                AlarmDatabase.MIGRATION_1_2.migrate(database)
+            })
         try {
             helper.writableDatabase.query("SELECT * FROM alarms WHERE id = 7").use { cursor ->
                 cursor.moveToFirst()
@@ -88,16 +91,23 @@ class AlarmMigrationTest {
         createCallback: (SupportSQLiteDatabase) -> Unit = {},
         upgradeCallback: (SupportSQLiteDatabase, Int, Int) -> Unit = { _, _, _ -> }
     ): SupportSQLiteOpenHelper {
-        val configuration = SupportSQLiteOpenHelper.Configuration.builder(context)
-            .name(TEST_DATABASE)
-            .callback(object : SupportSQLiteOpenHelper.Callback(version) {
-                override fun onCreate(db: SupportSQLiteDatabase) = createCallback(db)
+        val configuration =
+            SupportSQLiteOpenHelper.Configuration
+                .builder(context)
+                .name(TEST_DATABASE)
+                .callback(
+                    object : SupportSQLiteOpenHelper.Callback(version) {
+                        override fun onCreate(db: SupportSQLiteDatabase) = createCallback(db)
 
-                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
-                    upgradeCallback(db, oldVersion, newVersion)
-                }
-            })
-            .build()
+                        override fun onUpgrade(
+                            db: SupportSQLiteDatabase,
+                            oldVersion: Int,
+                            newVersion: Int
+                        ) {
+                            upgradeCallback(db, oldVersion, newVersion)
+                        }
+                    }
+                ).build()
         return FrameworkSQLiteOpenHelperFactory().create(configuration)
     }
 

@@ -4,74 +4,100 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
+import com.example.smartalarmer.alarm.AlarmIntentContract
+import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.domain.repeatDays
-import com.example.smartalarmer.service.AlarmService
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmScheduler
+import com.example.smartalarmer.service.AlarmService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class AlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val alarmId = intent.getIntExtra("ALARM_ID", -1)
-        val puzzlesList = intent.getStringExtra("PUZZLES_LIST") ?: "MATH"
-        val puzzleCount = intent.getIntExtra("PUZZLE_COUNT", 2)
-        val isGradualVolume = intent.getBooleanExtra("IS_GRADUAL_VOLUME", true)
-        val soundUri = intent.getStringExtra("SOUND_URI")
-        val alarmLabel = intent.getStringExtra("ALARM_LABEL") ?: ""
-        val isPreview = intent.getBooleanExtra("IS_PREVIEW", false)
-
-        val serviceIntent = Intent(context, AlarmService::class.java).apply {
-            putExtra("ALARM_ID", alarmId)
-            putExtra("PUZZLES_LIST", puzzlesList)
-            putExtra("PUZZLE_COUNT", puzzleCount)
-            putExtra("IS_GRADUAL_VOLUME", isGradualVolume)
-            putExtra("SOUND_URI", soundUri)
-            putExtra("ALARM_LABEL", alarmLabel)
-            putExtra("IS_PREVIEW", isPreview)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+    override fun onReceive(
+        context: Context,
+        intent: Intent
+    ) {
+        val payload = AlarmIntentContract.read(intent)
+        if (payload.alarmId == AlarmLaunchPayload.NO_ALARM_ID) {
+            startAlarmService(context, payload)
+            return
         }
 
-        if (alarmId != -1) {
-            val pendingResult = goAsync()
-            CoroutineScope(Dispatchers.IO).launch {
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val alarmDao = AlarmDatabase.getDatabase(context).alarmDao()
+                val alarm = alarmDao.getAlarmById(payload.alarmId)
+                if (!shouldDeliver(alarm) || alarm == null) {
+                    Log.i(TAG, "Ignoring stale alarm delivery for id ${payload.alarmId}")
+                    return@launch
+                }
+
                 try {
-                    val database = AlarmDatabase.getDatabase(context)
-                    val alarmDao = database.alarmDao()
-                    val alarm = alarmDao.getAlarmById(alarmId)
-                    if (alarm != null) {
-                        if (!alarm.repeatDays.isOneTime) {
-                            // Recurring alarm: schedule next occurrence
-                            when (val result = AlarmScheduler.schedule(context, alarm)) {
-                                AlarmScheduleResult.PermissionRequired -> android.util.Log.w(
-                                    "AlarmReceiver",
-                                    "Exact alarm permission is required to reschedule alarm $alarmId"
+                    startAlarmService(context, AlarmLaunchPayload.fromAlarm(alarm))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to start alarm service for ${alarm.id}", e)
+                }
+                when (followUpFor(alarm)) {
+                    AlarmFollowUp.NONE -> Unit
+                    AlarmFollowUp.RESCHEDULE -> {
+                        when (val result = AlarmScheduler.schedule(context, alarm)) {
+                            AlarmScheduleResult.PermissionRequired ->
+                                Log.w(
+                                    TAG,
+                                    "Exact alarm permission is required to reschedule alarm ${alarm.id}"
                                 )
-                                is AlarmScheduleResult.Failure -> android.util.Log.e(
-                                    "AlarmReceiver",
-                                    "Unable to reschedule alarm $alarmId",
-                                    result.exception
-                                )
-                                is AlarmScheduleResult.Scheduled -> Unit
-                            }
-                        } else {
-                            // One-time alarm: disable it
-                            val updated = alarm.copy(isEnabled = false)
-                            alarmDao.updateAlarm(updated)
+                            is AlarmScheduleResult.Failure ->
+                                Log.e(TAG, "Unable to reschedule alarm ${alarm.id}", result.exception)
+                            is AlarmScheduleResult.Scheduled -> Unit
                         }
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    pendingResult.finish()
+                    AlarmFollowUp.DISABLE -> alarmDao.updateAlarm(alarm.copy(isEnabled = false))
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to deliver or update alarm", e)
+            } finally {
+                pendingResult.finish()
             }
         }
     }
+
+    companion object {
+        private const val TAG = "AlarmReceiver"
+
+        private fun startAlarmService(
+            context: Context,
+            payload: AlarmLaunchPayload
+        ) {
+            val serviceIntent =
+                AlarmIntentContract.write(
+                    Intent(context, AlarmService::class.java),
+                    payload
+                )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        }
+
+        internal fun followUpFor(alarm: Alarm): AlarmFollowUp = when {
+            !alarm.isEnabled -> AlarmFollowUp.NONE
+            alarm.repeatDays.isOneTime -> AlarmFollowUp.DISABLE
+            else -> AlarmFollowUp.RESCHEDULE
+        }
+
+        internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
+    }
+}
+
+internal enum class AlarmFollowUp {
+    NONE,
+    RESCHEDULE,
+    DISABLE
 }

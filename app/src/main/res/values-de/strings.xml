@@ -12,13 +12,17 @@
     <string name="allow_notifications">Benachrichtigungen erlauben</string>
     <string name="allow_alarms">Alarme erlauben</string>
     <string name="allow_lockscreen">Sperrbildschirm-Anzeige erlauben</string>
+    <string name="notification_settings">Benachrichtigungseinstellungen</string>
     <string name="no_alarms_scheduled">Keine Alarme geplant.\nTippen Sie auf +, um einen Alarm hinzuzufügen.</string>
     <string name="test_btn">Testen</string>
     <string name="delete_alarm_desc">Alarm löschen</string>
+    <string name="delete_alarm_title">Alarm löschen?</string>
+    <string name="delete_alarm_confirmation">„%1$s“ löschen? Dieser Alarm wird nicht mehr klingeln.</string>
+    <string name="delete">Löschen</string>
     <string name="add_alarm_desc">Alarm hinzufügen</string>
     <string name="privacy_policy">Datenschutzerklärung</string>
     <string name="close">Schließen</string>
-    <string name="privacy_policy_body">Gültig ab: 11. Juli 2026\n\nSmart Alarmer wird von Anton Kopanov entwickelt. Die App speichert Alarmzeiten, Bezeichnungen, Wiederholungspläne, Rätseleinstellungen und Verweise auf ausgewählte Klingeltöne ausschließlich lokal auf Ihrem Gerät. Diese Informationen werden nur zum Planen und Ausführen von Alarmen verwendet.\n\nSmart Alarmer erstellt keine Benutzerkonten, zeigt keine Werbung an, verwendet keine Analyse- oder Tracking-SDKs, überträgt keine Benutzerdaten und verkauft oder teilt keine personenbezogenen Informationen. Bewegungsdaten für das Schüttelrätsel werden vorübergehend auf dem Gerät verarbeitet, solange das Rätsel aktiv ist, und weder gespeichert noch übertragen.\n\nDie App fordert Zugriff auf Benachrichtigungen, exakte Alarme, Vollbildanzeigen, Vordergrunddienste, Aktivierungssperren, Gerätestart und Audioeinstellungen nur an, um Alarme zu planen, Alarmtöne abzuspielen, den Bildschirm zu aktivieren, den Alarm über dem Sperrbildschirm anzuzeigen, Zeitpläne nach einem Neustart wiederherzustellen und die Alarmlautstärke zu steuern.\n\nAlarmdaten verbleiben auf dem Gerät, bis Sie einen Alarm löschen, die App-Daten löschen oder die App deinstallieren. Die Alarmdatenbank ist von Cloud-Sicherungen und Geräteübertragungen ausgeschlossen.\n\nBei Datenschutzfragen oder wenn Sie Hilfe beim Löschen benötigen, kontaktieren Sie den Entwickler über https://github.com/NotnaKO/smart_alarmer/issues. Da die App weder Konten noch einen externen Datendienst verwendet, werden durch das Löschen des App-Speichers oder die Deinstallation sämtliche App-Daten gelöscht.\n\nDiese Erklärung kann aktualisiert werden, wenn sich das Verhalten der App ändert. Die aktuelle Fassung ist in der App und in ihrem Google-Play-Eintrag verfügbar.</string>
+    <string name="privacy_policy_body">Gültig ab: 11. Juli 2026\n\nSmart Alarmer wird von NotnaKO entwickelt. Die App speichert Alarmzeiten, Bezeichnungen, Wiederholungspläne, Rätseleinstellungen und Verweise auf ausgewählte Klingeltöne ausschließlich lokal auf Ihrem Gerät. Diese Informationen werden nur zum Planen und Ausführen von Alarmen verwendet.\n\nSmart Alarmer erstellt keine Benutzerkonten, zeigt keine Werbung an, verwendet keine Analyse- oder Tracking-SDKs, überträgt keine Benutzerdaten und verkauft oder teilt keine personenbezogenen Informationen. Bewegungsdaten für das Schüttelrätsel werden vorübergehend auf dem Gerät verarbeitet, solange das Rätsel aktiv ist, und weder gespeichert noch übertragen.\n\nDie App fordert Zugriff auf Benachrichtigungen, exakte Alarme, Vollbildanzeigen, Vordergrunddienste, Aktivierungssperren, Gerätestart und Audioeinstellungen nur an, um Alarme zu planen, Alarmtöne abzuspielen, den Bildschirm zu aktivieren, den Alarm über dem Sperrbildschirm anzuzeigen, Zeitpläne nach einem Neustart wiederherzustellen und die Alarmlautstärke zu steuern.\n\nAlarmdaten verbleiben auf dem Gerät, bis Sie einen Alarm löschen, die App-Daten löschen oder die App deinstallieren. Die Alarmdatenbank ist von Cloud-Sicherungen und Geräteübertragungen ausgeschlossen.\n\nBei Datenschutzfragen oder wenn Sie Hilfe beim Löschen benötigen, kontaktieren Sie den Entwickler über https://github.com/NotnaKO/smart_alarmer/issues. Da die App weder Konten noch einen externen Datendienst verwendet, werden durch das Löschen des App-Speichers oder die Deinstallation sämtliche App-Daten gelöscht.\n\nDiese Erklärung kann aktualisiert werden, wenn sich das Verhalten der App ändert. Die aktuelle Fassung ist in der App und in ihrem Google-Play-Eintrag verfügbar.</string>
 
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">Neuer Alarm</string>
@@ -84,19 +88,23 @@
     <string name="alarm_set_toast">Alarm in %1$s ab jetzt gestellt</string>
     <string name="exact_alarm_permission_required">Erlauben Sie Alarme und Erinnerungen, bevor Sie diesen Alarm aktivieren.</string>
     <string name="alarm_schedule_failed">Der Alarm konnte nicht geplant werden. Versuchen Sie es erneut.</string>
+    <string name="alarm_operation_failed">Der Alarm konnte nicht aktualisiert werden. Der vorherige Zustand wurde wiederhergestellt.</string>
     <string name="hours_and_minutes_connector">%1$s und %2$s</string>
+    <string name="next_alarm_format">Nächster Alarm: %1$s</string>
 
     <!-- Alarm Dismiss Screen -->
     <string name="task_progress_format">Aufgabe %1$d von %2$d</string>
     <string name="your_answer_format">Deine Antwort: %1$s</string>
     <string name="type_sentence_label">Tippe diesen Satz exakt ab:</string>
     <string name="submit_btn">Bestätigen</string>
-    <string name="memorize_pattern">Muster merken...</string>
+    <string name="memorize_pattern">Muster merken…</string>
     <string name="repeat_pattern">Muster wiederholen!</string>
     <string name="shake_device">Gerät schütteln!</string>
     <string name="shakes_remaining">Verbleibende Erschütterungen: %1$d</string>
     <string name="backspace_desc">Rücktaste</string>
     <string name="confirm_answer_desc">Antwort bestätigen</string>
+    <string name="incorrect_answer">Falsche Antwort. Versuche es erneut.</string>
+    <string name="incorrect_pattern">Falsches Muster. Sieh es dir noch einmal an.</string>
     <string name="shift_key_desc">Umschalttaste</string>
     <string name="shift_on">Ein</string>
     <string name="shift_off">Aus</string>

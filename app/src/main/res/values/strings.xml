@@ -12,13 +12,17 @@
     <string name="allow_notifications">Allow Notifications</string>
     <string name="allow_alarms">Allow Alarms</string>
     <string name="allow_lockscreen">Allow Lockscreen Display</string>
+    <string name="notification_settings">Notification settings</string>
     <string name="no_alarms_scheduled">No alarms scheduled.\nTap + to add an alarm.</string>
     <string name="test_btn">Test</string>
     <string name="delete_alarm_desc">Delete Alarm</string>
+    <string name="delete_alarm_title">Delete alarm?</string>
+    <string name="delete_alarm_confirmation">Delete “%1$s”? This alarm will no longer ring.</string>
+    <string name="delete">Delete</string>
     <string name="add_alarm_desc">Add Alarm</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="close">Close</string>
-    <string name="privacy_policy_body">Effective date: July 11, 2026\n\nSmart Alarmer is developed by Anton Kopanov. The app stores alarm times, labels, repeat schedules, puzzle settings, and selected ringtone references locally on your device. This information is used only to schedule and operate alarms.\n\nSmart Alarmer does not create user accounts, display ads, use analytics or tracking SDKs, transmit user data, or sell or share personal information. Shake-puzzle motion readings are processed temporarily on the device while that puzzle is active and are not stored or transmitted.\n\nThe app requests notification, exact-alarm, full-screen-intent, foreground-service, wake-lock, boot, and audio-setting access only to schedule alarms, play alarm audio, wake the screen, display the alarm over the lock screen, restore schedules after a restart, and control alarm volume.\n\nAlarm data remains on the device until you delete an alarm, clear the app data, or uninstall the app. The alarm database is excluded from cloud backup and device transfer.\n\nFor privacy questions or deletion assistance, contact the developer through https://github.com/NotnaKO/smart_alarmer/issues. Because the app does not operate an account or remote data service, uninstalling the app or clearing its storage deletes all app data.\n\nThis policy may be updated when the app’s behavior changes. The current policy is available from the app and its Google Play listing.</string>
+    <string name="privacy_policy_body">Effective date: July 11, 2026\n\nSmart Alarmer is developed by NotnaKO. The app stores alarm times, labels, repeat schedules, puzzle settings, and selected ringtone references locally on your device. This information is used only to schedule and operate alarms.\n\nSmart Alarmer does not create user accounts, display ads, use analytics or tracking SDKs, transmit user data, or sell or share personal information. Shake-puzzle motion readings are processed temporarily on the device while that puzzle is active and are not stored or transmitted.\n\nThe app requests notification, exact-alarm, full-screen-intent, foreground-service, wake-lock, boot, and audio-setting access only to schedule alarms, play alarm audio, wake the screen, display the alarm over the lock screen, restore schedules after a restart, and control alarm volume.\n\nAlarm data remains on the device until you delete an alarm, clear the app data, or uninstall the app. The alarm database is excluded from cloud backup and device transfer.\n\nFor privacy questions or deletion assistance, contact the developer through https://github.com/NotnaKO/smart_alarmer/issues. Because the app does not operate an account or remote data service, uninstalling the app or clearing its storage deletes all app data.\n\nThis policy may be updated when the app’s behavior changes. The current policy is available from the app and its Google Play listing.</string>
 
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">New Alarm</string>
@@ -84,19 +88,23 @@
     <string name="alarm_set_toast">Alarm set for %1$s from now</string>
     <string name="exact_alarm_permission_required">Enable Alarms &amp; reminders before enabling this alarm.</string>
     <string name="alarm_schedule_failed">The alarm could not be scheduled. Please try again.</string>
+    <string name="alarm_operation_failed">The alarm could not be updated. Its previous state was restored.</string>
     <string name="hours_and_minutes_connector">%1$s and %2$s</string>
+    <string name="next_alarm_format">Next: %1$s</string>
 
     <!-- Alarm Dismiss Screen -->
     <string name="task_progress_format">Task %1$d of %2$d</string>
     <string name="your_answer_format">Your Answer: %1$s</string>
     <string name="type_sentence_label">Type this exact sentence:</string>
     <string name="submit_btn">Submit</string>
-    <string name="memorize_pattern">Memorize Pattern...</string>
+    <string name="memorize_pattern">Memorize Pattern…</string>
     <string name="repeat_pattern">Repeat Pattern!</string>
     <string name="shake_device">Shake the device!</string>
     <string name="shakes_remaining">Shakes remaining: %1$d</string>
     <string name="backspace_desc">Backspace</string>
     <string name="confirm_answer_desc">Confirm answer</string>
+    <string name="incorrect_answer">Incorrect answer. Try again.</string>
+    <string name="incorrect_pattern">Incorrect pattern. Watch it again.</string>
     <string name="shift_key_desc">Shift</string>
     <string name="shift_on">On</string>
     <string name="shift_off">Off</string>

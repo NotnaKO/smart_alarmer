@@ -1,8 +1,8 @@
 package com.example.smartalarmer.domain
 
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.Locale
 
 class AlarmConfigurationTest {
     @Test

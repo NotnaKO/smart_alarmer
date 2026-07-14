@@ -3,24 +3,30 @@ package com.example.smartalarmer.domain
 import com.example.smartalarmer.data.Alarm
 import java.util.Locale
 
-enum class AlarmDay(val isoValue: Int) {
+enum class AlarmDay(
+    val isoValue: Int
+) {
     MONDAY(1),
     TUESDAY(2),
     WEDNESDAY(3),
     THURSDAY(4),
     FRIDAY(5),
     SATURDAY(6),
-    SUNDAY(7);
+    SUNDAY(7)
+    ;
 
     companion object {
         fun fromIsoValue(value: Int): AlarmDay? = entries.firstOrNull { it.isoValue == value }
     }
 }
 
-class AlarmDays private constructor(val values: Set<AlarmDay>) {
-    val encoded: String = values
-        .sortedBy(AlarmDay::isoValue)
-        .joinToString(",") { it.isoValue.toString() }
+class AlarmDays private constructor(
+    val values: Set<AlarmDay>
+) {
+    val encoded: String =
+        values
+            .sortedBy(AlarmDay::isoValue)
+            .joinToString(",") { it.isoValue.toString() }
 
     val isOneTime: Boolean
         get() = values.isEmpty()
@@ -39,7 +45,8 @@ class AlarmDays private constructor(val values: Set<AlarmDay>) {
         fun parse(encoded: String?): AlarmDays {
             if (encoded.isNullOrBlank()) return ONE_TIME
             return of(
-                encoded.split(",")
+                encoded
+                    .split(",")
                     .mapNotNull { token -> token.trim().toIntOrNull() }
                     .mapNotNull(AlarmDay::fromIsoValue)
             )
@@ -54,10 +61,13 @@ enum class PuzzleType {
     SHAKE
 }
 
-class PuzzleSelection private constructor(val values: Set<PuzzleType>) {
-    val encoded: String = values
-        .sortedBy(PuzzleType::ordinal)
-        .joinToString(",") { it.name }
+class PuzzleSelection private constructor(
+    val values: Set<PuzzleType>
+) {
+    val encoded: String =
+        values
+            .sortedBy(PuzzleType::ordinal)
+            .joinToString(",") { it.name }
 
     override fun equals(other: Any?): Boolean = other is PuzzleSelection && values == other.values
 

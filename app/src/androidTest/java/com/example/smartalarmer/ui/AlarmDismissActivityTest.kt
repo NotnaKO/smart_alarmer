@@ -12,13 +12,14 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmDismissActivityTest {
-
     @org.junit.Before
     fun setUp() {
         // Ensure emulator screen is awake and unlocked
-        val device = androidx.test.uiautomator.UiDevice.getInstance(
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-        )
+        val device =
+            androidx.test.uiautomator.UiDevice.getInstance(
+                androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation()
+            )
         try {
             device.wakeUp()
             device.executeShellCommand("wm dismiss-keyguard")
@@ -30,12 +31,13 @@ class AlarmDismissActivityTest {
     @Test
     fun alarmDismissActivity_inPreviewMode_finishesOnBackPress() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val intent = Intent(context, AlarmDismissActivity::class.java).apply {
-            putExtra("PUZZLES_LIST", "MATH")
-            putExtra("PUZZLE_COUNT", 1)
-            putExtra("IS_PREVIEW", true)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        val intent =
+            Intent(context, AlarmDismissActivity::class.java).apply {
+                putExtra("PUZZLES_LIST", "MATH")
+                putExtra("PUZZLE_COUNT", 1)
+                putExtra("IS_PREVIEW", true)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
 
         ActivityScenario.launch<AlarmDismissActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
@@ -48,12 +50,13 @@ class AlarmDismissActivityTest {
     @Test
     fun alarmDismissActivity_inRealMode_trapsBackPress() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val intent = Intent(context, AlarmDismissActivity::class.java).apply {
-            putExtra("PUZZLES_LIST", "MATH")
-            putExtra("PUZZLE_COUNT", 1)
-            putExtra("IS_PREVIEW", false)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        val intent =
+            Intent(context, AlarmDismissActivity::class.java).apply {
+                putExtra("PUZZLES_LIST", "MATH")
+                putExtra("PUZZLE_COUNT", 1)
+                putExtra("IS_PREVIEW", false)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
 
         ActivityScenario.launch<AlarmDismissActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
@@ -66,38 +69,43 @@ class AlarmDismissActivityTest {
     @Test
     fun alarmDismissActivity_newAlarmIntent_replacesDisplayedSession() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val firstIntent = Intent(context, AlarmDismissActivity::class.java).apply {
-            putExtra("ALARM_ID", 1)
-            putExtra("PUZZLES_LIST", "MATH")
-            putExtra("PUZZLE_COUNT", 1)
-            putExtra("ALARM_LABEL", "First alarm")
-            putExtra("IS_PREVIEW", true)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-
-        ActivityScenario.launch<AlarmDismissActivity>(firstIntent).use {
-            val secondIntent = Intent(context, AlarmDismissActivity::class.java).apply {
-                putExtra("ALARM_ID", 2)
+        val firstIntent =
+            Intent(context, AlarmDismissActivity::class.java).apply {
+                putExtra("ALARM_ID", 1)
                 putExtra("PUZZLES_LIST", "MATH")
                 putExtra("PUZZLE_COUNT", 1)
-                putExtra("ALARM_LABEL", "Second alarm")
+                putExtra("ALARM_LABEL", "First alarm")
                 putExtra("IS_PREVIEW", true)
-                addFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP
-                )
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+
+        ActivityScenario.launch<AlarmDismissActivity>(firstIntent).use {
+            val secondIntent =
+                Intent(context, AlarmDismissActivity::class.java).apply {
+                    putExtra("ALARM_ID", 2)
+                    putExtra("PUZZLES_LIST", "MATH")
+                    putExtra("PUZZLE_COUNT", 1)
+                    putExtra("ALARM_LABEL", "Second alarm")
+                    putExtra("IS_PREVIEW", true)
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    )
+                }
             context.startActivity(secondIntent)
 
-            val device = androidx.test.uiautomator.UiDevice.getInstance(
-                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-            )
+            val device =
+                androidx.test.uiautomator.UiDevice.getInstance(
+                    androidx.test.platform.app.InstrumentationRegistry
+                        .getInstrumentation()
+                )
             assertTrue(
                 "The latest overlapping alarm should replace the displayed session",
                 device.wait(
                     androidx.test.uiautomator.Until.hasObject(
-                        androidx.test.uiautomator.By.text("Second alarm")
+                        androidx.test.uiautomator.By
+                            .text("Second alarm")
                     ),
                     5_000
                 )

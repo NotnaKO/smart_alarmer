@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.io.IOException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -11,7 +12,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 class AlarmDatabaseTest {
@@ -34,15 +34,16 @@ class AlarmDatabaseTest {
     @Test
     @Throws(Exception::class)
     fun writeAlarmAndReadInList() = runBlocking {
-        val alarm = Alarm(
-            hour = 7,
-            minute = 30,
-            daysOfWeek = "1,2,3,4,5",
-            puzzlesList = "MATH,TYPING",
-            puzzleCount = 2,
-            label = "Morning",
-            soundUri = "content://test/uri"
-        )
+        val alarm =
+            Alarm(
+                hour = 7,
+                minute = 30,
+                daysOfWeek = "1,2,3,4,5",
+                puzzlesList = "MATH,TYPING",
+                puzzleCount = 2,
+                label = "Morning",
+                soundUri = "content://test/uri"
+            )
         alarmDao.insertAlarm(alarm)
         val allAlarms = alarmDao.getAllAlarms().first()
         assertEquals(1, allAlarms.size)
@@ -54,22 +55,24 @@ class AlarmDatabaseTest {
 
     @Test
     fun testGetEnabledAlarmsOnly() = runBlocking {
-        val alarm1 = Alarm(
-            hour = 7,
-            minute = 30,
-            daysOfWeek = "1,2,3,4,5",
-            isEnabled = true,
-            puzzlesList = "MATH",
-            puzzleCount = 1
-        )
-        val alarm2 = Alarm(
-            hour = 8,
-            minute = 0,
-            daysOfWeek = "6,7",
-            isEnabled = false,
-            puzzlesList = "TYPING",
-            puzzleCount = 1
-        )
+        val alarm1 =
+            Alarm(
+                hour = 7,
+                minute = 30,
+                daysOfWeek = "1,2,3,4,5",
+                isEnabled = true,
+                puzzlesList = "MATH",
+                puzzleCount = 1
+            )
+        val alarm2 =
+            Alarm(
+                hour = 8,
+                minute = 0,
+                daysOfWeek = "6,7",
+                isEnabled = false,
+                puzzlesList = "TYPING",
+                puzzleCount = 1
+            )
         alarmDao.insertAlarm(alarm1)
         alarmDao.insertAlarm(alarm2)
         val enabledAlarms = alarmDao.getEnabledAlarms()

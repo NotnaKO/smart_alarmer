@@ -5,12 +5,13 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.smartalarmer.ui.main.AlarmItemCard
-import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.ui.main.AlarmEditSheet
+import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
-import org.junit.Assert.assertNotNull
+import com.example.smartalarmer.utils.AlarmTimeFormatter
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -18,7 +19,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmListScreenTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
@@ -67,20 +67,31 @@ class AlarmListScreenTest {
         }
     }
 
+    private fun formattedTime(
+        hour: Int,
+        minute: Int
+    ): String {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        return AlarmTimeFormatter.formatTime(context, hour, minute)
+    }
+
     // ── AlarmItemCard tests ───────────────────────────────────────────────
 
     @Test
     fun alarmCard_showsFormattedTime() {
         setAlarmCard(alarm = testAlarm(hour = 9, minute = 5))
 
-        composeTestRule.onNodeWithText("09:05").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(9, 5)).assertIsDisplayed()
     }
 
     @Test
     fun alarmCard_showsTimeWithLeadingZeros() {
         setAlarmCard(alarm = testAlarm(hour = 0, minute = 0))
 
-        composeTestRule.onNodeWithText("00:00").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(0, 0)).assertIsDisplayed()
     }
 
     @Test
@@ -118,7 +129,10 @@ class AlarmListScreenTest {
             onDelete = { deleted = true }
         )
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val deleteDesc = context.getString(com.example.smartalarmer.R.string.delete_alarm_desc)
         composeTestRule.onNodeWithContentDescription(deleteDesc).performClick()
 
@@ -131,14 +145,17 @@ class AlarmListScreenTest {
             alarm = testAlarm(daysOfWeek = "1,3,5", puzzlesList = "MATH,MEMORY", puzzleCount = 2)
         )
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val mon = context.getString(com.example.smartalarmer.R.string.day_mon)
         val wed = context.getString(com.example.smartalarmer.R.string.day_wed)
         val fri = context.getString(com.example.smartalarmer.R.string.day_fri)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        
+
         val expected = "$mon, $wed, $fri • $math, $memory (2 puzzles) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
@@ -149,11 +166,14 @@ class AlarmListScreenTest {
             alarm = testAlarm(daysOfWeek = "", puzzlesList = "MATH")
         )
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val oneTime = context.getString(com.example.smartalarmer.R.string.one_time)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        
+
         val expected = "$oneTime • $math (1 puzzle) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
@@ -164,12 +184,15 @@ class AlarmListScreenTest {
             alarm = testAlarm(isGradualVolume = true)
         )
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val weekdays = context.getString(com.example.smartalarmer.R.string.weekdays)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val gradual = context.getString(com.example.smartalarmer.R.string.gradual_volume)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        
+
         val expected = "$weekdays • $math (1 puzzle) • $gradual • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
@@ -182,7 +205,10 @@ class AlarmListScreenTest {
             onTest = { testClicked = true }
         )
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val testBtnDesc = context.getString(com.example.smartalarmer.R.string.test_btn)
         composeTestRule.onNodeWithContentDescription(testBtnDesc).performClick()
         assertTrue(testClicked)
@@ -197,7 +223,7 @@ class AlarmListScreenTest {
         )
 
         // Click the card (finding the time text in the unmerged tree to perform click on the left side)
-        composeTestRule.onNodeWithText("07:30", useUnmergedTree = true).performClick()
+        composeTestRule.onNodeWithText(formattedTime(7, 30), useUnmergedTree = true).performClick()
         assertTrue(editClicked)
     }
 
@@ -206,14 +232,14 @@ class AlarmListScreenTest {
         setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = "Morning Gym"))
 
         composeTestRule.onNodeWithText("Morning Gym").assertIsDisplayed()
-        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(7, 30)).assertIsDisplayed()
     }
 
     @Test
     fun alarmCard_withoutLabel_showsTimeAsTitleOnly() {
         setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = ""))
 
-        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(7, 30)).assertIsDisplayed()
         // No text matching Morning Gym should exist
         composeTestRule.onNodeWithText("Morning Gym").assertDoesNotExist()
     }
@@ -222,11 +248,12 @@ class AlarmListScreenTest {
 
     @Test
     fun multipleAlarmCards_allTimesVisible() {
-        val alarms = listOf(
-            testAlarm(hour = 6, minute = 0).copy(id = 1),
-            testAlarm(hour = 7, minute = 15).copy(id = 2),
-            testAlarm(hour = 8, minute = 45).copy(id = 3)
-        )
+        val alarms =
+            listOf(
+                testAlarm(hour = 6, minute = 0).copy(id = 1),
+                testAlarm(hour = 7, minute = 15).copy(id = 2),
+                testAlarm(hour = 8, minute = 45).copy(id = 3)
+            )
 
         composeTestRule.setContent {
             SmartAlarmerTheme {
@@ -238,14 +265,17 @@ class AlarmListScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("06:00").assertIsDisplayed()
-        composeTestRule.onNodeWithText("07:15").assertIsDisplayed()
-        composeTestRule.onNodeWithText("08:45").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(6, 0)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(7, 15)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(8, 45)).assertIsDisplayed()
     }
 
     @Test
     fun alarmEditSheet_withoutShakeSensor_hidesAndSanitizesShakePuzzle() {
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         var savedPuzzles: String? = null
         var savedPuzzleCount: Int? = null
 
@@ -254,9 +284,9 @@ class AlarmListScreenTest {
                 AlarmEditSheet(
                     alarm = testAlarm(puzzlesList = "SHAKE", puzzleCount = 1),
                     onDismiss = {},
-                    onSave = { _, _, _, puzzles, count, _, _, _ ->
-                        savedPuzzles = puzzles
-                        savedPuzzleCount = count
+                    onSave = { draft ->
+                        savedPuzzles = draft.puzzleSelection.encoded
+                        savedPuzzleCount = draft.puzzleCount
                     },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
@@ -281,13 +311,16 @@ class AlarmListScreenTest {
 
     @Test
     fun alarmEditSheet_dayAndStepperControlsMeetTouchTargetMinimum() {
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         composeTestRule.setContent {
             SmartAlarmerTheme {
                 AlarmEditSheet(
                     alarm = null,
                     onDismiss = {},
-                    onSave = { _, _, _, _, _, _, _, _ -> },
+                    onSave = {},
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
                     initialLabel = "",
@@ -306,5 +339,4 @@ class AlarmListScreenTest {
             .performScrollTo()
             .assertHeightIsAtLeast(48.dp)
     }
-
 }

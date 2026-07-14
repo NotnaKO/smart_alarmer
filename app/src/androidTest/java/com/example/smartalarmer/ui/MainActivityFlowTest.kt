@@ -15,18 +15,19 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityFlowTest {
-
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        
+
         // Ensure emulator screen is awake and unlocked
-        val device = androidx.test.uiautomator.UiDevice.getInstance(
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-        )
+        val device =
+            androidx.test.uiautomator.UiDevice.getInstance(
+                androidx.test.platform.app.InstrumentationRegistry
+                    .getInstrumentation()
+            )
         try {
             device.wakeUp()
             device.executeShellCommand("wm dismiss-keyguard")

@@ -14,16 +14,17 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmDaoTest {
-
     private lateinit var database: AlarmDatabase
     private lateinit var dao: AlarmDao
 
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AlarmDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        database =
+            Room
+                .inMemoryDatabaseBuilder(context, AlarmDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         dao = database.alarmDao()
     }
 

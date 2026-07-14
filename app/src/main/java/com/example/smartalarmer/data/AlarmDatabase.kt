@@ -14,31 +14,32 @@ abstract class AlarmDatabase : RoomDatabase() {
     companion object {
         @Volatile private var INSTANCE: AlarmDatabase? = null
 
-        val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE alarms ADD COLUMN isGradualVolume INTEGER NOT NULL DEFAULT 1")
+        val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE alarms ADD COLUMN isGradualVolume INTEGER NOT NULL DEFAULT 1")
+                }
             }
-        }
 
-        val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE alarms ADD COLUMN label TEXT NOT NULL DEFAULT ''")
-                db.execSQL("ALTER TABLE alarms ADD COLUMN soundUri TEXT DEFAULT NULL")
+        val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE alarms ADD COLUMN label TEXT NOT NULL DEFAULT ''")
+                    db.execSQL("ALTER TABLE alarms ADD COLUMN soundUri TEXT DEFAULT NULL")
+                }
             }
-        }
 
-        fun getDatabase(context: Context): AlarmDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AlarmDatabase::class.java,
-                    "alarm_database"
-                )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-                .build()
-                INSTANCE = instance
-                instance
-            }
+        fun getDatabase(context: Context): AlarmDatabase = INSTANCE ?: synchronized(this) {
+            val instance =
+                Room
+                    .databaseBuilder(
+                        context.applicationContext,
+                        AlarmDatabase::class.java,
+                        "alarm_database"
+                    ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .build()
+            INSTANCE = instance
+            instance
         }
     }
 }
