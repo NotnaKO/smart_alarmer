@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.receiver.AlarmReceiver
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class AlarmDeliveryEndToEndTest {
     @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
     fun scheduledPreviewAlarmReachesReceiverAndServiceWithoutChangingVolume() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val alarmManager = context.getSystemService(AlarmManager::class.java)

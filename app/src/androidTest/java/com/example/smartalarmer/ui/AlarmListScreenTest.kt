@@ -9,6 +9,7 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
+import com.example.smartalarmer.utils.AlarmTimeFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -66,20 +67,31 @@ class AlarmListScreenTest {
         }
     }
 
+    private fun formattedTime(
+        hour: Int,
+        minute: Int
+    ): String {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        return AlarmTimeFormatter.formatTime(context, hour, minute)
+    }
+
     // ── AlarmItemCard tests ───────────────────────────────────────────────
 
     @Test
     fun alarmCard_showsFormattedTime() {
         setAlarmCard(alarm = testAlarm(hour = 9, minute = 5))
 
-        composeTestRule.onNodeWithText("09:05").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(9, 5)).assertIsDisplayed()
     }
 
     @Test
     fun alarmCard_showsTimeWithLeadingZeros() {
         setAlarmCard(alarm = testAlarm(hour = 0, minute = 0))
 
-        composeTestRule.onNodeWithText("00:00").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(0, 0)).assertIsDisplayed()
     }
 
     @Test
@@ -211,7 +223,7 @@ class AlarmListScreenTest {
         )
 
         // Click the card (finding the time text in the unmerged tree to perform click on the left side)
-        composeTestRule.onNodeWithText("07:30", useUnmergedTree = true).performClick()
+        composeTestRule.onNodeWithText(formattedTime(7, 30), useUnmergedTree = true).performClick()
         assertTrue(editClicked)
     }
 
@@ -220,14 +232,14 @@ class AlarmListScreenTest {
         setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = "Morning Gym"))
 
         composeTestRule.onNodeWithText("Morning Gym").assertIsDisplayed()
-        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(7, 30)).assertIsDisplayed()
     }
 
     @Test
     fun alarmCard_withoutLabel_showsTimeAsTitleOnly() {
         setAlarmCard(alarm = testAlarm(hour = 7, minute = 30, label = ""))
 
-        composeTestRule.onNodeWithText("07:30").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(7, 30)).assertIsDisplayed()
         // No text matching Morning Gym should exist
         composeTestRule.onNodeWithText("Morning Gym").assertDoesNotExist()
     }
@@ -253,9 +265,9 @@ class AlarmListScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("06:00").assertIsDisplayed()
-        composeTestRule.onNodeWithText("07:15").assertIsDisplayed()
-        composeTestRule.onNodeWithText("08:45").assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(6, 0)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(7, 15)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(formattedTime(8, 45)).assertIsDisplayed()
     }
 
     @Test
