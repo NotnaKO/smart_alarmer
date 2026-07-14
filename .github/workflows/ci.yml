@@ -97,9 +97,7 @@ jobs:
           disable-animations: true
           script: |
             ./gradlew installDebug
-            if [[ "${{ matrix.api-level }}" == "31" ]]; then
-              adb shell appops set com.notnako.smartalarmer SCHEDULE_EXACT_ALARM allow
-            fi
+            if [ "${{ matrix.api-level }}" = "31" ]; then adb shell appops set com.notnako.smartalarmer SCHEDULE_EXACT_ALARM allow; fi
             ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.sleepDevice=true
 
       - name: Upload Instrumented Test Reports
