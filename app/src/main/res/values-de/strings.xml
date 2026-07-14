@@ -12,9 +12,13 @@
     <string name="allow_notifications">Benachrichtigungen erlauben</string>
     <string name="allow_alarms">Alarme erlauben</string>
     <string name="allow_lockscreen">Sperrbildschirm-Anzeige erlauben</string>
+    <string name="notification_settings">Benachrichtigungseinstellungen</string>
     <string name="no_alarms_scheduled">Keine Alarme geplant.\nTippen Sie auf +, um einen Alarm hinzuzufügen.</string>
     <string name="test_btn">Testen</string>
     <string name="delete_alarm_desc">Alarm löschen</string>
+    <string name="delete_alarm_title">Alarm löschen?</string>
+    <string name="delete_alarm_confirmation">„%1$s“ löschen? Dieser Alarm wird nicht mehr klingeln.</string>
+    <string name="delete">Löschen</string>
     <string name="add_alarm_desc">Alarm hinzufügen</string>
     <string name="privacy_policy">Datenschutzerklärung</string>
     <string name="close">Schließen</string>
@@ -84,19 +88,23 @@
     <string name="alarm_set_toast">Alarm in %1$s ab jetzt gestellt</string>
     <string name="exact_alarm_permission_required">Erlauben Sie Alarme und Erinnerungen, bevor Sie diesen Alarm aktivieren.</string>
     <string name="alarm_schedule_failed">Der Alarm konnte nicht geplant werden. Versuchen Sie es erneut.</string>
+    <string name="alarm_operation_failed">Der Alarm konnte nicht aktualisiert werden. Der vorherige Zustand wurde wiederhergestellt.</string>
     <string name="hours_and_minutes_connector">%1$s und %2$s</string>
+    <string name="next_alarm_format">Nächster Alarm: %1$s</string>
 
     <!-- Alarm Dismiss Screen -->
     <string name="task_progress_format">Aufgabe %1$d von %2$d</string>
     <string name="your_answer_format">Deine Antwort: %1$s</string>
     <string name="type_sentence_label">Tippe diesen Satz exakt ab:</string>
     <string name="submit_btn">Bestätigen</string>
-    <string name="memorize_pattern">Muster merken...</string>
+    <string name="memorize_pattern">Muster merken…</string>
     <string name="repeat_pattern">Muster wiederholen!</string>
     <string name="shake_device">Gerät schütteln!</string>
     <string name="shakes_remaining">Verbleibende Erschütterungen: %1$d</string>
     <string name="backspace_desc">Rücktaste</string>
     <string name="confirm_answer_desc">Antwort bestätigen</string>
+    <string name="incorrect_answer">Falsche Antwort. Versuche es erneut.</string>
+    <string name="incorrect_pattern">Falsches Muster. Sieh es dir noch einmal an.</string>
     <string name="shift_key_desc">Umschalttaste</string>
     <string name="shift_on">Ein</string>
     <string name="shift_off">Aus</string>

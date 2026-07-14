@@ -6,13 +6,19 @@ interface AlarmRepository {
     val alarms: Flow<List<Alarm>>
 
     suspend fun getEnabledAlarms(): List<Alarm>
+
     suspend fun getAlarmById(id: Int): Alarm?
+
     suspend fun insertAlarm(alarm: Alarm): Alarm
+
     suspend fun updateAlarm(alarm: Alarm)
+
     suspend fun deleteAlarm(alarm: Alarm)
 }
 
-class RoomAlarmRepository(private val alarmDao: AlarmDao) : AlarmRepository {
+class RoomAlarmRepository(
+    private val alarmDao: AlarmDao
+) : AlarmRepository {
     override val alarms: Flow<List<Alarm>> = alarmDao.getAllAlarms()
 
     override suspend fun getEnabledAlarms(): List<Alarm> = alarmDao.getEnabledAlarms()

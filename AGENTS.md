@@ -80,7 +80,7 @@ Puzzle types in config are stored as **comma-separated string values**:
 ## ⚠️ Important Constraints & Pitfalls
 
 ### Permissions & Manifest
-- **Exact alarm permission** (`SCHEDULE_EXACT_ALARM`) is critical; scheduling uses `setAlarmClock()` and returns a typed failure when exact access is unavailable
+- **Exact alarm permissions** are critical: use `SCHEDULE_EXACT_ALARM` through API 32 and `USE_EXACT_ALARM` on API 33+; scheduling uses `setAlarmClock()` and returns a typed failure when exact access is unavailable
 - **Foreground service** requires `POST_NOTIFICATIONS` (Android 13+)
 - **Full-screen intent** for AlarmDismissActivity requires `USE_FULL_SCREEN_INTENT`
 - Device reboot, app replacement, time changes, and time-zone changes trigger

@@ -20,7 +20,8 @@ fun PrivacyPolicyDialog(onDismiss: () -> Unit) {
         text = {
             Text(
                 text = stringResource(R.string.privacy_policy_body),
-                modifier = Modifier
+                modifier =
+                Modifier
                     .heightIn(max = 480.dp)
                     .verticalScroll(rememberScrollState())
             )

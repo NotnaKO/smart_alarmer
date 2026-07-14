@@ -31,17 +31,22 @@ class AlarmTimeCalculator(
         error("Unable to calculate a future trigger for alarm ${alarm.id}")
     }
 
-    private fun resolveOccurrences(date: LocalDate, alarm: Alarm, now: Instant): List<Instant> {
+    private fun resolveOccurrences(
+        date: LocalDate,
+        alarm: Alarm,
+        now: Instant
+    ): List<Instant> {
         val localDateTime = LocalDateTime.of(date.year, date.month, date.dayOfMonth, alarm.hour, alarm.minute)
         val validOffsets = zoneId.rules.getValidOffsets(localDateTime)
-        val occurrences = if (validOffsets.isEmpty()) {
-            // A DST gap has no exact wall-clock match. java.time shifts it forward by the gap length.
-            listOf(localDateTime.atZone(zoneId).toInstant())
-        } else {
-            validOffsets.map { offset ->
-                ZonedDateTime.ofLocal(localDateTime, zoneId, offset).toInstant()
+        val occurrences =
+            if (validOffsets.isEmpty()) {
+                // A DST gap has no exact wall-clock match. java.time shifts it forward by the gap length.
+                listOf(localDateTime.atZone(zoneId).toInstant())
+            } else {
+                validOffsets.map { offset ->
+                    ZonedDateTime.ofLocal(localDateTime, zoneId, offset).toInstant()
+                }
             }
-        }
         return occurrences.filter { it > now }.sorted()
     }
 }

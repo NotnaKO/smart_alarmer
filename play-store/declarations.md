@@ -45,16 +45,22 @@ puzzles over the lock screen so the user can see and silence the alarm.
 
 ## Exact alarms
 
-The app declares the user-granted `SCHEDULE_EXACT_ALARM` permission and calls
-`AlarmManager.setAlarmClock()` for alarms explicitly created by the user. It does
-not declare the restricted `USE_EXACT_ALARM` permission.
+Smart Alarmer is a dedicated alarm-clock app whose core user-facing function
+requires alarms to ring at an exact time. It declares `USE_EXACT_ALARM` on
+Android 13 and newer and calls `AlarmManager.setAlarmClock()` only for alarms
+explicitly created by the user. On Android 12 and 12L it retains the
+user-granted `SCHEDULE_EXACT_ALARM` permission through `maxSdkVersion="32"`.
+
+Complete the Exact Alarm permission declaration in Play Console and select the
+alarm/timer-app use case before uploading this version.
 
 ## Permissions summary
 
 | Permission | User-facing purpose |
 | --- | --- |
 | `POST_NOTIFICATIONS` | Show an active-alarm foreground notification. |
-| `SCHEDULE_EXACT_ALARM` | Ring alarms at the time selected by the user. |
+| `USE_EXACT_ALARM` | Ring user-created alarms at their exact selected time on Android 13+. |
+| `SCHEDULE_EXACT_ALARM` | Android 12/12L compatibility for exact user-created alarms. |
 | `USE_FULL_SCREEN_INTENT` | Present the ringing alarm over the lock screen. |
 | `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Continue alarm audio while the app is not visible. |
 | `WAKE_LOCK` | Keep alarm processing active while the alarm rings. |

@@ -66,9 +66,10 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 │  → starts MediaPlayer (alarm tone, looping)                  │
 │  → locks volume to max every 1 second                        │
 │  │  (skipped during Preview Mode)                            │
-│  → launches AlarmDismissActivity directly                    │
+│  → keeps CPU awake until the alarm session is dismissed      │
 └────────────────────────┬────────────────────────────────────┘
                          │
+              full-screen/content PendingIntent
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                  AlarmDismissActivity                         │
@@ -127,7 +128,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 
 | File | Purpose |
 |------|---------|
-| `data/Alarm.kt` | Room `@Entity`. Fields: `id`, `hour`, `minute`, `daysOfWeek` (CSV of ISO-8601 day numbers), `isEnabled`, `puzzlesList` (CSV of puzzle types), `puzzleCount`. |
+| `data/Alarm.kt` | Room `@Entity`. Stores identity, time, repeat-day and puzzle CSV values, enabled state, puzzle count, gradual-volume preference, label, and optional sound URI. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
 | `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 3. Versioned schemas are committed under `app/schemas/`. |
@@ -180,13 +181,16 @@ Declared in `AndroidManifest.xml`:
 | `FOREGROUND_SERVICE` | Run `AlarmService` as a foreground service |
 | `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Required `foregroundServiceType` for audio on Android 14+ |
 | `USE_FULL_SCREEN_INTENT` | Launch dismiss activity from the notification |
-| `SCHEDULE_EXACT_ALARM` | Schedule exact alarms (user-grantable on Android 12+) |
+| `SCHEDULE_EXACT_ALARM` | Android 12/12L compatibility for exact alarms (`maxSdkVersion=32`) |
+| `USE_EXACT_ALARM` | Automatically granted exact-alarm access for this dedicated alarm app on Android 13+ |
 | `WAKE_LOCK` | Keep CPU alive during alarm processing |
 | `MODIFY_AUDIO_SETTINGS` | Apply gradual alarm volume and restore the previous level after dismissal |
 | `POST_NOTIFICATIONS` | Show foreground service notification |
 | `RECEIVE_BOOT_COMPLETED` | Trigger `BootReceiver` after device restart |
 
-> **Note on Android 14+ (SDK 34+):** The `SCHEDULE_EXACT_ALARM` permission is revoked by default. On physical devices users must enable "Alarms & reminders" in Special App Access settings. On emulators, run:
+> **Note on Android 12/12L (SDK 31–32):** These releases use the user-controlled
+> `SCHEDULE_EXACT_ALARM` special access. Enable “Alarms & reminders” on a physical
+> test device. On an emulator, run:
 > ```bash
 > adb shell appops set com.notnako.smartalarmer SCHEDULE_EXACT_ALARM allow
 > ```
@@ -242,7 +246,7 @@ ignored by Git and should be stored in a secret manager, outside this repository
 
 ```
         ┌───────────────────────┐
-        │  Emulator E2E Tests   │  ← Manual via ADB / script
+        │  Emulator E2E Tests   │  ← connectedAndroidTest matrix
         │  (integration)        │
         ├───────────────────────┤
         │  Instrumented Tests   │  ← connectedAndroidTest
@@ -277,30 +281,4 @@ These run on a real device or emulator and require the Android runtime.
 | `AlarmListScreenTest` | Tests Composable settings cards, dynamic weekdays text generation, play/test trigger callbacks, and edit clicks. |
 | `AlarmDismissScreenTest` | Verifies Math, Memory, Typing, and Shake behavior, accessibility semantics, saved puzzle input, and rotation-safe task progression. |
 | `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |
-
----
-
-## Implementation History
-
-Development proceeded incrementally, with each feature committed and verified before moving to the next:
-
-| Commit | Description |
-|--------|-------------|
-| `8e2b572` | **Latest:** Add run_app.sh launcher script |
-| `9ce179e` | Implement Glassmorphism styling, BottomSheet editor, and AlarmListScreenTest updates |
-| `05395e7` | Support IS_PREVIEW flag in AlarmDismissActivity and write AlarmDismissActivityTest |
-| `ae9ac6c` | Implement MainViewModel and MainViewModelTest |
-| `c955390` | Implement `TypingEngine` and unit tests |
-| `d3f0fef` | Implement `MemoryEngine` and unit tests |
-| `943bd4d` | Implement Room database persistence and in-memory test |
-| `84b8a53` | Implement `AlarmReceiver` and `AlarmScheduler` |
-| `361beed` | Implement `AlarmService` and `AlarmDismissActivity` |
-| `7c4b5ce` | Implement `AlarmDismissScreen` and puzzle Compose views |
-| `a420bc3` | Implement `MainActivity` with alarm configuration controls |
-| `418aee6` | Custom alarm list and FAB `TimePickerDialog` with Material Icons |
-| `3b8d350` | Update `AlarmDao.insertAlarm()` to return row ID |
-| `5be85d3` | End-to-end multiple alarm scheduling with time picker UI and emulator verification |
-| `c8a04f9` | **Cleanup:** delete unused template boilerplate |
-| `151b9fe` | Implement `BootReceiver` to reschedule active alarms on device boot |
-| `d79cc28` | Precise day-of-week scheduling calculation (ISO-8601 mapping) |
-| `2e379f1` | Extract `calculateNextTriggerTime()`, add scheduling unit tests, add auto-rescheduling in `AlarmReceiver` |
+| `AlarmDeliveryEndToEndTest` | Schedules a safe preview alarm through `AlarmManager` and verifies receiver/service delivery without audio or volume changes. |

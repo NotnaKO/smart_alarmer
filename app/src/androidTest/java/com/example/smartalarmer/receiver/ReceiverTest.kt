@@ -15,28 +15,29 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ReceiverTest {
-
     @Test
     fun alarmReceiver_previewTrigger_forwardsSafeServiceIntent() {
         val baseContext = ApplicationProvider.getApplicationContext<Context>()
         var capturedServiceIntent: Intent? = null
-        val context = object : ContextWrapper(baseContext) {
-            override fun startForegroundService(service: Intent): ComponentName? {
-                capturedServiceIntent = service
-                return service.component
-            }
+        val context =
+            object : ContextWrapper(baseContext) {
+                override fun startForegroundService(service: Intent): ComponentName? {
+                    capturedServiceIntent = service
+                    return service.component
+                }
 
-            override fun startService(service: Intent): ComponentName? {
-                capturedServiceIntent = service
-                return service.component
+                override fun startService(service: Intent): ComponentName? {
+                    capturedServiceIntent = service
+                    return service.component
+                }
             }
-        }
         val receiver = AlarmReceiver()
-        val intent = Intent("com.example.smartalarmer.ALARM_TRIGGER").apply {
-            putExtra("PUZZLES_LIST", "MATH")
-            putExtra("PUZZLE_COUNT", 1)
-            putExtra("IS_PREVIEW", true)
-        }
+        val intent =
+            Intent("com.example.smartalarmer.ALARM_TRIGGER").apply {
+                putExtra("PUZZLES_LIST", "MATH")
+                putExtra("PUZZLE_COUNT", 1)
+                putExtra("IS_PREVIEW", true)
+            }
 
         receiver.onReceive(context, intent)
 

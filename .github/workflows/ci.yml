@@ -27,7 +27,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6  
 
       - name: Run Lint
-        run: ./gradlew lintDebug
+        run: ./gradlew ktlintCheck lintDebug
 
       - name: Upload Lint Report
         if: failure()
@@ -68,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [29, 31, 35]
+        api-level: [24, 31, 34, 36]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -95,7 +95,12 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.sleepDevice=true
+          script: |
+            ./gradlew installDebug
+            if [[ "${{ matrix.api-level }}" == "31" ]]; then
+              adb shell appops set com.notnako.smartalarmer SCHEDULE_EXACT_ALARM allow
+            fi
+            ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.sleepDevice=true
 
       - name: Upload Instrumented Test Reports
         if: failure()

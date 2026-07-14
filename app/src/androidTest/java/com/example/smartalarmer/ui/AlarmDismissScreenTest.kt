@@ -1,17 +1,17 @@
 package com.example.smartalarmer.ui
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.smartalarmer.puzzle.*
 import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
 import com.example.smartalarmer.ui.dismiss.MathPuzzleView
 import com.example.smartalarmer.ui.dismiss.MemoryPuzzleView
-import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
 import com.example.smartalarmer.ui.dismiss.ShakePuzzleView
+import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
 import com.example.smartalarmer.ui.dismiss.VirtualKeyboard
-import com.example.smartalarmer.puzzle.*
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -20,46 +20,62 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmDismissScreenTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
     // ── Fake providers ────────────────────────────────────────────────────
 
     /** Always returns "5 + 3" with answer 8. */
-    private val fakeMath = object : MathPuzzleProvider {
-        override fun generate(difficulty: Difficulty) =
-            MathPuzzle(equation = "5 + 3", answer = 8, difficulty = Difficulty.MEDIUM)
-    }
+    private val fakeMath =
+        object : MathPuzzleProvider {
+            override fun generate(difficulty: Difficulty) = MathPuzzle(equation = "5 + 3", answer = 8, difficulty = Difficulty.MEDIUM)
+        }
 
     /** Always returns the same fixed quote. */
-    private val fakeTyping = object : TypingPuzzleProvider {
-        override fun getRandomQuote(quotes: List<String>) = "Wake up now"
-        override fun isMatch(target: String, input: String) = target.trim() == input.trim()
-    }
+    private val fakeTyping =
+        object : TypingPuzzleProvider {
+            override fun getRandomQuote(quotes: List<String>) = "Wake up now"
+
+            override fun isMatch(
+                target: String,
+                input: String
+            ) = target.trim() == input.trim()
+        }
 
     /**
      * Returns sequence [0, 1, 2] and delegates real verification logic
      * so we can tap correctly without rewriting the engine.
      */
-    private val fakeMemory = object : MemoryPuzzleProvider {
-        override fun generateSequence(length: Int) = listOf(0, 1, 2)
-        override fun verifyStep(sequence: List<Int>, userInputs: List<Int>) =
-            MemoryEngine.verifyStep(sequence, userInputs)
-    }
+    private val fakeMemory =
+        object : MemoryPuzzleProvider {
+            override fun generateSequence(length: Int) = listOf(0, 1, 2)
 
-    private val fakeShake = object : ShakeSensorProvider {
-        private var callback: ((Float, Float, Float) -> Unit)? = null
-        override fun register(onSensorChanged: (Float, Float, Float) -> Unit) {
-            callback = onSensorChanged
+            override fun verifyStep(
+                sequence: List<Int>,
+                userInputs: List<Int>
+            ) = MemoryEngine.verifyStep(sequence, userInputs)
         }
-        override fun unregister() {
-            callback = null
+
+    private val fakeShake =
+        object : ShakeSensorProvider {
+            private var callback: ((Float, Float, Float) -> Unit)? = null
+
+            override fun register(onSensorChanged: (Float, Float, Float) -> Unit) {
+                callback = onSensorChanged
+            }
+
+            override fun unregister() {
+                callback = null
+            }
+
+            fun simulateShake(
+                x: Float,
+                y: Float,
+                z: Float
+            ) {
+                callback?.invoke(x, y, z)
+            }
         }
-        fun simulateShake(x: Float, y: Float, z: Float) {
-            callback?.invoke(x, y, z)
-        }
-    }
 
     // ── Math puzzle ───────────────────────────────────────────────────────
 
@@ -69,7 +85,7 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MathPuzzleView(
                 onComplete = { completed = true },
-                mathProvider = fakeMath,
+                mathProvider = fakeMath
             )
         }
 
@@ -89,7 +105,7 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MathPuzzleView(
                 onComplete = { completed = true },
-                mathProvider = fakeMath,
+                mathProvider = fakeMath
             )
         }
 
@@ -98,7 +114,10 @@ class AlarmDismissScreenTest {
         composeTestRule.onNodeWithText("✔").performClick()
 
         // Input should be cleared (label resets to empty)
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val yourAnswerEmpty = context.getString(com.example.smartalarmer.R.string.your_answer_format, "")
         composeTestRule.onNodeWithText(yourAnswerEmpty).assertIsDisplayed()
         assertTrue("onComplete should NOT be called", !completed)
@@ -109,13 +128,16 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MathPuzzleView(
                 onComplete = {},
-                mathProvider = fakeMath,
+                mathProvider = fakeMath
             )
         }
 
         composeTestRule.onNodeWithText("8").performClick()
         composeTestRule.onNodeWithText("5").performClick()
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val yourAnswer85 = context.getString(com.example.smartalarmer.R.string.your_answer_format, "85")
         composeTestRule.onNodeWithText(yourAnswer85).assertIsDisplayed()
 
@@ -131,7 +153,10 @@ class AlarmDismissScreenTest {
         restorationTester.setContent {
             MathPuzzleView(onComplete = {}, mathProvider = fakeMath)
         }
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
 
         composeTestRule.onNodeWithText("8").performClick()
         restorationTester.emulateSavedInstanceStateRestore()
@@ -145,7 +170,10 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MathPuzzleView(onComplete = {}, mathProvider = fakeMath)
         }
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
 
         composeTestRule
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.backspace_desc))
@@ -160,17 +188,18 @@ class AlarmDismissScreenTest {
     @Test
     fun mathPuzzle_requestsOnlyMediumOrHardDifficulty() {
         var requestedDifficulty: Difficulty? = null
-        val capturingMathProvider = object : MathPuzzleProvider {
-            override fun generate(difficulty: Difficulty): MathPuzzle {
-                requestedDifficulty = difficulty
-                return MathPuzzle(equation = "1 + 1", answer = 2, difficulty = difficulty)
+        val capturingMathProvider =
+            object : MathPuzzleProvider {
+                override fun generate(difficulty: Difficulty): MathPuzzle {
+                    requestedDifficulty = difficulty
+                    return MathPuzzle(equation = "1 + 1", answer = 2, difficulty = difficulty)
+                }
             }
-        }
 
         composeTestRule.setContent {
             MathPuzzleView(
                 onComplete = {},
-                mathProvider = capturingMathProvider,
+                mathProvider = capturingMathProvider
             )
         }
 
@@ -208,11 +237,14 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             TypingPuzzleView(
                 onComplete = { completed = true },
-                typingProvider = fakeTyping,
+                typingProvider = fakeTyping
             )
         }
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val submitBtn = context.getString(com.example.smartalarmer.R.string.submit_btn)
         composeTestRule.onNodeWithText("Wake up now").assertIsDisplayed()
         simulateVirtualKeyboardInput("Wake up now")
@@ -227,11 +259,14 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             TypingPuzzleView(
                 onComplete = { completed = true },
-                typingProvider = fakeTyping,
+                typingProvider = fakeTyping
             )
         }
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val submitBtn = context.getString(com.example.smartalarmer.R.string.submit_btn)
         simulateVirtualKeyboardInput("wrong text")
         composeTestRule.onNodeWithText(submitBtn).performClick()
@@ -251,12 +286,15 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MemoryPuzzleView(
                 onComplete = { completed = true },
-                memoryProvider = fakeMemory,
+                memoryProvider = fakeMemory
             )
         }
 
         // Wait until flash animation finishes and input is allowed
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule.onAllNodesWithText(repeatPattern).fetchSemanticsNodes().isNotEmpty()
@@ -278,12 +316,15 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MemoryPuzzleView(
                 onComplete = {},
-                memoryProvider = fakeMemory,
+                memoryProvider = fakeMemory
             )
         }
 
         // Wait for input phase
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule.onAllNodesWithText(repeatPattern).fetchSemanticsNodes().isNotEmpty()
@@ -291,7 +332,7 @@ class AlarmDismissScreenTest {
 
         // Tap the wrong button (index 2 first instead of 0)
         val buttons = composeTestRule.onAllNodes(hasClickAction() and !hasText(repeatPattern))
-        buttons[2].performClick()   // wrong first step
+        buttons[2].performClick() // wrong first step
 
         // Puzzle should reset: "Memorize Pattern..." should reappear
         val memorizePattern = context.getString(com.example.smartalarmer.R.string.memorize_pattern)
@@ -303,21 +344,23 @@ class AlarmDismissScreenTest {
     @Test
     fun memoryPuzzle_requestsOnlyMediumOrHardSequenceLength() {
         var requestedLength: Int? = null
-        val capturingMemoryProvider = object : MemoryPuzzleProvider {
-            override fun generateSequence(length: Int): List<Int> {
-                requestedLength = length
-                return listOf(0, 1, 2)
-            }
+        val capturingMemoryProvider =
+            object : MemoryPuzzleProvider {
+                override fun generateSequence(length: Int): List<Int> {
+                    requestedLength = length
+                    return listOf(0, 1, 2)
+                }
 
-            override fun verifyStep(sequence: List<Int>, userInputs: List<Int>): Boolean {
-                return MemoryEngine.verifyStep(sequence, userInputs)
+                override fun verifyStep(
+                    sequence: List<Int>,
+                    userInputs: List<Int>
+                ): Boolean = MemoryEngine.verifyStep(sequence, userInputs)
             }
-        }
 
         composeTestRule.setContent {
             MemoryPuzzleView(
                 onComplete = {},
-                memoryProvider = capturingMemoryProvider,
+                memoryProvider = capturingMemoryProvider
             )
         }
 
@@ -333,14 +376,16 @@ class AlarmDismissScreenTest {
         composeTestRule.setContent {
             MemoryPuzzleView(onComplete = {}, memoryProvider = fakeMemory)
         }
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
 
         (1..9).forEach { cell ->
             composeTestRule
                 .onNodeWithContentDescription(
                     context.getString(com.example.smartalarmer.R.string.memory_cell_desc, cell)
-                )
-                .assertExists()
+                ).assertExists()
                 .assertHeightIsAtLeast(48.dp)
         }
     }
@@ -356,7 +401,10 @@ class AlarmDismissScreenTest {
             )
         }
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val shakeDevice = context.getString(com.example.smartalarmer.R.string.shake_device)
         val shakesRemaining = context.getString(com.example.smartalarmer.R.string.shakes_remaining, 30)
 
@@ -401,7 +449,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
 
@@ -423,11 +471,14 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
 
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val expectedText = context.getString(com.example.smartalarmer.R.string.task_progress_format, 1, 1)
         composeTestRule.onNodeWithText(expectedText).assertIsDisplayed()
     }
@@ -444,10 +495,13 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
-        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
         val firstTask = context.getString(com.example.smartalarmer.R.string.task_progress_format, 1, 2)
         val secondTask = context.getString(com.example.smartalarmer.R.string.task_progress_format, 2, 2)
 
@@ -483,7 +537,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
 
@@ -501,7 +555,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
 
@@ -519,7 +573,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
 
@@ -538,7 +592,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = fakeShake,
+                shakeProvider = fakeShake
             )
         }
 
@@ -548,11 +602,14 @@ class AlarmDismissScreenTest {
 
     @Test
     fun alarmDismissScreen_unavailableShakeSensor_fallsBackToMath() {
-        val unavailableShake = object : ShakeSensorProvider {
-            override val isAvailable = false
-            override fun register(onSensorChanged: (Float, Float, Float) -> Unit) = Unit
-            override fun unregister() = Unit
-        }
+        val unavailableShake =
+            object : ShakeSensorProvider {
+                override val isAvailable = false
+
+                override fun register(onSensorChanged: (Float, Float, Float) -> Unit) = Unit
+
+                override fun unregister() = Unit
+            }
         var dismissed = false
 
         composeTestRule.setContent {
@@ -563,7 +620,7 @@ class AlarmDismissScreenTest {
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
-                shakeProvider = unavailableShake,
+                shakeProvider = unavailableShake
             )
         }
 
@@ -574,10 +631,11 @@ class AlarmDismissScreenTest {
     @Test
     fun virtualKeyboard_inSpanish_displaysSpanishSpecificKeys() {
         composeTestRule.setContent {
-            val config = androidx.compose.ui.platform.LocalConfiguration.current.apply {
-                val locale = java.util.Locale.forLanguageTag("es")
-                setLocale(locale)
-            }
+            val config =
+                androidx.compose.ui.platform.LocalConfiguration.current.apply {
+                    val locale = java.util.Locale.forLanguageTag("es")
+                    setLocale(locale)
+                }
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.compose.ui.platform.LocalConfiguration provides config
             ) {
@@ -595,10 +653,11 @@ class AlarmDismissScreenTest {
     @Test
     fun virtualKeyboard_inGerman_displaysGermanSpecificKeys() {
         composeTestRule.setContent {
-            val config = androidx.compose.ui.platform.LocalConfiguration.current.apply {
-                val locale = java.util.Locale.forLanguageTag("de")
-                setLocale(locale)
-            }
+            val config =
+                androidx.compose.ui.platform.LocalConfiguration.current.apply {
+                    val locale = java.util.Locale.forLanguageTag("de")
+                    setLocale(locale)
+                }
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.compose.ui.platform.LocalConfiguration provides config
             ) {
@@ -616,10 +675,11 @@ class AlarmDismissScreenTest {
     @Test
     fun virtualKeyboard_inRussian_displaysRussianSpecificKeys() {
         composeTestRule.setContent {
-            val config = androidx.compose.ui.platform.LocalConfiguration.current.apply {
-                val locale = java.util.Locale.forLanguageTag("ru")
-                setLocale(locale)
-            }
+            val config =
+                androidx.compose.ui.platform.LocalConfiguration.current.apply {
+                    val locale = java.util.Locale.forLanguageTag("ru")
+                    setLocale(locale)
+                }
             androidx.compose.runtime.CompositionLocalProvider(
                 androidx.compose.ui.platform.LocalConfiguration provides config
             ) {

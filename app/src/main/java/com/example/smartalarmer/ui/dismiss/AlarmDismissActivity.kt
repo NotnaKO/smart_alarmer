@@ -5,8 +5,8 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.addCallback
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
@@ -15,8 +15,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
+import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.service.AlarmService
+import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 
 class AlarmDismissActivity : ComponentActivity() {
     private data class DismissConfig(
@@ -70,13 +71,15 @@ class AlarmDismissActivity : ComponentActivity() {
     }
 
     private fun updateConfig(intent: Intent) {
-        dismissConfig = DismissConfig(
-            alarmId = intent.getIntExtra("ALARM_ID", -1),
-            puzzlesList = intent.getStringExtra("PUZZLES_LIST") ?: "MATH",
-            puzzleCount = intent.getIntExtra("PUZZLE_COUNT", 1),
-            alarmLabel = intent.getStringExtra("ALARM_LABEL") ?: "",
-            isPreview = intent.getBooleanExtra("IS_PREVIEW", false)
-        )
+        val payload = AlarmIntentContract.read(intent)
+        dismissConfig =
+            DismissConfig(
+                alarmId = payload.alarmId,
+                puzzlesList = payload.puzzlesList,
+                puzzleCount = payload.puzzleCount,
+                alarmLabel = payload.alarmLabel,
+                isPreview = payload.isPreview
+            )
     }
 
     private fun applyWindowMode() {

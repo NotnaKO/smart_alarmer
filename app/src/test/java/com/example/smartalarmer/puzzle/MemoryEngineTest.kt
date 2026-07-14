@@ -15,7 +15,7 @@ class MemoryEngineTest {
     @Test
     fun testVerifyStep() {
         val sequence = listOf(1, 4, 3, 8)
-        
+
         // Correct steps
         assertTrue(MemoryEngine.verifyStep(sequence, listOf(1)))
         assertTrue(MemoryEngine.verifyStep(sequence, listOf(1, 4)))

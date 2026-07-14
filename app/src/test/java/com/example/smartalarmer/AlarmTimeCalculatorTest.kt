@@ -2,14 +2,14 @@ package com.example.smartalarmer
 
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.scheduler.AlarmTimeCalculator
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 class AlarmTimeCalculatorTest {
     @Test
@@ -42,27 +42,30 @@ class AlarmTimeCalculatorTest {
 
     @Test
     fun recurringAlarmFindsNextConfiguredWeekday() {
-        val result = calculator("2026-06-18T10:00:00Z").nextTrigger(
-            alarm(hour = 9, minute = 30, days = "1,4")
-        )
+        val result =
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(hour = 9, minute = 30, days = "1,4")
+            )
 
         assertEquals(Instant.parse("2026-06-22T09:30:00Z"), result)
     }
 
     @Test
     fun recurringAlarmUsesTodayWhenConfiguredTimeIsFuture() {
-        val result = calculator("2026-06-18T10:00:00Z").nextTrigger(
-            alarm(hour = 10, minute = 1, days = "4")
-        )
+        val result =
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(hour = 10, minute = 1, days = "4")
+            )
 
         assertEquals(Instant.parse("2026-06-18T10:01:00Z"), result)
     }
 
     @Test
     fun malformedRepeatDaysFallBackToOneTimeScheduling() {
-        val result = calculator("2026-06-18T10:00:00Z").nextTrigger(
-            alarm(hour = 11, minute = 0, days = "invalid,0,8")
-        )
+        val result =
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(hour = 11, minute = 0, days = "invalid,0,8")
+            )
 
         assertEquals(Instant.parse("2026-06-18T11:00:00Z"), result)
     }
@@ -70,9 +73,10 @@ class AlarmTimeCalculatorTest {
     @Test
     fun springDstGapMovesAlarmForwardByGapLength() {
         val zone = ZoneId.of("America/New_York")
-        val result = calculator("2026-03-08T06:00:00Z", zone).nextTrigger(
-            alarm(hour = 2, minute = 30, days = "7")
-        )
+        val result =
+            calculator("2026-03-08T06:00:00Z", zone).nextTrigger(
+                alarm(hour = 2, minute = 30, days = "7")
+            )
 
         assertEquals(
             ZonedDateTime.parse("2026-03-08T03:30:00-04:00[America/New_York]").toInstant(),
@@ -83,21 +87,25 @@ class AlarmTimeCalculatorTest {
     @Test
     fun fallDstOverlapUsesSecondOccurrenceWhenFirstHasPassed() {
         val zone = ZoneId.of("America/New_York")
-        val firstOffsetNow = ZonedDateTime.ofLocal(
-            LocalDateTime.of(2026, 11, 1, 1, 45),
-            zone,
-            ZoneOffset.ofHours(-4)
-        ).toInstant()
-        val result = AlarmTimeCalculator(Clock.fixed(firstOffsetNow, ZoneOffset.UTC), zone).nextTrigger(
-            alarm(hour = 1, minute = 30, days = "7")
-        )
+        val firstOffsetNow =
+            ZonedDateTime
+                .ofLocal(
+                    LocalDateTime.of(2026, 11, 1, 1, 45),
+                    zone,
+                    ZoneOffset.ofHours(-4)
+                ).toInstant()
+        val result =
+            AlarmTimeCalculator(Clock.fixed(firstOffsetNow, ZoneOffset.UTC), zone).nextTrigger(
+                alarm(hour = 1, minute = 30, days = "7")
+            )
 
         assertEquals(
-            ZonedDateTime.ofLocal(
-                LocalDateTime.of(2026, 11, 1, 1, 30),
-                zone,
-                ZoneOffset.ofHours(-5)
-            ).toInstant(),
+            ZonedDateTime
+                .ofLocal(
+                    LocalDateTime.of(2026, 11, 1, 1, 30),
+                    zone,
+                    ZoneOffset.ofHours(-5)
+                ).toInstant(),
             result
         )
     }
@@ -105,16 +113,18 @@ class AlarmTimeCalculatorTest {
     @Test
     fun fallDstOverlapUsesFirstOccurrenceWhenBothAreFuture() {
         val zone = ZoneId.of("America/New_York")
-        val result = calculator("2026-11-01T04:00:00Z", zone).nextTrigger(
-            alarm(hour = 1, minute = 30, days = "7")
-        )
+        val result =
+            calculator("2026-11-01T04:00:00Z", zone).nextTrigger(
+                alarm(hour = 1, minute = 30, days = "7")
+            )
 
         assertEquals(
-            ZonedDateTime.ofLocal(
-                LocalDateTime.of(2026, 11, 1, 1, 30),
-                zone,
-                ZoneOffset.ofHours(-4)
-            ).toInstant(),
+            ZonedDateTime
+                .ofLocal(
+                    LocalDateTime.of(2026, 11, 1, 1, 30),
+                    zone,
+                    ZoneOffset.ofHours(-4)
+                ).toInstant(),
             result
         )
     }
@@ -129,11 +139,16 @@ class AlarmTimeCalculatorTest {
         assertEquals(Instant.parse("2026-06-18T23:00:00Z"), tokyoResult)
     }
 
-    private fun calculator(now: String, zoneId: ZoneId = ZoneId.of("UTC")): AlarmTimeCalculator {
-        return AlarmTimeCalculator(Clock.fixed(Instant.parse(now), ZoneOffset.UTC), zoneId)
-    }
+    private fun calculator(
+        now: String,
+        zoneId: ZoneId = ZoneId.of("UTC")
+    ): AlarmTimeCalculator = AlarmTimeCalculator(Clock.fixed(Instant.parse(now), ZoneOffset.UTC), zoneId)
 
-    private fun alarm(hour: Int, minute: Int, days: String = "") = Alarm(
+    private fun alarm(
+        hour: Int,
+        minute: Int,
+        days: String = ""
+    ) = Alarm(
         hour = hour,
         minute = minute,
         daysOfWeek = days,
