@@ -1,6 +1,5 @@
 package com.example.smartalarmer.service
 
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
@@ -37,6 +36,7 @@ class AlarmService : Service() {
     private var originalAlarmVolume: Int? = null
     private var toneJob: Job? = null
     private var volumeJob: Job? = null
+    private var wakeLockJob: Job? = null
     private var activeAlarmId: Int? = null
     private var activeNotificationId: Int? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -295,22 +295,41 @@ class AlarmService : Service() {
         }
     }
 
-    @SuppressLint("WakelockTimeout")
     private fun acquireWakeLock() {
-        if (wakeLock?.isHeld == true) return
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock =
-            powerManager
-                .newWakeLock(
-                    PowerManager.PARTIAL_WAKE_LOCK,
-                    "$packageName:active-alarm"
-                ).apply {
-                    setReferenceCounted(false)
-                    acquire()
+        if (wakeLock == null) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock =
+                powerManager
+                    .newWakeLock(
+                        PowerManager.PARTIAL_WAKE_LOCK,
+                        "$packageName:active-alarm"
+                    ).apply {
+                        setReferenceCounted(false)
+                    }
+        }
+        renewWakeLock()
+        wakeLockJob?.cancel()
+        wakeLockJob =
+            serviceScope.launch {
+                while (isActive) {
+                    delay(WAKE_LOCK_RENEWAL_INTERVAL_MILLIS)
+                    renewWakeLock()
                 }
+            }
     }
 
+    @Synchronized
+    private fun renewWakeLock() {
+        wakeLock?.run {
+            if (isHeld) release()
+            acquire(WAKE_LOCK_TIMEOUT_MILLIS)
+        }
+    }
+
+    @Synchronized
     private fun releaseWakeLock() {
+        wakeLockJob?.cancel()
+        wakeLockJob = null
         wakeLock?.takeIf { it.isHeld }?.release()
         wakeLock = null
     }
@@ -378,6 +397,9 @@ class AlarmService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        internal const val WAKE_LOCK_RENEWAL_INTERVAL_MILLIS = 9 * 60 * 1000L
+        internal const val WAKE_LOCK_TIMEOUT_MILLIS = 10 * 60 * 1000L
+
         internal fun shouldReplaceActiveAlarm(
             activeAlarmId: Int?,
             incomingAlarmId: Int

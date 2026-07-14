@@ -90,4 +90,10 @@ class AlarmServiceTest {
         assertEquals(maxVolume, volEnd)
         assertEquals(maxVolume, volPast)
     }
+
+    @Test
+    fun alarmService_wakeLockRenewsBeforeItsFailsafeTimeout() {
+        assertTrue(AlarmService.WAKE_LOCK_RENEWAL_INTERVAL_MILLIS > 0)
+        assertTrue(AlarmService.WAKE_LOCK_TIMEOUT_MILLIS > AlarmService.WAKE_LOCK_RENEWAL_INTERVAL_MILLIS)
+    }
 }

@@ -45,6 +45,21 @@ class AlarmCommandCoordinatorTest {
     }
 
     @Test
+    fun createRollbackCancellationFailureKeepsDisabledRowAndSurfacesFailure() = runTest {
+        val repository = FakeRepository().apply { failUpdates = true }
+        val cancellationException = IllegalStateException("cancel")
+        val scheduler =
+            FakeScheduler(
+                cancelResult = AlarmCancelResult.Failure(cancellationException)
+            )
+
+        val result = AlarmCommandCoordinator(repository, scheduler).create(draft())
+
+        assertEquals(AlarmCommandResult.CancellationFailed(cancellationException), result)
+        assertEquals(false, repository.items.value.single().isEnabled)
+    }
+
+    @Test
     fun editPersistenceFailureRestoresPreviousSchedule() = runTest {
         val original = alarm(id = 7, hour = 6)
         val repository = FakeRepository(listOf(original)).apply { failUpdates = true }
@@ -71,6 +86,22 @@ class AlarmCommandCoordinatorTest {
 
         assertTrue(result is AlarmCommandResult.PersistenceFailed)
         assertEquals(listOf(4), scheduler.cancelled.map(Alarm::id))
+    }
+
+    @Test
+    fun enableRollbackCancellationFailureSurfacesFailure() = runTest {
+        val original = alarm(id = 4, isEnabled = false)
+        val repository = FakeRepository(listOf(original)).apply { failUpdates = true }
+        val cancellationException = IllegalStateException("cancel")
+        val scheduler =
+            FakeScheduler(
+                cancelResult = AlarmCancelResult.Failure(cancellationException)
+            )
+
+        val result = AlarmCommandCoordinator(repository, scheduler).setEnabled(original, true)
+
+        assertEquals(AlarmCommandResult.CancellationFailed(cancellationException), result)
+        assertEquals(original, repository.items.value.single())
     }
 
     @Test

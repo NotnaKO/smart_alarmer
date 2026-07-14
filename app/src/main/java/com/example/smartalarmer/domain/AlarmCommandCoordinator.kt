@@ -51,9 +51,14 @@ class AlarmCommandCoordinator(
                     repository.updateAlarm(candidate)
                     AlarmCommandResult.Scheduled(candidate, schedule.triggerAtMillis)
                 } catch (e: Exception) {
-                    scheduler.cancel(candidate)
-                    runCatching { repository.deleteAlarm(inserted) }
-                    AlarmCommandResult.PersistenceFailed(e)
+                    when (val cancellation = scheduler.cancel(candidate)) {
+                        AlarmCancelResult.Cancelled -> {
+                            runCatching { repository.deleteAlarm(inserted) }
+                            AlarmCommandResult.PersistenceFailed(e)
+                        }
+                        is AlarmCancelResult.Failure ->
+                            AlarmCommandResult.CancellationFailed(cancellation.exception)
+                    }
                 }
             }
             AlarmScheduleResult.PermissionRequired -> {
@@ -99,8 +104,11 @@ class AlarmCommandCoordinator(
                         repository.updateAlarm(candidate)
                         AlarmCommandResult.Scheduled(candidate, schedule.triggerAtMillis)
                     } catch (e: Exception) {
-                        scheduler.cancel(candidate)
-                        AlarmCommandResult.PersistenceFailed(e)
+                        when (val cancellation = scheduler.cancel(candidate)) {
+                            AlarmCancelResult.Cancelled -> AlarmCommandResult.PersistenceFailed(e)
+                            is AlarmCancelResult.Failure ->
+                                AlarmCommandResult.CancellationFailed(cancellation.exception)
+                        }
                     }
                 }
                 AlarmScheduleResult.PermissionRequired -> AlarmCommandResult.PermissionRequired
