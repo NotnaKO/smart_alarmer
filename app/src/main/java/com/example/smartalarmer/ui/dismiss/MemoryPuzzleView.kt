@@ -22,6 +22,7 @@ import com.example.smartalarmer.ui.theme.*
 @Composable
 fun MemoryPuzzleView(
     onComplete: () -> Unit,
+    onProgress: (Float) -> Unit = {},
     memoryProvider: MemoryPuzzleProvider = MemoryEngine
 ) {
     val sequence =
@@ -87,9 +88,12 @@ fun MemoryPuzzleView(
                                         userInputs.clear()
                                         showError = true
                                         isShowingSequence = true
-                                    } else if (userInputs.size == sequence.size) {
-                                        onComplete()
                                     } else {
+                                        onProgress(userInputs.size.toFloat() / sequence.size.toFloat())
+                                        if (userInputs.size == sequence.size) {
+                                            onComplete()
+                                            return@Button
+                                        }
                                         showError = false
                                     }
                                 }

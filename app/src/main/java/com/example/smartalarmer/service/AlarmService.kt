@@ -2,8 +2,10 @@ package com.example.smartalarmer.service
 
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -15,8 +17,11 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.smartalarmer.R
 import com.example.smartalarmer.alarm.AlarmIntentContract
+import com.example.smartalarmer.alarm.AlarmProgressContract
+import com.example.smartalarmer.alarm.AlarmProgressEventType
 import java.util.ArrayDeque
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,8 +41,12 @@ class AlarmService : Service() {
     private var originalAlarmVolume: Int? = null
     private var toneJob: Job? = null
     private var volumeJob: Job? = null
+
+    @Volatile
+    private var volumeController: AlarmVolumeController? = null
     private var wakeLockJob: Job? = null
     private var activeAlarmId: Int? = null
+    private var activeTaskIndex = 0
     private var activeNotificationId: Int? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private lateinit var sessionStore: AlarmSessionStore
@@ -65,11 +74,38 @@ class AlarmService : Service() {
                     }
             }
         }
+    private val progressReceiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(
+                context: Context?,
+                intent: Intent?
+            ) {
+                val event = intent?.let(AlarmProgressContract::read) ?: return
+                if (event.alarmId != activeAlarmId) return
+                if (event.taskIndex != activeTaskIndex) return
+                val controller = volumeController ?: return
+                val now = android.os.SystemClock.elapsedRealtime()
+                val targetVolume =
+                    when (event.type) {
+                        AlarmProgressEventType.VERIFIED_PROGRESS ->
+                            controller.onVerifiedProgress(event.progress, now)
+                        AlarmProgressEventType.INTERMEDIATE_TASK_COMPLETED ->
+                            controller.onIntermediateTaskCompleted(now).also { activeTaskIndex++ }
+                    }
+                applyAlarmVolume(targetVolume)
+            }
+        }
 
     override fun onCreate() {
         super.onCreate()
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         sessionStore = AlarmSessionStore(this)
+        ContextCompat.registerReceiver(
+            this,
+            progressReceiver,
+            IntentFilter(AlarmProgressContract.ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onStartCommand(
@@ -126,10 +162,12 @@ class AlarmService : Service() {
         }
 
         activeAlarmId = payload.alarmId
+        activeTaskIndex = 0
 
         releasePlaybackResources()
         volumeJob?.cancel()
         volumeJob = null
+        volumeController = null
         captureOriginalAlarmVolume()
         requestAlarmAudioFocus()
         acquireWakeLock()
@@ -144,30 +182,22 @@ class AlarmService : Service() {
             ).distinct()
         startAlarmPlayback(fallbackUris)
 
-        // Lock Volume / Gradual Volume Crescendo
+        // Lock volume while allowing verified puzzle progress to reduce it.
         val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 7
-        val startTime = System.currentTimeMillis()
+        val controller =
+            AlarmVolumeController(
+                maxVolume = maxVolume,
+                startedAtMillis = android.os.SystemClock.elapsedRealtime(),
+                rampDurationMillis = payload.volumeRampSeconds * 1_000L
+            )
+        volumeController = controller
+        applyAlarmVolume(controller.targetVolume(android.os.SystemClock.elapsedRealtime()))
 
         volumeJob =
             serviceScope.launch {
                 while (isActive) {
-                    val targetVolume =
-                        if (payload.isGradualVolume) {
-                            val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000L
-                            calculateGradualVolume(elapsedSeconds, maxVolume)
-                        } else {
-                            maxVolume
-                        }
-                    try {
-                        audioManager?.setStreamVolume(
-                            AudioManager.STREAM_ALARM,
-                            targetVolume,
-                            0
-                        )
-                    } catch (e: SecurityException) {
-                        android.util.Log.e("AlarmService", "Unable to change alarm volume", e)
-                        break
-                    }
+                    val targetVolume = controller.targetVolume(android.os.SystemClock.elapsedRealtime())
+                    if (!applyAlarmVolume(targetVolume)) break
                     delay(1000)
                 }
             }
@@ -178,6 +208,7 @@ class AlarmService : Service() {
     override fun onDestroy() {
         volumeJob?.cancel()
         volumeJob = null
+        volumeController = null
         serviceJob.cancel()
         releasePlaybackResources()
         restoreOriginalAlarmVolume()
@@ -189,7 +220,21 @@ class AlarmService : Service() {
         }
         activeNotificationId = null
         activeAlarmId = null
+        activeTaskIndex = 0
+        runCatching { unregisterReceiver(progressReceiver) }
         super.onDestroy()
+    }
+
+    private fun applyAlarmVolume(targetVolume: Int): Boolean = try {
+        audioManager?.setStreamVolume(
+            AudioManager.STREAM_ALARM,
+            targetVolume,
+            0
+        )
+        true
+    } catch (e: SecurityException) {
+        android.util.Log.e("AlarmService", "Unable to change alarm volume", e)
+        false
     }
 
     private fun startAlarmPlayback(uris: List<Uri>) {
@@ -414,13 +459,11 @@ class AlarmService : Service() {
             elapsedSeconds: Long,
             maxVolume: Int,
             durationSeconds: Long = 60L
-        ): Int {
-            if (elapsedSeconds < durationSeconds) {
-                val progress = elapsedSeconds.toDouble() / durationSeconds.toDouble()
-                val volumeRange = maxVolume - 1
-                return 1 + (progress * volumeRange).toInt()
-            }
-            return maxVolume
-        }
+        ): Int = AlarmVolumeController.calculateRampVolume(
+            startVolume = if (maxVolume > 0) 1 else 0,
+            maxVolume = maxVolume,
+            elapsedMillis = elapsedSeconds * 1_000L,
+            durationMillis = durationSeconds * 1_000L
+        )
     }
 }

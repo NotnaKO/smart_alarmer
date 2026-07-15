@@ -11,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,8 @@ fun AlarmDismissScreen(
     puzzlesList: String,
     puzzleCount: Int,
     onDismissComplete: () -> Unit,
+    onVerifiedProgress: (taskIndex: Int, progress: Float) -> Unit = { _, _ -> },
+    onIntermediateTaskCompleted: (taskIndex: Int) -> Unit = {},
     alarmLabel: String = "",
     mathProvider: MathPuzzleProvider = MathEngine,
     typingProvider: TypingPuzzleProvider = TypingEngine,
@@ -70,68 +73,104 @@ fun AlarmDismissScreen(
         return
     }
 
-    val currentPuzzle = puzzles[currentTaskIndex]
+    val activeTaskIndex = currentTaskIndex
+    val currentPuzzle = puzzles[activeTaskIndex]
+    val completeCurrentTask = {
+        if (currentTaskIndex == activeTaskIndex) {
+            if (activeTaskIndex + 1 < puzzles.size) {
+                onIntermediateTaskCompleted(activeTaskIndex)
+            }
+            currentTaskIndex = activeTaskIndex + 1
+        }
+        Unit
+    }
 
     Column(
         modifier =
         Modifier
             .fillMaxSize()
             .background(DarkBgScreen)
-            .verticalScroll(rememberScrollState())
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.Top
     ) {
-        // Label Header (if present)
-        if (alarmLabel.isNotEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (alarmLabel.isNotEmpty()) {
+                Text(
+                    text = alarmLabel,
+                    color = Color.White,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
             Text(
-                text = alarmLabel,
+                text =
+                stringResource(
+                    R.string.task_progress_format,
+                    currentTaskIndex + 1,
+                    puzzles.size
+                ),
                 color = Color.White,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
         }
 
-        // Progress Header
-        Text(
-            text =
-            stringResource(
-                R.string.task_progress_format,
-                currentTaskIndex + 1,
-                puzzles.size
-            ),
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Active Puzzle View
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            when (currentPuzzle) {
-                PuzzleType.MATH ->
-                    MathPuzzleView(
-                        onComplete = { currentTaskIndex++ },
-                        mathProvider = mathProvider
-                    )
-                PuzzleType.TYPING ->
-                    TypingPuzzleView(
-                        onComplete = { currentTaskIndex++ },
-                        typingProvider = typingProvider
-                    )
-                PuzzleType.MEMORY ->
-                    MemoryPuzzleView(
-                        onComplete = { currentTaskIndex++ },
-                        memoryProvider = memoryProvider
-                    )
-                PuzzleType.SHAKE ->
-                    ShakePuzzleView(
-                        onComplete = { currentTaskIndex++ },
-                        shakeProvider = shakeProvider
-                    )
+        Box(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .testTag(PUZZLE_CONTAINER_TAG),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .testTag(PUZZLE_CONTENT_TAG),
+                contentAlignment = Alignment.Center
+            ) {
+                when (currentPuzzle) {
+                    PuzzleType.MATH ->
+                        MathPuzzleView(
+                            onComplete = completeCurrentTask,
+                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                            mathProvider = mathProvider
+                        )
+                    PuzzleType.TYPING ->
+                        TypingPuzzleView(
+                            onComplete = completeCurrentTask,
+                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                            typingProvider = typingProvider
+                        )
+                    PuzzleType.MEMORY ->
+                        MemoryPuzzleView(
+                            onComplete = completeCurrentTask,
+                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                            memoryProvider = memoryProvider
+                        )
+                    PuzzleType.SHAKE ->
+                        ShakePuzzleView(
+                            onComplete = completeCurrentTask,
+                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                            shakeProvider = shakeProvider
+                        )
+                }
             }
         }
     }
 }
+
+internal const val PUZZLE_CONTAINER_TAG = "alarm_dismiss_puzzle_container"
+internal const val PUZZLE_CONTENT_TAG = "alarm_dismiss_puzzle_content"

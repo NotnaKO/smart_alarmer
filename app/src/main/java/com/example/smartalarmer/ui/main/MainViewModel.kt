@@ -9,6 +9,7 @@ import com.example.smartalarmer.domain.AlarmCommandCoordinator
 import com.example.smartalarmer.domain.AlarmCommandResult
 import com.example.smartalarmer.domain.AlarmDays
 import com.example.smartalarmer.domain.AlarmDraft
+import com.example.smartalarmer.domain.AlarmVolumeRamp
 import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
@@ -92,9 +93,9 @@ class MainViewModel(
         daysOfWeek: String,
         puzzlesList: String,
         puzzleCount: Int,
-        isGradualVolume: Boolean,
         label: String,
-        soundUri: String?
+        soundUri: String?,
+        volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS
     ) {
         val selection = PuzzleSelection.parse(puzzlesList)
         saveAlarm(
@@ -104,9 +105,9 @@ class MainViewModel(
                 repeatDays = AlarmDays.parse(daysOfWeek),
                 puzzleSelection = selection,
                 puzzleCount = puzzleCount.coerceIn(1, selection.values.size),
-                isGradualVolume = isGradualVolume,
                 label = label,
-                soundUri = soundUri
+                soundUri = soundUri,
+                volumeRampSeconds = AlarmVolumeRamp.sanitize(volumeRampSeconds)
             )
         )
     }

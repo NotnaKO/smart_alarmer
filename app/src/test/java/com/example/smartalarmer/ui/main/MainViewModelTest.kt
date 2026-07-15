@@ -67,15 +67,16 @@ class MainViewModelTest {
             daysOfWeek = "1,2,3,4,5",
             puzzlesList = "MATH",
             puzzleCount = 1,
-            isGradualVolume = true,
             label = "Morning",
-            soundUri = null
+            soundUri = null,
+            volumeRampSeconds = 120
         )
         advanceUntilIdle()
 
         val saved = repository.alarms.value.single()
         assertEquals(1, saved.id)
         assertTrue(saved.isEnabled)
+        assertEquals(120, saved.volumeRampSeconds)
         assertEquals(saved, scheduler.scheduled.single())
         assertEquals(MainUiEvent.AlarmScheduled(12_345L), event.await())
         assertFalse(viewModel.isBottomSheetVisible.value)
@@ -94,7 +95,6 @@ class MainViewModelTest {
             daysOfWeek = "",
             puzzlesList = "MATH",
             puzzleCount = 1,
-            isGradualVolume = false,
             label = "",
             soundUri = null
         )
@@ -125,7 +125,7 @@ class MainViewModelTest {
 
     @Test
     fun saveEditedAlarm_success_updatesSameRowAndEnablesAlarm() = runTest(mainDispatcherRule.dispatcher) {
-        val existing = alarm(id = 8, isEnabled = false)
+        val existing = alarm(id = 8, isEnabled = false).copy(isGradualVolume = false)
         repository.seed(existing)
         val viewModel = createViewModel()
         viewModel.openEditSheet(existing)
@@ -137,7 +137,6 @@ class MainViewModelTest {
             daysOfWeek = "7,1",
             puzzlesList = "typing,memory",
             puzzleCount = 3,
-            isGradualVolume = false,
             label = "Updated",
             soundUri = "content://alarm/sound"
         )
@@ -150,7 +149,7 @@ class MainViewModelTest {
         assertEquals("1,7", saved.daysOfWeek)
         assertEquals("TYPING,MEMORY", saved.puzzlesList)
         assertEquals(2, saved.puzzleCount)
-        assertFalse(saved.isGradualVolume)
+        assertTrue(saved.isGradualVolume)
         assertEquals("Updated", saved.label)
         assertEquals("content://alarm/sound", saved.soundUri)
         assertTrue(saved.isEnabled)
@@ -187,7 +186,6 @@ class MainViewModelTest {
             daysOfWeek = "7,1,1,invalid,9",
             puzzlesList = "shake,unknown,math,shake",
             puzzleCount = 2,
-            isGradualVolume = true,
             label = "",
             soundUri = null
         )
@@ -288,7 +286,6 @@ class MainViewModelTest {
             daysOfWeek = "1,2,3,4,5",
             puzzlesList = "MATH",
             puzzleCount = 1,
-            isGradualVolume = true,
             label = "Morning",
             soundUri = null
         )

@@ -31,14 +31,14 @@ class AlarmMigrationTest {
     }
 
     @Test
-    fun migratesAlarmFromVersion1ThroughVersion3WithoutLosingData() = runBlocking {
+    fun migratesAlarmFromVersion1ThroughVersion4WithoutLosingData() = runBlocking {
         createVersion1Database()
         migrateAndValidateVersion2()
 
         val database =
             Room
                 .databaseBuilder(context, AlarmDatabase::class.java, TEST_DATABASE)
-                .addMigrations(AlarmDatabase.MIGRATION_2_3)
+                .addMigrations(AlarmDatabase.MIGRATION_2_3, AlarmDatabase.MIGRATION_3_4)
                 .build()
         try {
             val alarm = requireNotNull(database.alarmDao().getAlarmById(7))
@@ -47,6 +47,7 @@ class AlarmMigrationTest {
             assertEquals("1,3,5", alarm.daysOfWeek)
             assertEquals("MATH,TYPING", alarm.puzzlesList)
             assertEquals(true, alarm.isGradualVolume)
+            assertEquals(60, alarm.volumeRampSeconds)
             assertEquals("", alarm.label)
             assertNull(alarm.soundUri)
         } finally {

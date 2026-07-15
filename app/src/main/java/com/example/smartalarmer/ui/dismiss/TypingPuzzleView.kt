@@ -21,6 +21,7 @@ import com.example.smartalarmer.ui.theme.*
 @Composable
 fun TypingPuzzleView(
     onComplete: () -> Unit,
+    onProgress: (Float) -> Unit = {},
     typingProvider: TypingPuzzleProvider = TypingEngine
 ) {
     val quotes = stringArrayResource(R.array.typing_quotes).toList()
@@ -51,7 +52,9 @@ fun TypingPuzzleView(
         VirtualKeyboard(
             onKeyClick = {
                 showError = false
-                input += it
+                val updatedInput = input + it
+                input = updatedInput
+                typingProvider.progress(targetQuote, updatedInput).takeIf { progress -> progress > 0f }?.let(onProgress)
             },
             onBackspace = { if (input.isNotEmpty()) input = input.dropLast(1) }
         )

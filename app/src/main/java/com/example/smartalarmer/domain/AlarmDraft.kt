@@ -8,15 +8,18 @@ data class AlarmDraft(
     val repeatDays: AlarmDays,
     val puzzleSelection: PuzzleSelection,
     val puzzleCount: Int,
-    val isGradualVolume: Boolean,
     val label: String,
-    val soundUri: String?
+    val soundUri: String?,
+    val volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS
 ) {
     init {
         require(hour in 0..23) { "Alarm hour must be between 0 and 23" }
         require(minute in 0..59) { "Alarm minute must be between 0 and 59" }
         require(puzzleCount in 1..puzzleSelection.values.size) {
             "Puzzle count must match the selected puzzles"
+        }
+        require(volumeRampSeconds in AlarmVolumeRamp.OPTIONS_SECONDS) {
+            "Volume ramp duration must be a supported preset"
         }
     }
 
@@ -31,7 +34,8 @@ data class AlarmDraft(
         isEnabled = isEnabled,
         puzzlesList = puzzleSelection.encoded,
         puzzleCount = puzzleCount,
-        isGradualVolume = isGradualVolume,
+        isGradualVolume = true,
+        volumeRampSeconds = volumeRampSeconds,
         label = label.trim(),
         soundUri = soundUri
     )

@@ -22,6 +22,7 @@ import com.example.smartalarmer.ui.theme.*
 @Composable
 fun MathPuzzleView(
     onComplete: () -> Unit,
+    onProgress: (Float) -> Unit = {},
     mathProvider: MathPuzzleProvider = MathEngine
 ) {
     val puzzle =
@@ -64,7 +65,9 @@ fun MathPuzzleView(
                         Button(
                             onClick = {
                                 showError = false
-                                input += num.toString()
+                                val updatedInput = input + num.toString()
+                                input = updatedInput
+                                reportMathProgress(updatedInput, puzzle.answer, onProgress)
                             },
                             modifier =
                             Modifier
@@ -92,7 +95,9 @@ fun MathPuzzleView(
                 Button(
                     onClick = {
                         showError = false
-                        input += "0"
+                        val updatedInput = input + "0"
+                        input = updatedInput
+                        reportMathProgress(updatedInput, puzzle.answer, onProgress)
                     },
                     modifier =
                     Modifier.padding(4.dp).size(64.dp).semantics {
@@ -131,5 +136,16 @@ fun MathPuzzleView(
                 }
             )
         }
+    }
+}
+
+private fun reportMathProgress(
+    input: String,
+    answer: Int,
+    onProgress: (Float) -> Unit
+) {
+    val answerText = answer.toString()
+    if (input.isNotEmpty() && answerText.startsWith(input)) {
+        onProgress((input.length.toFloat() / answerText.length.toFloat()).coerceIn(0f, 1f))
     }
 }

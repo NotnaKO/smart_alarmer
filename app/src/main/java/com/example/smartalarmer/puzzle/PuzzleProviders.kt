@@ -7,6 +7,11 @@ interface MathPuzzleProvider {
 interface TypingPuzzleProvider {
     fun getRandomQuote(quotes: List<String>): String
 
+    fun progress(
+        target: String,
+        input: String
+    ): Float
+
     fun isMatch(
         target: String,
         input: String

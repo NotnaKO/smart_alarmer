@@ -1,5 +1,6 @@
 package com.example.smartalarmer.puzzle
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,5 +25,12 @@ class TypingEngineTest {
 
         // Non-matches
         assertFalse(TypingEngine.isMatch("The early bird", "The late bird"))
+    }
+
+    @Test
+    fun progressOnlyCountsNormalizedCorrectPrefix() {
+        assertEquals(2f / 12f, TypingEngine.progress("Ál que vuela!", "al "), 0.001f)
+        assertEquals(0f, TypingEngine.progress("Wake up now", "Wrong"), 0.001f)
+        assertEquals(1f, TypingEngine.progress("Wake up now!", "wake up now"), 0.001f)
     }
 }

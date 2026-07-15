@@ -44,5 +44,6 @@ class ReceiverTest {
         assertNotNull(capturedServiceIntent)
         assertEquals(AlarmService::class.java.name, capturedServiceIntent?.component?.className)
         assertTrue(capturedServiceIntent?.getBooleanExtra("IS_PREVIEW", false) == true)
+        assertEquals(60, capturedServiceIntent?.getIntExtra("VOLUME_RAMP_SECONDS", -1))
     }
 }

@@ -9,9 +9,12 @@ import com.example.smartalarmer.puzzle.*
 import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
 import com.example.smartalarmer.ui.dismiss.MathPuzzleView
 import com.example.smartalarmer.ui.dismiss.MemoryPuzzleView
+import com.example.smartalarmer.ui.dismiss.PUZZLE_CONTAINER_TAG
+import com.example.smartalarmer.ui.dismiss.PUZZLE_CONTENT_TAG
 import com.example.smartalarmer.ui.dismiss.ShakePuzzleView
 import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
 import com.example.smartalarmer.ui.dismiss.VirtualKeyboard
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -35,6 +38,11 @@ class AlarmDismissScreenTest {
     private val fakeTyping =
         object : TypingPuzzleProvider {
             override fun getRandomQuote(quotes: List<String>) = "Wake up now"
+
+            override fun progress(
+                target: String,
+                input: String
+            ): Float = TypingEngine.progress(target, input)
 
             override fun isMatch(
                 target: String,
@@ -121,6 +129,24 @@ class AlarmDismissScreenTest {
         val yourAnswerEmpty = context.getString(com.example.smartalarmer.R.string.your_answer_format, "")
         composeTestRule.onNodeWithText(yourAnswerEmpty).assertIsDisplayed()
         assertTrue("onComplete should NOT be called", !completed)
+    }
+
+    @Test
+    fun mathPuzzle_reportsOnlyCorrectAnswerPrefixProgress() {
+        val progress = mutableListOf<Float>()
+        composeTestRule.setContent {
+            MathPuzzleView(
+                onComplete = {},
+                onProgress = progress::add,
+                mathProvider = fakeMath
+            )
+        }
+
+        composeTestRule.onNodeWithText("9").performClick()
+        assertTrue(progress.isEmpty())
+        composeTestRule.onNodeWithText("✔").performClick()
+        composeTestRule.onNodeWithText("8").performClick()
+        assertEquals(listOf(1f), progress)
     }
 
     @Test
@@ -274,6 +300,24 @@ class AlarmDismissScreenTest {
         assertTrue("onComplete should NOT be called", !completed)
     }
 
+    @Test
+    fun typingPuzzle_reportsOnlyNormalizedCorrectPrefixProgress() {
+        val progress = mutableListOf<Float>()
+        composeTestRule.setContent {
+            TypingPuzzleView(
+                onComplete = {},
+                onProgress = progress::add,
+                typingProvider = fakeTyping
+            )
+        }
+
+        composeTestRule.onNodeWithText("x").performClick()
+        assertTrue(progress.isEmpty())
+        composeTestRule.onNodeWithText("⌫").performClick()
+        simulateVirtualKeyboardInput("W")
+        assertEquals(listOf(1f / 11f), progress)
+    }
+
     // ── Memory puzzle ─────────────────────────────────────────────────────
 
     /**
@@ -283,9 +327,11 @@ class AlarmDismissScreenTest {
     @Test
     fun memoryPuzzle_correctSequence_callsOnComplete() {
         var completed = false
+        val progress = mutableListOf<Float>()
         composeTestRule.setContent {
             MemoryPuzzleView(
                 onComplete = { completed = true },
+                onProgress = progress::add,
                 memoryProvider = fakeMemory
             )
         }
@@ -309,6 +355,7 @@ class AlarmDismissScreenTest {
 
         composeTestRule.waitForIdle()
         assertTrue("onComplete should have been called", completed)
+        assertEquals(listOf(1f / 3f, 2f / 3f, 1f), progress)
     }
 
     @Test
@@ -415,9 +462,11 @@ class AlarmDismissScreenTest {
     @Test
     fun shakePuzzle_simulatedShakes_callsOnComplete() {
         var completed = false
+        val progress = mutableListOf<Float>()
         composeTestRule.setContent {
             ShakePuzzleView(
                 onComplete = { completed = true },
+                onProgress = progress::add,
                 shakeProvider = fakeShake
             )
         }
@@ -434,6 +483,8 @@ class AlarmDismissScreenTest {
 
         composeTestRule.waitForIdle()
         assertTrue("onComplete should have been called after 30 shakes", completed)
+        assertTrue(progress.isNotEmpty())
+        assertEquals(1f, progress.last(), 0.001f)
     }
 
     // ── Full flow ─────────────────────────────────────────────────────────
@@ -484,14 +535,47 @@ class AlarmDismissScreenTest {
     }
 
     @Test
+    fun alarmDismissScreen_centersShortPuzzleInAvailableSpace() {
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake
+            )
+        }
+
+        val containerBounds =
+            composeTestRule
+                .onNodeWithTag(PUZZLE_CONTAINER_TAG)
+                .fetchSemanticsNode()
+                .boundsInRoot
+        val contentBounds =
+            composeTestRule
+                .onNodeWithTag(PUZZLE_CONTENT_TAG)
+                .fetchSemanticsNode()
+                .boundsInRoot
+
+        assertTrue(
+            "Short puzzle content should be vertically centered below the header",
+            kotlin.math.abs(contentBounds.center.y - containerBounds.center.y) < 1f
+        )
+    }
+
+    @Test
     fun alarmDismissScreen_rotationKeepsCurrentTaskWithoutSkipping() {
         val restorationTester = StateRestorationTester(composeTestRule)
         var dismissed = false
+        val completedTaskIndexes = mutableListOf<Int>()
         restorationTester.setContent {
             AlarmDismissScreen(
                 puzzlesList = "MATH,TYPING",
                 puzzleCount = 2,
                 onDismissComplete = { dismissed = true },
+                onIntermediateTaskCompleted = completedTaskIndexes::add,
                 mathProvider = fakeMath,
                 typingProvider = fakeTyping,
                 memoryProvider = fakeMemory,
@@ -518,6 +602,7 @@ class AlarmDismissScreenTest {
                 .performClick()
         }
         composeTestRule.onNodeWithText(secondTask).assertIsDisplayed()
+        assertEquals(listOf(0), completedTaskIndexes)
 
         restorationTester.emulateSavedInstanceStateRestore()
 

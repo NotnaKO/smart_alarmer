@@ -31,6 +31,7 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.domain.AlarmDay
 import com.example.smartalarmer.domain.AlarmDays
 import com.example.smartalarmer.domain.AlarmDraft
+import com.example.smartalarmer.domain.AlarmVolumeRamp
 import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.domain.PuzzleType
 import com.example.smartalarmer.domain.puzzleSelection
@@ -94,7 +95,9 @@ fun AlarmEditSheet(
     var puzzleCount by rememberSaveable(alarm?.id) {
         mutableStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
     }
-    var isGradualVolume by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.isGradualVolume ?: true) }
+    var volumeRampSeconds by rememberSaveable(alarm?.id) {
+        mutableStateOf(AlarmVolumeRamp.sanitize(alarm?.volumeRampSeconds ?: AlarmVolumeRamp.DEFAULT_SECONDS))
+    }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -355,41 +358,42 @@ fun AlarmEditSheet(
                     }
                 }
 
-                // Gradual Volume toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            androidx.compose.ui.res
-                                .stringResource(com.example.smartalarmer.R.string.gradual_volume),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            androidx.compose.ui.res
-                                .stringResource(com.example.smartalarmer.R.string.gradual_volume_desc),
-                            color = Color.LightGray,
-                            fontSize = 12.sp
-                        )
-                    }
-                    Switch(
-                        checked = isGradualVolume,
-                        onCheckedChange = { isGradualVolume = it },
-                        colors =
-                        SwitchDefaults.colors(
-                            checkedThumbColor = IndigoPrimary,
-                            checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = CardBorderGlass
-                        )
+                Column {
+                    Text(
+                        text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
+                    Text(
+                        text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration_desc),
+                        color = Color.LightGray,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AlarmVolumeRamp.OPTIONS_SECONDS.forEach { seconds ->
+                            FilterChip(
+                                selected = volumeRampSeconds == seconds,
+                                onClick = { volumeRampSeconds = seconds },
+                                label = {
+                                    Text(stringResource(com.example.smartalarmer.R.string.volume_ramp_seconds_format, seconds))
+                                },
+                                colors =
+                                FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = IndigoPrimary,
+                                    selectedLabelColor = Color.White,
+                                    containerColor = KeyButtonBg,
+                                    labelColor = Color.Gray
+                                )
+                            )
+                        }
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
 
                 // Actions
                 Row(
@@ -417,9 +421,9 @@ fun AlarmEditSheet(
                                     repeatDays = AlarmDays.of(selectedDays),
                                     puzzleSelection = puzzleSelection,
                                     puzzleCount = puzzleCount.coerceIn(1, puzzleSelection.values.size),
-                                    isGradualVolume = isGradualVolume,
                                     label = label,
-                                    soundUri = pickedSoundUri
+                                    soundUri = pickedSoundUri,
+                                    volumeRampSeconds = volumeRampSeconds
                                 )
                             )
                         },

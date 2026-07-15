@@ -82,7 +82,6 @@ fun AlarmItemCard(
                     }
                 stringResource(resId)
             }.joinToString(", ")
-    val gradualText = if (alarm.isGradualVolume) " • " + stringResource(com.example.smartalarmer.R.string.gradual_volume) else ""
     val puzzleCountText =
         resources.getQuantityString(
             com.example.smartalarmer.R.plurals.puzzles_plural,
@@ -138,7 +137,7 @@ fun AlarmItemCard(
                         }.getOrNull()
                     } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
                 Text(
-                    text = "$daysSummary • $puzzlesText ($puzzleCountText)$gradualText • $soundName",
+                    text = "$daysSummary • $puzzlesText ($puzzleCountText) • $soundName",
                     fontSize = 13.sp,
                     color = Color.LightGray
                 )

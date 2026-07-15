@@ -4,7 +4,7 @@ A native Android alarm clock that forces you to wake up by completing cognitive 
 
 ## Overview
 
-Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigger a foreground service playing audio at maximum volume. The only way to stop the noise is to solve a configurable sequence of puzzles (math, typing, and memory pattern recognition). The alarm survives device reboots and automatically reschedules recurring alarms after they fire.
+Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigger a foreground service playing audio with a gradual volume ramp. Verified puzzle progress reduces the sound, while completing the configured puzzle sequence is the only way to dismiss the alarm. The alarm survives device reboots and automatically reschedules recurring alarms after they fire.
 
 ### Key Features
 
@@ -14,7 +14,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
-- **Volume lock**: The alarm stream is forced to maximum every second while active.
+- **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
 - **Full-screen overlay**: The puzzle screen appears over the lock screen with back-button disabled for real alarms.
 - **Room database**: Persistent alarm storage with reactive Flow-based UI updates.
 
@@ -64,7 +64,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 │                      AlarmService                            │
 │  → foreground notification with full-screen intent           │
 │  → starts MediaPlayer (alarm tone, looping)                  │
-│  → locks volume to max every 1 second                        │
+│  → enforces progress-aware volume every 1 second             │
 │  │  (skipped during Preview Mode)                            │
 │  → keeps CPU awake until the alarm session is dismissed      │
 └────────────────────────┬────────────────────────────────────┘
@@ -121,17 +121,17 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `ui/main/MainViewModel.kt` | Lifecycle-managed state holder that coordinates injected repository and scheduling abstractions and emits one-shot UI events without retaining Android `Context`. |
 | `MainActivity.kt` | Activity wiring, lifecycle-aware state collection, permission refresh, and dashboard orchestration. |
 | `AlarmItemCard.kt` | Accessible alarm summary and alarm actions. |
-| `AlarmEditSheet.kt` | Saveable, scrollable alarm editor with sensor-aware puzzle selection. |
+| `AlarmEditSheet.kt` | Saveable, scrollable alarm editor with sensor-aware puzzle selection and volume-ramp presets. |
 | `theme/` | Material 3 dark theme configuration. |
 
 ### Data Layer
 
 | File | Purpose |
 |------|---------|
-| `data/Alarm.kt` | Room `@Entity`. Stores identity, time, repeat-day and puzzle CSV values, enabled state, puzzle count, gradual-volume preference, label, and optional sound URI. |
+| `data/Alarm.kt` | Room `@Entity`. Stores identity, time, repeat-day and puzzle CSV values, enabled state, puzzle count, volume-ramp duration, a compatibility-only legacy volume flag, label, and optional sound URI. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 3. Versioned schemas are committed under `app/schemas/`. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 4. Versioned schemas are committed under `app/schemas/`. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android
@@ -184,7 +184,7 @@ Declared in `AndroidManifest.xml`:
 | `SCHEDULE_EXACT_ALARM` | Android 12/12L compatibility for exact alarms (`maxSdkVersion=32`) |
 | `USE_EXACT_ALARM` | Automatically granted exact-alarm access for this dedicated alarm app on Android 13+ |
 | `WAKE_LOCK` | Keep CPU alive during alarm processing |
-| `MODIFY_AUDIO_SETTINGS` | Apply gradual alarm volume and restore the previous level after dismissal |
+| `MODIFY_AUDIO_SETTINGS` | Apply progress-aware alarm volume and restore the previous level after dismissal |
 | `POST_NOTIFICATIONS` | Show foreground service notification |
 | `RECEIVE_BOOT_COMPLETED` | Trigger `BootReceiver` after device restart |
 
