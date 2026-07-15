@@ -33,9 +33,10 @@ export SMART_ALARMER_KEYSTORE_PASSWORD
 export SMART_ALARMER_KEY_ALIAS="$KEY_ALIAS"
 export SMART_ALARMER_KEY_PASSWORD
 
-./gradlew test :app:lintDebug :app:bundleRelease
+./gradlew test :app:lintDebug :app:bundleRelease :app:assembleRelease
 
 AAB="app/build/outputs/bundle/release/app-release.aab"
+APK="app/build/outputs/apk/release/app-release.apk"
 VERIFY_OUTPUT="$(LC_ALL=C jarsigner -verify "$AAB" 2>&1)"
 if [[ "$VERIFY_OUTPUT" != *"jar verified."* ]]; then
   echo "Release bundle was created but its signature could not be verified:" >&2
@@ -44,3 +45,4 @@ if [[ "$VERIFY_OUTPUT" != *"jar verified."* ]]; then
 fi
 
 echo "Signed release bundle ready: $AAB"
+echo "Signed release APK ready: $APK"
