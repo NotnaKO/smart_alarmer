@@ -94,6 +94,10 @@
     </plurals>
     <string name="alarm_set_toast">Будильник заведен: прозвенит через %1$s</string>
     <string name="exact_alarm_permission_required">Разрешите установку будильников и напоминаний, прежде чем включать этот будильник.</string>
+    <string name="notification_delivery_required">Разрешите уведомления будильника перед его включением.</string>
+    <string name="schedule_permission_required">Не запланирован: требуется доступ к точным будильникам</string>
+    <string name="schedule_failed">Ошибка планирования — откройте будильник и повторите</string>
+    <string name="schedule_unverified">Расписание проверяется</string>
     <string name="alarm_schedule_failed">Не удалось запланировать будильник. Попробуйте ещё раз.</string>
     <string name="alarm_operation_failed">Не удалось обновить будильник. Предыдущее состояние восстановлено.</string>
     <string name="hours_and_minutes_connector">%1$s и %2$s</string>

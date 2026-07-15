@@ -19,6 +19,7 @@ import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEvent
 import com.example.smartalarmer.alarm.AlarmProgressEventType
+import com.example.smartalarmer.service.ActiveAlarmRecovery
 import com.example.smartalarmer.service.AlarmService
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 
@@ -70,6 +71,9 @@ class AlarmDismissActivity : ComponentActivity() {
                             },
                             onDismissComplete = {
                                 if (!dismissConfig.isPreview) {
+                                    runCatching {
+                                        ActiveAlarmRecovery.markDismissRequested(this, dismissConfig.alarmId)
+                                    }
                                     stopService(Intent(this, AlarmService::class.java))
                                 }
                                 finish()

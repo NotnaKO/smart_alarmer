@@ -2,6 +2,7 @@ package com.example.smartalarmer.domain
 
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmRepository
+import com.example.smartalarmer.data.AlarmScheduleStatus
 import com.example.smartalarmer.scheduler.AlarmCancelResult
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
@@ -20,6 +21,8 @@ sealed interface AlarmCommandResult {
 
     data object PermissionRequired : AlarmCommandResult
 
+    data object NotificationCapabilityRequired : AlarmCommandResult
+
     data class SchedulingFailed(
         val exception: Exception
     ) : AlarmCommandResult
@@ -35,9 +38,13 @@ sealed interface AlarmCommandResult {
 
 class AlarmCommandCoordinator(
     private val repository: AlarmRepository,
-    private val scheduler: AlarmSchedulingGateway
+    private val scheduler: AlarmSchedulingGateway,
+    private val activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY
 ) {
     suspend fun create(draft: AlarmDraft): AlarmCommandResult {
+        if (!activationGate.isNotificationDeliveryReady()) {
+            return AlarmCommandResult.NotificationCapabilityRequired
+        }
         val inserted =
             try {
                 repository.insertAlarm(draft.toAlarm(isEnabled = false))
@@ -47,9 +54,10 @@ class AlarmCommandCoordinator(
         val candidate = inserted.copy(isEnabled = true)
         return when (val schedule = scheduler.schedule(candidate)) {
             is AlarmScheduleResult.Scheduled -> {
+                val scheduledCandidate = candidate.withScheduleResult(schedule)
                 try {
-                    repository.updateAlarm(candidate)
-                    AlarmCommandResult.Scheduled(candidate, schedule.triggerAtMillis)
+                    repository.updateAlarm(scheduledCandidate)
+                    AlarmCommandResult.Scheduled(scheduledCandidate, schedule.triggerAtMillis)
                 } catch (e: Exception) {
                     when (val cancellation = scheduler.cancel(candidate)) {
                         AlarmCancelResult.Cancelled -> {
@@ -76,12 +84,16 @@ class AlarmCommandCoordinator(
         original: Alarm,
         draft: AlarmDraft
     ): AlarmCommandResult {
+        if (!activationGate.isNotificationDeliveryReady()) {
+            return AlarmCommandResult.NotificationCapabilityRequired
+        }
         val candidate = draft.toAlarm(existing = original, isEnabled = true)
         return when (val schedule = scheduler.schedule(candidate)) {
             is AlarmScheduleResult.Scheduled -> {
+                val scheduledCandidate = candidate.withScheduleResult(schedule)
                 try {
-                    repository.updateAlarm(candidate)
-                    AlarmCommandResult.Scheduled(candidate, schedule.triggerAtMillis)
+                    repository.updateAlarm(scheduledCandidate)
+                    AlarmCommandResult.Scheduled(scheduledCandidate, schedule.triggerAtMillis)
                 } catch (e: Exception) {
                     restore(original, candidate)
                     AlarmCommandResult.PersistenceFailed(e)
@@ -98,11 +110,15 @@ class AlarmCommandCoordinator(
     ): AlarmCommandResult {
         val candidate = alarm.copy(isEnabled = enabled)
         if (enabled) {
+            if (!activationGate.isNotificationDeliveryReady()) {
+                return AlarmCommandResult.NotificationCapabilityRequired
+            }
             return when (val schedule = scheduler.schedule(candidate)) {
                 is AlarmScheduleResult.Scheduled -> {
+                    val scheduledCandidate = candidate.withScheduleResult(schedule)
                     try {
-                        repository.updateAlarm(candidate)
-                        AlarmCommandResult.Scheduled(candidate, schedule.triggerAtMillis)
+                        repository.updateAlarm(scheduledCandidate)
+                        AlarmCommandResult.Scheduled(scheduledCandidate, schedule.triggerAtMillis)
                     } catch (e: Exception) {
                         when (val cancellation = scheduler.cancel(candidate)) {
                             AlarmCancelResult.Cancelled -> AlarmCommandResult.PersistenceFailed(e)
@@ -119,8 +135,12 @@ class AlarmCommandCoordinator(
         return when (val cancellation = scheduler.cancel(alarm)) {
             AlarmCancelResult.Cancelled -> {
                 try {
-                    repository.updateAlarm(candidate)
-                    AlarmCommandResult.Updated(candidate)
+                    val disabled = candidate.copy(
+                        scheduleStatus = AlarmScheduleStatus.DISABLED.name,
+                        scheduledTriggerAtMillis = null
+                    )
+                    repository.updateAlarm(disabled)
+                    AlarmCommandResult.Updated(disabled)
                 } catch (e: Exception) {
                     if (alarm.isEnabled) scheduler.schedule(alarm)
                     AlarmCommandResult.PersistenceFailed(e)
@@ -153,4 +173,9 @@ class AlarmCommandCoordinator(
             scheduler.cancel(candidate)
         }
     }
+
+    private fun Alarm.withScheduleResult(result: AlarmScheduleResult.Scheduled): Alarm = copy(
+        scheduleStatus = AlarmScheduleStatus.SCHEDULED.name,
+        scheduledTriggerAtMillis = result.triggerAtMillis
+    )
 }

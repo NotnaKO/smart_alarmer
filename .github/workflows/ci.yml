@@ -71,13 +71,12 @@ jobs:
 
   instrumented-test:
     name: Run Instrumented Tests (API ${{ matrix.api-level }})
-    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        api-level: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[26,31,34,36]' || '[26]') }}
+        api-level: [26, 31, 34, 36]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -107,6 +106,7 @@ jobs:
           script: |
             ./gradlew installDebug
             if [ "${{ matrix.api-level }}" = "31" ]; then adb shell appops set com.notnako.smartalarmer SCHEDULE_EXACT_ALARM allow; fi
+            if [ "${{ matrix.api-level }}" -ge "33" ]; then adb shell pm grant com.notnako.smartalarmer android.permission.POST_NOTIFICATIONS; fi
             ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.sleepDevice=true
 
       - name: Upload Instrumented Test Reports
@@ -119,7 +119,7 @@ jobs:
   build:
     name: Build Debug APK
     if: github.event_name == 'push'
-    needs: [lint, test]
+    needs: [lint, test, instrumented-test]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

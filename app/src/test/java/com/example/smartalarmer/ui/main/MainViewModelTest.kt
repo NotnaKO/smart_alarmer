@@ -2,6 +2,8 @@ package com.example.smartalarmer.ui.main
 
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmRepository
+import com.example.smartalarmer.data.AlarmScheduleStatus
+import com.example.smartalarmer.domain.AlarmActivationGate
 import com.example.smartalarmer.scheduler.AlarmCancelResult
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
@@ -76,8 +78,10 @@ class MainViewModelTest {
         val saved = repository.alarms.value.single()
         assertEquals(1, saved.id)
         assertTrue(saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.SCHEDULED.name, saved.scheduleStatus)
+        assertEquals(12_345L, saved.scheduledTriggerAtMillis)
         assertEquals(120, saved.volumeRampSeconds)
-        assertEquals(saved, scheduler.scheduled.single())
+        assertEquals(saved.id, scheduler.scheduled.single().id)
         assertEquals(MainUiEvent.AlarmScheduled(12_345L), event.await())
         assertFalse(viewModel.isBottomSheetVisible.value)
     }
@@ -153,7 +157,7 @@ class MainViewModelTest {
         assertEquals("Updated", saved.label)
         assertEquals("content://alarm/sound", saved.soundUri)
         assertTrue(saved.isEnabled)
-        assertEquals(saved, scheduler.scheduled.single())
+        assertEquals(saved.id, scheduler.scheduled.single().id)
         assertEquals(MainUiEvent.AlarmScheduled(1L), event.await())
     }
 
@@ -228,7 +232,7 @@ class MainViewModelTest {
 
         val saved = repository.alarms.value.single()
         assertTrue(saved.isEnabled)
-        assertEquals(saved, scheduler.scheduled.single())
+        assertEquals(saved.id, scheduler.scheduled.single().id)
         assertTrue(scheduler.cancelled.isEmpty())
     }
 
@@ -275,6 +279,20 @@ class MainViewModelTest {
 
         assertTrue(repository.alarms.value.isEmpty())
         assertEquals(existing, scheduler.cancelled.single())
+    }
+
+    @Test
+    fun notificationDeliveryUnavailable_blocksAlarmActivation() = runTest(mainDispatcherRule.dispatcher) {
+        val viewModel = MainViewModel(repository, scheduler, AlarmActivationGate { false })
+        viewModel.openEditSheet()
+        val event = async { viewModel.uiEvents.first() }
+
+        saveDefaultAlarm(viewModel)
+        advanceUntilIdle()
+
+        assertTrue(repository.alarms.value.isEmpty())
+        assertTrue(scheduler.scheduled.isEmpty())
+        assertEquals(MainUiEvent.NotificationCapabilityRequired, event.await())
     }
 
     private fun createViewModel() = MainViewModel(repository, scheduler)

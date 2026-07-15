@@ -55,8 +55,8 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     AlarmReceiver                            │
+│  → validates the persisted alarm                            │
 │  → starts AlarmService (foreground)                          │
-│  → reschedules recurring alarms / disables one-time alarms  │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
@@ -67,6 +67,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 │  → enforces progress-aware volume every 1 second             │
 │  │  (skipped during Preview Mode)                            │
 │  → keeps CPU awake until the alarm session is dismissed      │
+│  → after initialization: reschedules/updates schedule health │
 └────────────────────────┬────────────────────────────────────┘
                          │
               full-screen/content PendingIntent
@@ -106,8 +107,8 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 |------|---------|
 | `AlarmScheduler.kt` | Calculates the next trigger time and registers user-visible exact alarms via `AlarmManager.setAlarmClock()`. Scheduling returns a typed result for success, missing permission, or system failure. |
 | `AlarmTimeCalculator.kt` | Pure `java.time` wall-clock calculation with injected `Clock` and `ZoneId`, including deterministic DST gap/overlap behavior. |
-| `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Starts the foreground `AlarmService` and automatically reschedules recurring alarms for the next active day. Disables one-time alarms. |
-| `AlarmService.kt` | Owns one active alarm session, asynchronously prepares fallback audio, manages volume/audio focus, uses alarm-specific notification identities, and safely replaces overlapping alarms. |
+| `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Validates that the persisted alarm is still enabled and requests the foreground `AlarmService`; failed start requests are recorded without disabling the alarm. |
+| `AlarmService.kt` | Owns one active alarm session, posts foreground state first, persists launcher recovery data, delegates playback/audio focus/wake-lock handling, and only then confirms delivery so recurring rescheduling or one-time disablement cannot happen before initialization. |
 | `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI, accepts replacement alarm intents, and handles normal alarm security locks or safe `IS_PREVIEW` executions. |
 | `AlarmDismissScreen.kt` | Saveable puzzle-sequence orchestration (Task 1 of N → Task N of N), including rotation-safe progress. |
 | `MathPuzzleView.kt`, `TypingPuzzleView.kt`, `MemoryPuzzleView.kt`, `ShakePuzzleView.kt` | Focused, accessible puzzle controls with injectable providers. |
@@ -120,6 +121,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 |------|---------|
 | `ui/main/MainViewModel.kt` | Lifecycle-managed state holder that coordinates injected repository and scheduling abstractions and emits one-shot UI events without retaining Android `Context`. |
 | `MainActivity.kt` | Activity wiring, lifecycle-aware state collection, permission refresh, and dashboard orchestration. |
+| `ActiveAlarmRecovery.kt` | Recreates the dismiss intent from durable active-session state when the user returns through the launcher, while suppressing recovery after dismissal has begun. |
 | `AlarmItemCard.kt` | Accessible alarm summary and alarm actions. |
 | `AlarmEditSheet.kt` | Saveable, scrollable alarm editor with sensor-aware puzzle selection and volume-ramp presets. |
 | `theme/` | Material 3 dark theme configuration. |
@@ -131,12 +133,15 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `data/Alarm.kt` | Room `@Entity`. Stores identity, time, repeat-day and puzzle CSV values, enabled state, puzzle count, volume-ramp duration, a compatibility-only legacy volume flag, label, and optional sound URI. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 4. Versioned schemas are committed under `app/schemas/`. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 5. Versioned schemas are committed under `app/schemas/`. Version 5 persists schedule health and the registered trigger time. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android
 does not restore the matching `AlarmManager` registrations; excluding them
 prevents a restored alarm from appearing enabled without actually being armed.
+The transient `active_alarm_session` preferences are excluded for the same
+reason and to prevent a restored device from inheriting another device's saved
+alarm-volume recovery state.
 
 ### Puzzle Engines
 
@@ -273,11 +278,14 @@ These run on the host JVM with no Android framework required.
 ### 2. Instrumented UI & Integration Tests (`app/src/androidTest/`)
 
 These run on a real device or emulator and require the Android runtime.
+CI runs the full API 26, 31, 34, and 36 emulator matrix for pull requests,
+pushes, and manual runs so exact-alarm, notification, and full-screen behavior
+is exercised at each relevant platform boundary.
 
 | Test Class | What It Covers |
 |------------|---------------|
 | `AlarmDatabaseTest` | Creates an in-memory Room database, inserts alarms, reads them back, and validates CRUD operations. |
-| `AlarmMigrationTest` | Creates a version 1 database, runs 1→2→3 migrations, lets Room validate the final schema, and checks data/default preservation. |
+| `AlarmMigrationTest` | Creates a version 1 database, runs every migration through version 5, lets Room validate the final schema, and checks data/default preservation. |
 | `AlarmListScreenTest` | Tests Composable settings cards, dynamic weekdays text generation, play/test trigger callbacks, and edit clicks. |
 | `AlarmDismissScreenTest` | Verifies Math, Memory, Typing, and Shake behavior, accessibility semantics, saved puzzle input, and rotation-safe task progression. |
 | `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |

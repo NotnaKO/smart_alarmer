@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.data.AlarmScheduleStatus
+import com.example.smartalarmer.data.scheduleHealth
 import com.example.smartalarmer.domain.AlarmDay
 import com.example.smartalarmer.domain.PuzzleType
 import com.example.smartalarmer.domain.puzzleSelection
@@ -142,25 +144,36 @@ fun AlarmItemCard(
                     color = Color.LightGray
                 )
                 if (alarm.isEnabled) {
-                    val nextTrigger =
-                        remember(alarm) {
-                            runCatching {
-                                AlarmTimeCalculator(Clock.systemUTC(), ZoneId.systemDefault())
-                                    .nextTrigger(alarm)
-                                    .toEpochMilli()
-                            }.getOrNull()
+                    Spacer(modifier = Modifier.height(4.dp))
+                    when (alarm.scheduleHealth) {
+                        AlarmScheduleStatus.SCHEDULED -> {
+                            val nextTrigger =
+                                alarm.scheduledTriggerAtMillis ?: remember(alarm) {
+                                    runCatching {
+                                        AlarmTimeCalculator(Clock.systemUTC(), ZoneId.systemDefault())
+                                            .nextTrigger(alarm)
+                                            .toEpochMilli()
+                                    }.getOrNull()
+                                }
+                            nextTrigger?.let { triggerAtMillis ->
+                                Text(
+                                    text =
+                                    stringResource(
+                                        com.example.smartalarmer.R.string.next_alarm_format,
+                                        AlarmTimeFormatter.formatNextTrigger(context, triggerAtMillis)
+                                    ),
+                                    fontSize = 12.sp,
+                                    color = GreenSuccess
+                                )
+                            }
                         }
-                    nextTrigger?.let { triggerAtMillis ->
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text =
-                            stringResource(
-                                com.example.smartalarmer.R.string.next_alarm_format,
-                                AlarmTimeFormatter.formatNextTrigger(context, triggerAtMillis)
-                            ),
-                            fontSize = 12.sp,
-                            color = GreenSuccess
-                        )
+                        AlarmScheduleStatus.PERMISSION_REQUIRED ->
+                            ScheduleHealthText(com.example.smartalarmer.R.string.schedule_permission_required)
+                        AlarmScheduleStatus.FAILED ->
+                            ScheduleHealthText(com.example.smartalarmer.R.string.schedule_failed)
+                        AlarmScheduleStatus.UNKNOWN,
+                        AlarmScheduleStatus.DISABLED
+                        -> ScheduleHealthText(com.example.smartalarmer.R.string.schedule_unverified, OrangeWarning)
                     }
                 }
             }
@@ -218,4 +231,17 @@ fun AlarmItemCard(
             }
         }
     }
+}
+
+@Composable
+private fun ScheduleHealthText(
+    textResource: Int,
+    color: Color = RedError
+) {
+    Text(
+        text = stringResource(textResource),
+        fontSize = 12.sp,
+        color = color,
+        fontWeight = FontWeight.SemiBold
+    )
 }

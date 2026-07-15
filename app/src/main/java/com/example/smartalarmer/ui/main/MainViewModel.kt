@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmRepository
+import com.example.smartalarmer.domain.AlarmActivationGate
 import com.example.smartalarmer.domain.AlarmCommandCoordinator
 import com.example.smartalarmer.domain.AlarmCommandResult
 import com.example.smartalarmer.domain.AlarmDays
@@ -30,6 +31,8 @@ sealed interface MainUiEvent {
 
     data object ExactAlarmPermissionRequired : MainUiEvent
 
+    data object NotificationCapabilityRequired : MainUiEvent
+
     data class AlarmScheduleFailed(
         val exception: Exception
     ) : MainUiEvent
@@ -41,9 +44,10 @@ sealed interface MainUiEvent {
 
 class MainViewModel(
     private val alarmRepository: AlarmRepository,
-    private val alarmScheduler: AlarmSchedulingGateway
+    private val alarmScheduler: AlarmSchedulingGateway,
+    activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY
 ) : ViewModel() {
-    private val commandCoordinator = AlarmCommandCoordinator(alarmRepository, alarmScheduler)
+    private val commandCoordinator = AlarmCommandCoordinator(alarmRepository, alarmScheduler, activationGate)
     private val rescheduleEnabledAlarms = RescheduleEnabledAlarms(alarmRepository, alarmScheduler)
 
     val alarms: StateFlow<List<Alarm>> =
@@ -133,7 +137,7 @@ class MainViewModel(
             try {
                 val report = rescheduleEnabledAlarms()
                 for (failure in report.failures) {
-                    publishScheduleResult(failure)
+                    publishScheduleResult(failure.result)
                 }
             } catch (e: Exception) {
                 _uiEvents.send(MainUiEvent.AlarmOperationFailed(e))
@@ -155,6 +159,8 @@ class MainViewModel(
             -> Unit
             AlarmCommandResult.PermissionRequired ->
                 _uiEvents.send(MainUiEvent.ExactAlarmPermissionRequired)
+            AlarmCommandResult.NotificationCapabilityRequired ->
+                _uiEvents.send(MainUiEvent.NotificationCapabilityRequired)
             is AlarmCommandResult.SchedulingFailed ->
                 _uiEvents.send(MainUiEvent.AlarmScheduleFailed(result.exception))
             is AlarmCommandResult.PersistenceFailed ->
@@ -176,12 +182,13 @@ class MainViewModel(
 
     class Factory(
         private val alarmRepository: AlarmRepository,
-        private val alarmScheduler: AlarmSchedulingGateway
+        private val alarmScheduler: AlarmSchedulingGateway,
+        private val activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-                return MainViewModel(alarmRepository, alarmScheduler) as T
+                return MainViewModel(alarmRepository, alarmScheduler, activationGate) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

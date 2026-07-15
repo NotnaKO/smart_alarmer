@@ -1,6 +1,7 @@
 package com.example.smartalarmer.domain
 
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.data.AlarmScheduleStatus
 
 data class AlarmDraft(
     val hour: Int,
@@ -37,6 +38,8 @@ data class AlarmDraft(
         isGradualVolume = true,
         volumeRampSeconds = volumeRampSeconds,
         label = label.trim(),
-        soundUri = soundUri
+        soundUri = soundUri,
+        scheduleStatus = if (isEnabled) AlarmScheduleStatus.UNKNOWN.name else AlarmScheduleStatus.DISABLED.name,
+        scheduledTriggerAtMillis = null
     )
 }

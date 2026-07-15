@@ -1,11 +1,18 @@
 package com.example.smartalarmer.service
 
+import android.annotation.SuppressLint
 import android.content.Context
+import com.example.smartalarmer.alarm.AlarmLaunchPayload
 
 internal data class AlarmAudioSession(
-    val alarmId: Int,
-    val originalVolume: Int
-)
+    val payload: AlarmLaunchPayload,
+    val originalVolume: Int,
+    val activeTaskIndex: Int,
+    val dismissRequested: Boolean = false
+) {
+    val alarmId: Int
+        get() = payload.alarmId
+}
 
 internal class AlarmSessionStore(
     context: Context
@@ -13,40 +20,88 @@ internal class AlarmSessionStore(
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     fun begin(
-        alarmId: Int,
+        payload: AlarmLaunchPayload,
         currentVolume: Int
     ): AlarmAudioSession {
-        val storedVolume = preferences.getInt(KEY_ORIGINAL_VOLUME, NO_VOLUME)
-        val originalVolume = if (storedVolume == NO_VOLUME) currentVolume else storedVolume
-        preferences
-            .edit()
-            .putInt(KEY_ALARM_ID, alarmId)
-            .putInt(KEY_ORIGINAL_VOLUME, originalVolume)
-            .apply()
-        return AlarmAudioSession(alarmId, originalVolume)
+        val existing = current()
+        val session =
+            AlarmAudioSession(
+                payload = payload,
+                originalVolume = existing?.originalVolume ?: currentVolume,
+                activeTaskIndex = existing?.activeTaskIndex?.takeIf { existing.alarmId == payload.alarmId } ?: 0,
+                dismissRequested = false
+            )
+        check(write(session)) { "Unable to persist the active alarm session" }
+        return session
     }
 
     fun current(): AlarmAudioSession? {
         val originalVolume = preferences.getInt(KEY_ORIGINAL_VOLUME, NO_VOLUME)
         if (originalVolume == NO_VOLUME) return null
         return AlarmAudioSession(
-            alarmId = preferences.getInt(KEY_ALARM_ID, AlarmLaunchPayloadDefaults.NO_ALARM_ID),
-            originalVolume = originalVolume
+            payload =
+            AlarmLaunchPayload(
+                alarmId = preferences.getInt(KEY_ALARM_ID, AlarmLaunchPayload.NO_ALARM_ID),
+                puzzlesList = preferences.getString(KEY_PUZZLES_LIST, null).orEmpty(),
+                puzzleCount = preferences.getInt(KEY_PUZZLE_COUNT, 1),
+                soundUri = preferences.getString(KEY_SOUND_URI, null),
+                alarmLabel = preferences.getString(KEY_ALARM_LABEL, null).orEmpty(),
+                volumeRampSeconds = preferences.getInt(KEY_VOLUME_RAMP_SECONDS, 60),
+                isPreview = false
+            ),
+            originalVolume = originalVolume,
+            activeTaskIndex = preferences.getInt(KEY_ACTIVE_TASK_INDEX, 0).coerceAtLeast(0),
+            dismissRequested = preferences.getBoolean(KEY_DISMISS_REQUESTED, false)
         )
     }
 
-    fun clear() {
-        preferences.edit().clear().apply()
+    fun updateActiveTaskIndex(
+        alarmId: Int,
+        taskIndex: Int
+    ) {
+        val session = current()?.takeIf { it.alarmId == alarmId } ?: return
+        check(write(session.copy(activeTaskIndex = taskIndex.coerceAtLeast(0)))) {
+            "Unable to persist active alarm progress"
+        }
     }
 
-    private object AlarmLaunchPayloadDefaults {
-        const val NO_ALARM_ID = -1
+    fun markDismissRequested(alarmId: Int) {
+        val session = current()?.takeIf { it.alarmId == alarmId } ?: return
+        check(write(session.copy(dismissRequested = true))) {
+            "Unable to persist the alarm dismissal request"
+        }
     }
+
+    @SuppressLint("ApplySharedPref")
+    fun clear() {
+        check(preferences.edit().clear().commit()) { "Unable to clear the active alarm session" }
+    }
+
+    @SuppressLint("ApplySharedPref")
+    private fun write(session: AlarmAudioSession): Boolean = preferences
+        .edit()
+        .putInt(KEY_ALARM_ID, session.payload.alarmId)
+        .putInt(KEY_ORIGINAL_VOLUME, session.originalVolume)
+        .putString(KEY_PUZZLES_LIST, session.payload.puzzlesList)
+        .putInt(KEY_PUZZLE_COUNT, session.payload.puzzleCount)
+        .putString(KEY_SOUND_URI, session.payload.soundUri)
+        .putString(KEY_ALARM_LABEL, session.payload.alarmLabel)
+        .putInt(KEY_VOLUME_RAMP_SECONDS, session.payload.volumeRampSeconds)
+        .putInt(KEY_ACTIVE_TASK_INDEX, session.activeTaskIndex)
+        .putBoolean(KEY_DISMISS_REQUESTED, session.dismissRequested)
+        .commit()
 
     companion object {
-        private const val PREFERENCES_NAME = "active_alarm_session"
+        internal const val PREFERENCES_NAME = "active_alarm_session"
         private const val KEY_ALARM_ID = "alarm_id"
         private const val KEY_ORIGINAL_VOLUME = "original_volume"
+        private const val KEY_PUZZLES_LIST = "puzzles_list"
+        private const val KEY_PUZZLE_COUNT = "puzzle_count"
+        private const val KEY_SOUND_URI = "sound_uri"
+        private const val KEY_ALARM_LABEL = "alarm_label"
+        private const val KEY_VOLUME_RAMP_SECONDS = "volume_ramp_seconds"
+        private const val KEY_ACTIVE_TASK_INDEX = "active_task_index"
+        private const val KEY_DISMISS_REQUESTED = "dismiss_requested"
         private const val NO_VOLUME = -1
     }
 }

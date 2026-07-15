@@ -93,7 +93,7 @@ jobs:
           SMART_ALARMER_KEYSTORE_PASSWORD: ${{ secrets.SMART_ALARMER_KEYSTORE_PASSWORD }}
           SMART_ALARMER_KEY_ALIAS: ${{ secrets.SMART_ALARMER_KEY_ALIAS }}
           SMART_ALARMER_KEY_PASSWORD: ${{ secrets.SMART_ALARMER_KEY_PASSWORD }}
-        run: ./gradlew test :app:lintDebug :app:bundleRelease --no-daemon
+        run: ./gradlew test ktlintCheck :app:lintDebug :app:bundleRelease --no-daemon
 
       - name: Verify and package release files
         run: |

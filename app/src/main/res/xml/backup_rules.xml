@@ -2,4 +2,5 @@
 <full-backup-content>
     <!-- Alarm rows are operational state: restoring them cannot restore AlarmManager entries. -->
     <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="active_alarm_session.xml" />
 </full-backup-content>

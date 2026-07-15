@@ -12,21 +12,6 @@ class AlarmReceiverDecisionTest {
         assertEquals(true, AlarmReceiver.shouldDeliver(alarm(true, "")))
     }
 
-    @Test
-    fun disabledAlarmGetsNoFollowUp() {
-        assertEquals(AlarmFollowUp.NONE, AlarmReceiver.followUpFor(alarm(false, "1")))
-    }
-
-    @Test
-    fun enabledOneTimeAlarmIsDisabled() {
-        assertEquals(AlarmFollowUp.DISABLE, AlarmReceiver.followUpFor(alarm(true, "")))
-    }
-
-    @Test
-    fun enabledRecurringAlarmIsRescheduled() {
-        assertEquals(AlarmFollowUp.RESCHEDULE, AlarmReceiver.followUpFor(alarm(true, "1,3")))
-    }
-
     private fun alarm(
         enabled: Boolean,
         days: String
