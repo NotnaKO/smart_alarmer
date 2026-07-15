@@ -14,7 +14,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
-- **Progress-aware volume**: Volume rises over 60 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
+- **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
 - **Full-screen overlay**: The puzzle screen appears over the lock screen with back-button disabled for real alarms.
 - **Room database**: Persistent alarm storage with reactive Flow-based UI updates.
 
@@ -121,17 +121,17 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `ui/main/MainViewModel.kt` | Lifecycle-managed state holder that coordinates injected repository and scheduling abstractions and emits one-shot UI events without retaining Android `Context`. |
 | `MainActivity.kt` | Activity wiring, lifecycle-aware state collection, permission refresh, and dashboard orchestration. |
 | `AlarmItemCard.kt` | Accessible alarm summary and alarm actions. |
-| `AlarmEditSheet.kt` | Saveable, scrollable alarm editor with sensor-aware puzzle selection. |
+| `AlarmEditSheet.kt` | Saveable, scrollable alarm editor with sensor-aware puzzle selection and volume-ramp presets. |
 | `theme/` | Material 3 dark theme configuration. |
 
 ### Data Layer
 
 | File | Purpose |
 |------|---------|
-| `data/Alarm.kt` | Room `@Entity`. Stores identity, time, repeat-day and puzzle CSV values, enabled state, puzzle count, a compatibility-only legacy volume flag, label, and optional sound URI. |
+| `data/Alarm.kt` | Room `@Entity`. Stores identity, time, repeat-day and puzzle CSV values, enabled state, puzzle count, volume-ramp duration, a compatibility-only legacy volume flag, label, and optional sound URI. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 3. Versioned schemas are committed under `app/schemas/`. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 4. Versioned schemas are committed under `app/schemas/`. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android

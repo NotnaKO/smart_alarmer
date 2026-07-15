@@ -31,6 +31,9 @@
     <string name="repeat_days_label">Repetir días</string>
     <string name="dismiss_puzzles_label">Puzzles para apagar</string>
     <string name="puzzles_required">Puzzles requeridos</string>
+    <string name="volume_ramp_duration">Subida de volumen</string>
+    <string name="volume_ramp_duration_desc">Tiempo hasta alcanzar el volumen máximo</string>
+    <string name="volume_ramp_seconds_format">%1$d s</string>
     <string name="cancel">Cancelar</string>
     <string name="save">Guardar</string>
     <string name="sound_label">Sonido de alarma</string>

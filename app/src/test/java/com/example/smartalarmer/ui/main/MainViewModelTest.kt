@@ -68,13 +68,15 @@ class MainViewModelTest {
             puzzlesList = "MATH",
             puzzleCount = 1,
             label = "Morning",
-            soundUri = null
+            soundUri = null,
+            volumeRampSeconds = 120
         )
         advanceUntilIdle()
 
         val saved = repository.alarms.value.single()
         assertEquals(1, saved.id)
         assertTrue(saved.isEnabled)
+        assertEquals(120, saved.volumeRampSeconds)
         assertEquals(saved, scheduler.scheduled.single())
         assertEquals(MainUiEvent.AlarmScheduled(12_345L), event.await())
         assertFalse(viewModel.isBottomSheetVisible.value)

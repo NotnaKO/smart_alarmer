@@ -32,6 +32,7 @@ class AlarmListScreenTest {
         puzzlesList: String = "MATH",
         puzzleCount: Int = 1,
         isGradualVolume: Boolean = false,
+        volumeRampSeconds: Int = 60,
         label: String = "",
         soundUri: String? = null
     ) = Alarm(
@@ -43,6 +44,7 @@ class AlarmListScreenTest {
         puzzlesList = puzzlesList,
         puzzleCount = puzzleCount,
         isGradualVolume = isGradualVolume,
+        volumeRampSeconds = volumeRampSeconds,
         label = label,
         soundUri = soundUri
     )
@@ -277,6 +279,7 @@ class AlarmListScreenTest {
                 .targetContext
         var savedPuzzles: String? = null
         var savedPuzzleCount: Int? = null
+        var savedVolumeRampSeconds: Int? = null
 
         composeTestRule.setContent {
             SmartAlarmerTheme {
@@ -286,6 +289,7 @@ class AlarmListScreenTest {
                     onSave = { draft ->
                         savedPuzzles = draft.puzzleSelection.encoded
                         savedPuzzleCount = draft.puzzleCount
+                        savedVolumeRampSeconds = draft.volumeRampSeconds
                     },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
@@ -300,12 +304,17 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
             .assertDoesNotExist()
         composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_seconds_format, 120))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.save))
             .performScrollTo()
             .performClick()
 
         assertEquals("MATH", savedPuzzles)
         assertEquals(1, savedPuzzleCount)
+        assertEquals(120, savedVolumeRampSeconds)
     }
 
     @Test

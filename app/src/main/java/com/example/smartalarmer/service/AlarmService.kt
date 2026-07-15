@@ -185,7 +185,8 @@ class AlarmService : Service() {
         val controller =
             AlarmVolumeController(
                 maxVolume = maxVolume,
-                startedAtMillis = android.os.SystemClock.elapsedRealtime()
+                startedAtMillis = android.os.SystemClock.elapsedRealtime(),
+                rampDurationMillis = payload.volumeRampSeconds * 1_000L
             )
         volumeController = controller
         applyAlarmVolume(controller.targetVolume(android.os.SystemClock.elapsedRealtime()))

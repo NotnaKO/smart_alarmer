@@ -14,6 +14,22 @@ class AlarmVolumeControllerTest {
     }
 
     @Test
+    fun customRampDurationControlsInitialAndResumedRise() {
+        val controller =
+            AlarmVolumeController(
+                maxVolume = 10,
+                startedAtMillis = 0L,
+                rampDurationMillis = 240_000L
+            )
+
+        assertEquals(5, controller.targetVolume(120_000L))
+        assertEquals(10, controller.targetVolume(240_000L))
+        controller.onIntermediateTaskCompleted(240_000L)
+        assertEquals(5, controller.targetVolume(360_000L))
+        assertEquals(10, controller.targetVolume(480_000L))
+    }
+
+    @Test
     fun verifiedProgressFadesLinearlyAndNeverRegresses() {
         val controller = AlarmVolumeController(maxVolume = 10, startedAtMillis = 0L)
 

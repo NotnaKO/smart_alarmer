@@ -43,4 +43,17 @@ class AlarmProgressContractTest {
                 ).putExtra("alarm_progress_value", 1.5f)
         assertNull(AlarmProgressContract.read(invalid))
     }
+
+    @Test
+    fun alarmLaunchContractPreservesSupportedRampAndSanitizesUnknownValue() {
+        val supported =
+            AlarmIntentContract.write(
+                Intent(),
+                AlarmLaunchPayload(volumeRampSeconds = 240)
+            )
+        assertEquals(240, AlarmIntentContract.read(supported).volumeRampSeconds)
+
+        val unknown = supported.putExtra(AlarmIntentContract.EXTRA_VOLUME_RAMP_SECONDS, 90)
+        assertEquals(60, AlarmIntentContract.read(unknown).volumeRampSeconds)
+    }
 }
