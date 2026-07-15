@@ -16,6 +16,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.smartalarmer.alarm.AlarmIntentContract
+import com.example.smartalarmer.alarm.AlarmProgressContract
+import com.example.smartalarmer.alarm.AlarmProgressEvent
+import com.example.smartalarmer.alarm.AlarmProgressEventType
 import com.example.smartalarmer.service.AlarmService
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 
@@ -50,6 +53,21 @@ class AlarmDismissActivity : ComponentActivity() {
                             puzzlesList = config.puzzlesList,
                             puzzleCount = config.puzzleCount,
                             alarmLabel = config.alarmLabel,
+                            onVerifiedProgress = { taskIndex, progress ->
+                                reportProgress(
+                                    config = config,
+                                    taskIndex = taskIndex,
+                                    type = AlarmProgressEventType.VERIFIED_PROGRESS,
+                                    progress = progress
+                                )
+                            },
+                            onIntermediateTaskCompleted = { taskIndex ->
+                                reportProgress(
+                                    config = config,
+                                    taskIndex = taskIndex,
+                                    type = AlarmProgressEventType.INTERMEDIATE_TASK_COMPLETED
+                                )
+                            },
                             onDismissComplete = {
                                 if (!dismissConfig.isPreview) {
                                     stopService(Intent(this, AlarmService::class.java))
@@ -61,6 +79,26 @@ class AlarmDismissActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun reportProgress(
+        config: DismissConfig,
+        taskIndex: Int,
+        type: AlarmProgressEventType,
+        progress: Float = 0f
+    ) {
+        if (config.isPreview || config.alarmId < 0) return
+        sendBroadcast(
+            AlarmProgressContract.intent(
+                this,
+                AlarmProgressEvent(
+                    alarmId = config.alarmId,
+                    taskIndex = taskIndex,
+                    type = type,
+                    progress = progress
+                )
+            )
+        )
     }
 
     override fun onNewIntent(intent: Intent) {

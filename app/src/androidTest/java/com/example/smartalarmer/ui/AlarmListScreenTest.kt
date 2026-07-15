@@ -179,9 +179,9 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun alarmCard_displaysGradualVolumeIndicator() {
+    fun alarmCard_hidesLegacyGradualVolumeSetting() {
         setAlarmCard(
-            alarm = testAlarm(isGradualVolume = true)
+            alarm = testAlarm(isGradualVolume = false)
         )
 
         val context =
@@ -190,10 +190,9 @@ class AlarmListScreenTest {
                 .targetContext
         val weekdays = context.getString(com.example.smartalarmer.R.string.weekdays)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
-        val gradual = context.getString(com.example.smartalarmer.R.string.gradual_volume)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
 
-        val expected = "$weekdays • $math (1 puzzle) • $gradual • $defaultSound"
+        val expected = "$weekdays • $math (1 puzzle) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 

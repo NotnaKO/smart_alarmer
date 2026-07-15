@@ -31,8 +31,6 @@
     <string name="repeat_days_label">Repeat Days</string>
     <string name="dismiss_puzzles_label">Dismiss Puzzles</string>
     <string name="puzzles_required">Puzzles Required</string>
-    <string name="gradual_volume">Gradual Volume</string>
-    <string name="gradual_volume_desc">Volume ramps up over 60 seconds</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="sound_label">Alarm Sound</string>

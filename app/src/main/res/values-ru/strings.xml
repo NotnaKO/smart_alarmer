@@ -31,8 +31,6 @@
     <string name="repeat_days_label">Дни повтора</string>
     <string name="dismiss_puzzles_label">Головоломки для выключения</string>
     <string name="puzzles_required">Количество головоломок</string>
-    <string name="gradual_volume">Нарастающая громкость</string>
-    <string name="gradual_volume_desc">Громкость нарастает в течение 60 секунд</string>
     <string name="cancel">Отмена</string>
     <string name="save">Сохранить</string>
     <string name="sound_label">Звук будильника</string>

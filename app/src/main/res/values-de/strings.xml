@@ -31,8 +31,6 @@
     <string name="repeat_days_label">Wiederholungstage</string>
     <string name="dismiss_puzzles_label">Rätsel zum Ausschalten</string>
     <string name="puzzles_required">Erforderliche Rätsel</string>
-    <string name="gradual_volume">Ansteigende Lautstärke</string>
-    <string name="gradual_volume_desc">Lautstärke steigt über 60 Sekunden an</string>
     <string name="cancel">Abbrechen</string>
     <string name="save">Speichern</string>
     <string name="sound_label">Alarmton</string>

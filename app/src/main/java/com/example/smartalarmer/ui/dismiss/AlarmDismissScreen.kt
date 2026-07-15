@@ -26,6 +26,8 @@ fun AlarmDismissScreen(
     puzzlesList: String,
     puzzleCount: Int,
     onDismissComplete: () -> Unit,
+    onVerifiedProgress: (taskIndex: Int, progress: Float) -> Unit = { _, _ -> },
+    onIntermediateTaskCompleted: (taskIndex: Int) -> Unit = {},
     alarmLabel: String = "",
     mathProvider: MathPuzzleProvider = MathEngine,
     typingProvider: TypingPuzzleProvider = TypingEngine,
@@ -70,7 +72,17 @@ fun AlarmDismissScreen(
         return
     }
 
-    val currentPuzzle = puzzles[currentTaskIndex]
+    val activeTaskIndex = currentTaskIndex
+    val currentPuzzle = puzzles[activeTaskIndex]
+    val completeCurrentTask = {
+        if (currentTaskIndex == activeTaskIndex) {
+            if (activeTaskIndex + 1 < puzzles.size) {
+                onIntermediateTaskCompleted(activeTaskIndex)
+            }
+            currentTaskIndex = activeTaskIndex + 1
+        }
+        Unit
+    }
 
     Column(
         modifier =
@@ -113,22 +125,26 @@ fun AlarmDismissScreen(
             when (currentPuzzle) {
                 PuzzleType.MATH ->
                     MathPuzzleView(
-                        onComplete = { currentTaskIndex++ },
+                        onComplete = completeCurrentTask,
+                        onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
                         mathProvider = mathProvider
                     )
                 PuzzleType.TYPING ->
                     TypingPuzzleView(
-                        onComplete = { currentTaskIndex++ },
+                        onComplete = completeCurrentTask,
+                        onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
                         typingProvider = typingProvider
                     )
                 PuzzleType.MEMORY ->
                     MemoryPuzzleView(
-                        onComplete = { currentTaskIndex++ },
+                        onComplete = completeCurrentTask,
+                        onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
                         memoryProvider = memoryProvider
                     )
                 PuzzleType.SHAKE ->
                     ShakePuzzleView(
-                        onComplete = { currentTaskIndex++ },
+                        onComplete = completeCurrentTask,
+                        onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
                         shakeProvider = shakeProvider
                     )
             }

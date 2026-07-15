@@ -3,6 +3,16 @@ package com.example.smartalarmer.puzzle
 object TypingEngine : TypingPuzzleProvider {
     override fun getRandomQuote(quotes: List<String>): String = quotes.random()
 
+    override fun progress(
+        target: String,
+        input: String
+    ): Float {
+        val normalizedTarget = normalize(target)
+        val normalizedInput = normalize(input)
+        if (normalizedInput.isEmpty() || !normalizedTarget.startsWith(normalizedInput)) return 0f
+        return (normalizedInput.length.toFloat() / normalizedTarget.length.toFloat()).coerceIn(0f, 1f)
+    }
+
     override fun isMatch(
         target: String,
         input: String

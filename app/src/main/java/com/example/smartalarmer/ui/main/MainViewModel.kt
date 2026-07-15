@@ -92,7 +92,6 @@ class MainViewModel(
         daysOfWeek: String,
         puzzlesList: String,
         puzzleCount: Int,
-        isGradualVolume: Boolean,
         label: String,
         soundUri: String?
     ) {
@@ -104,7 +103,6 @@ class MainViewModel(
                 repeatDays = AlarmDays.parse(daysOfWeek),
                 puzzleSelection = selection,
                 puzzleCount = puzzleCount.coerceIn(1, selection.values.size),
-                isGradualVolume = isGradualVolume,
                 label = label,
                 soundUri = soundUri
             )

@@ -94,7 +94,6 @@ fun AlarmEditSheet(
     var puzzleCount by rememberSaveable(alarm?.id) {
         mutableStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
     }
-    var isGradualVolume by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.isGradualVolume ?: true) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -355,42 +354,6 @@ fun AlarmEditSheet(
                     }
                 }
 
-                // Gradual Volume toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            androidx.compose.ui.res
-                                .stringResource(com.example.smartalarmer.R.string.gradual_volume),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            androidx.compose.ui.res
-                                .stringResource(com.example.smartalarmer.R.string.gradual_volume_desc),
-                            color = Color.LightGray,
-                            fontSize = 12.sp
-                        )
-                    }
-                    Switch(
-                        checked = isGradualVolume,
-                        onCheckedChange = { isGradualVolume = it },
-                        colors =
-                        SwitchDefaults.colors(
-                            checkedThumbColor = IndigoPrimary,
-                            checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = CardBorderGlass
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 // Actions
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -417,7 +380,6 @@ fun AlarmEditSheet(
                                     repeatDays = AlarmDays.of(selectedDays),
                                     puzzleSelection = puzzleSelection,
                                     puzzleCount = puzzleCount.coerceIn(1, puzzleSelection.values.size),
-                                    isGradualVolume = isGradualVolume,
                                     label = label,
                                     soundUri = pickedSoundUri
                                 )

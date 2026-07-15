@@ -142,7 +142,6 @@ class AlarmCommandCoordinatorTest {
         repeatDays = AlarmDays.ONE_TIME,
         puzzleSelection = PuzzleSelection.DEFAULT,
         puzzleCount = 1,
-        isGradualVolume = true,
         label = "Wake up",
         soundUri = null
     )

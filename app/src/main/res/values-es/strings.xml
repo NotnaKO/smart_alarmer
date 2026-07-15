@@ -31,8 +31,6 @@
     <string name="repeat_days_label">Repetir días</string>
     <string name="dismiss_puzzles_label">Puzzles para apagar</string>
     <string name="puzzles_required">Puzzles requeridos</string>
-    <string name="gradual_volume">Volumen gradual</string>
-    <string name="gradual_volume_desc">El volumen aumenta durante 60 segundos</string>
     <string name="cancel">Cancelar</string>
     <string name="save">Guardar</string>
     <string name="sound_label">Sonido de alarma</string>

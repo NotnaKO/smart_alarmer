@@ -20,6 +20,7 @@ import com.example.smartalarmer.ui.theme.*
 @Composable
 fun ShakePuzzleView(
     onComplete: () -> Unit,
+    onProgress: (Float) -> Unit = {},
     shakeProvider: ShakeSensorProvider
 ) {
     var shakeCount by rememberSaveable { mutableStateOf(30) }
@@ -43,6 +44,7 @@ fun ShakePuzzleView(
                 if (speed > 800) { // Shake detected
                     if (shakeCount > 0) {
                         shakeCount--
+                        onProgress((targetShakes - shakeCount).toFloat() / targetShakes.toFloat())
                         if (shakeCount == 0) {
                             onComplete()
                         }

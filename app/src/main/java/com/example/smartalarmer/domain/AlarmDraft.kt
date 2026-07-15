@@ -8,7 +8,6 @@ data class AlarmDraft(
     val repeatDays: AlarmDays,
     val puzzleSelection: PuzzleSelection,
     val puzzleCount: Int,
-    val isGradualVolume: Boolean,
     val label: String,
     val soundUri: String?
 ) {
@@ -31,7 +30,7 @@ data class AlarmDraft(
         isEnabled = isEnabled,
         puzzlesList = puzzleSelection.encoded,
         puzzleCount = puzzleCount,
-        isGradualVolume = isGradualVolume,
+        isGradualVolume = true,
         label = label.trim(),
         soundUri = soundUri
     )
