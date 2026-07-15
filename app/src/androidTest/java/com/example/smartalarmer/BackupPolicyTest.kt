@@ -25,10 +25,20 @@ class BackupPolicyTest {
     fun alarmDatabaseIsExcludedFromCloudBackupAndDeviceTransfer() {
         assertTrue(databaseExclusions(R.xml.backup_rules) == 1)
         assertTrue(databaseExclusions(R.xml.data_extraction_rules) == 2)
+        assertTrue(activeSessionExclusions(R.xml.backup_rules) == 1)
+        assertTrue(activeSessionExclusions(R.xml.data_extraction_rules) == 2)
     }
+
+    private fun activeSessionExclusions(@XmlRes resourceId: Int): Int = exclusions(resourceId, domain = "sharedpref", path = "active_alarm_session.xml")
 
     private fun databaseExclusions(
         @XmlRes resourceId: Int
+    ): Int = exclusions(resourceId, domain = "database", path = ".")
+
+    private fun exclusions(
+        @XmlRes resourceId: Int,
+        domain: String,
+        path: String
     ): Int {
         val parser = context.resources.getXml(resourceId)
         var exclusions = 0
@@ -36,8 +46,8 @@ class BackupPolicyTest {
             if (
                 parser.eventType == XmlPullParser.START_TAG &&
                 parser.name == "exclude" &&
-                parser.getAttributeValue(null, "domain") == "database" &&
-                parser.getAttributeValue(null, "path") == "."
+                parser.getAttributeValue(null, "domain") == domain &&
+                parser.getAttributeValue(null, "path") == path
             ) {
                 exclusions++
             }

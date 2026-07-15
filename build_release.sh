@@ -33,7 +33,7 @@ export SMART_ALARMER_KEYSTORE_PASSWORD
 export SMART_ALARMER_KEY_ALIAS="$KEY_ALIAS"
 export SMART_ALARMER_KEY_PASSWORD
 
-./gradlew test :app:lintDebug :app:bundleRelease :app:assembleRelease
+./gradlew test ktlintCheck :app:lintDebug :app:bundleRelease :app:assembleRelease
 
 AAB="app/build/outputs/bundle/release/app-release.aab"
 APK="app/build/outputs/apk/release/app-release.apk"

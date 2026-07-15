@@ -44,17 +44,17 @@ class BootReceiver : BroadcastReceiver() {
                             repository,
                             AndroidAlarmSchedulingGateway(context)
                         )()
-                    report.failures.forEach { result ->
-                        when (result) {
+                    report.failures.forEach { failure ->
+                        when (val result = failure.result) {
                             AlarmScheduleResult.PermissionRequired ->
                                 android.util.Log.w(
                                     TAG,
-                                    "Exact alarm permission is required while restoring alarms"
+                                    "Exact alarm permission is required while restoring alarm ${failure.alarmId}"
                                 )
                             is AlarmScheduleResult.Failure ->
                                 android.util.Log.e(
                                     TAG,
-                                    "Unable to restore an alarm",
+                                    "Unable to restore alarm ${failure.alarmId}",
                                     result.exception
                                 )
                             is AlarmScheduleResult.Scheduled -> Unit

@@ -15,5 +15,23 @@ data class Alarm(
     val isGradualVolume: Boolean = true,
     val volumeRampSeconds: Int = 60,
     val label: String = "",
-    val soundUri: String? = null
+    val soundUri: String? = null,
+    val scheduleStatus: String = AlarmScheduleStatus.UNKNOWN.name,
+    val scheduledTriggerAtMillis: Long? = null
 )
+
+enum class AlarmScheduleStatus {
+    DISABLED,
+    SCHEDULED,
+    PERMISSION_REQUIRED,
+    FAILED,
+    UNKNOWN
+    ;
+
+    companion object {
+        fun parse(value: String?): AlarmScheduleStatus = entries.firstOrNull { it.name == value } ?: UNKNOWN
+    }
+}
+
+val Alarm.scheduleHealth: AlarmScheduleStatus
+    get() = AlarmScheduleStatus.parse(scheduleStatus)

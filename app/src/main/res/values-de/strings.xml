@@ -88,6 +88,10 @@
     </plurals>
     <string name="alarm_set_toast">Alarm in %1$s ab jetzt gestellt</string>
     <string name="exact_alarm_permission_required">Erlauben Sie Alarme und Erinnerungen, bevor Sie diesen Alarm aktivieren.</string>
+    <string name="notification_delivery_required">Aktivieren Sie Alarmbenachrichtigungen, bevor Sie diesen Alarm einschalten.</string>
+    <string name="schedule_permission_required">Nicht geplant: Zugriff auf genaue Alarme erforderlich</string>
+    <string name="schedule_failed">Planung fehlgeschlagen – Alarm öffnen und erneut versuchen</string>
+    <string name="schedule_unverified">Zeitplan wird überprüft</string>
     <string name="alarm_schedule_failed">Der Alarm konnte nicht geplant werden. Versuchen Sie es erneut.</string>
     <string name="alarm_operation_failed">Der Alarm konnte nicht aktualisiert werden. Der vorherige Zustand wurde wiederhergestellt.</string>
     <string name="hours_and_minutes_connector">%1$s und %2$s</string>

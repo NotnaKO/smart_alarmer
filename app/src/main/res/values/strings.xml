@@ -88,6 +88,10 @@
     </plurals>
     <string name="alarm_set_toast">Alarm set for %1$s from now</string>
     <string name="exact_alarm_permission_required">Enable Alarms &amp; reminders before enabling this alarm.</string>
+    <string name="notification_delivery_required">Enable alarm notifications before activating this alarm.</string>
+    <string name="schedule_permission_required">Not scheduled: exact alarm access is required</string>
+    <string name="schedule_failed">Scheduling failed — open the alarm to retry</string>
+    <string name="schedule_unverified">Schedule is being verified</string>
     <string name="alarm_schedule_failed">The alarm could not be scheduled. Please try again.</string>
     <string name="alarm_operation_failed">The alarm could not be updated. Its previous state was restored.</string>
     <string name="hours_and_minutes_connector">%1$s and %2$s</string>

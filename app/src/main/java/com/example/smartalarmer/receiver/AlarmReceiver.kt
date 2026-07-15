@@ -9,9 +9,7 @@ import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
-import com.example.smartalarmer.domain.repeatDays
-import com.example.smartalarmer.scheduler.AlarmScheduleResult
-import com.example.smartalarmer.scheduler.AlarmScheduler
+import com.example.smartalarmer.data.AlarmScheduleStatus
 import com.example.smartalarmer.service.AlarmService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,24 +38,14 @@ class AlarmReceiver : BroadcastReceiver() {
 
                 try {
                     startAlarmService(context, AlarmLaunchPayload.fromAlarm(alarm))
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to start alarm service for ${alarm.id}", e)
-                }
-                when (followUpFor(alarm)) {
-                    AlarmFollowUp.NONE -> Unit
-                    AlarmFollowUp.RESCHEDULE -> {
-                        when (val result = AlarmScheduler.schedule(context, alarm)) {
-                            AlarmScheduleResult.PermissionRequired ->
-                                Log.w(
-                                    TAG,
-                                    "Exact alarm permission is required to reschedule alarm ${alarm.id}"
-                                )
-                            is AlarmScheduleResult.Failure ->
-                                Log.e(TAG, "Unable to reschedule alarm ${alarm.id}", result.exception)
-                            is AlarmScheduleResult.Scheduled -> Unit
-                        }
-                    }
-                    AlarmFollowUp.DISABLE -> alarmDao.updateAlarm(alarm.copy(isEnabled = false))
+                } catch (error: Exception) {
+                    alarmDao.updateAlarm(
+                        alarm.copy(
+                            scheduleStatus = AlarmScheduleStatus.FAILED.name,
+                            scheduledTriggerAtMillis = null
+                        )
+                    )
+                    Log.e(TAG, "Unable to start alarm service for ${alarm.id}", error)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to deliver or update alarm", e)
@@ -85,19 +73,6 @@ class AlarmReceiver : BroadcastReceiver() {
                 context.startService(serviceIntent)
             }
         }
-
-        internal fun followUpFor(alarm: Alarm): AlarmFollowUp = when {
-            !alarm.isEnabled -> AlarmFollowUp.NONE
-            alarm.repeatDays.isOneTime -> AlarmFollowUp.DISABLE
-            else -> AlarmFollowUp.RESCHEDULE
-        }
-
         internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
     }
-}
-
-internal enum class AlarmFollowUp {
-    NONE,
-    RESCHEDULE,
-    DISABLE
 }

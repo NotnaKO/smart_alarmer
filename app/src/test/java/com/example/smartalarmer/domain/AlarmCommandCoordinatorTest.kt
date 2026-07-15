@@ -2,6 +2,7 @@ package com.example.smartalarmer.domain
 
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmRepository
+import com.example.smartalarmer.data.AlarmScheduleStatus
 import com.example.smartalarmer.scheduler.AlarmCancelResult
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
@@ -27,7 +28,9 @@ class AlarmCommandCoordinatorTest {
                 .single()
                 .isEnabled
         )
-        assertEquals(repository.items.value.single(), scheduler.scheduled.single())
+        assertEquals(repository.items.value.single().id, scheduler.scheduled.single().id)
+        assertEquals(AlarmScheduleStatus.SCHEDULED.name, repository.items.value.single().scheduleStatus)
+        assertEquals(123L, repository.items.value.single().scheduledTriggerAtMillis)
     }
 
     @Test
@@ -134,6 +137,23 @@ class AlarmCommandCoordinatorTest {
 
         assertTrue(result is AlarmCommandResult.PersistenceFailed)
         assertEquals(original, scheduler.scheduled.single())
+    }
+
+    @Test
+    fun notificationGatePreventsInsertAndSchedule() = runTest {
+        val repository = FakeRepository()
+        val scheduler = FakeScheduler()
+
+        val result =
+            AlarmCommandCoordinator(
+                repository,
+                scheduler,
+                AlarmActivationGate { false }
+            ).create(draft())
+
+        assertEquals(AlarmCommandResult.NotificationCapabilityRequired, result)
+        assertTrue(repository.items.value.isEmpty())
+        assertTrue(scheduler.scheduled.isEmpty())
     }
 
     private fun draft(hour: Int = 7) = AlarmDraft(
