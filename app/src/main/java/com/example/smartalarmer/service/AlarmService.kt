@@ -41,7 +41,9 @@ class AlarmService : Service() {
     private var originalAlarmVolume: Int? = null
     private var toneJob: Job? = null
     private var volumeJob: Job? = null
-    @Volatile private var volumeController: AlarmVolumeController? = null
+
+    @Volatile
+    private var volumeController: AlarmVolumeController? = null
     private var wakeLockJob: Job? = null
     private var activeAlarmId: Int? = null
     private var activeTaskIndex = 0
@@ -223,18 +225,17 @@ class AlarmService : Service() {
         super.onDestroy()
     }
 
-    private fun applyAlarmVolume(targetVolume: Int): Boolean =
-        try {
-            audioManager?.setStreamVolume(
-                AudioManager.STREAM_ALARM,
-                targetVolume,
-                0
-            )
-            true
-        } catch (e: SecurityException) {
-            android.util.Log.e("AlarmService", "Unable to change alarm volume", e)
-            false
-        }
+    private fun applyAlarmVolume(targetVolume: Int): Boolean = try {
+        audioManager?.setStreamVolume(
+            AudioManager.STREAM_ALARM,
+            targetVolume,
+            0
+        )
+        true
+    } catch (e: SecurityException) {
+        android.util.Log.e("AlarmService", "Unable to change alarm volume", e)
+        false
+    }
 
     private fun startAlarmPlayback(uris: List<Uri>) {
         playbackGeneration++
@@ -458,12 +459,11 @@ class AlarmService : Service() {
             elapsedSeconds: Long,
             maxVolume: Int,
             durationSeconds: Long = 60L
-        ): Int =
-            AlarmVolumeController.calculateRampVolume(
-                startVolume = if (maxVolume > 0) 1 else 0,
-                maxVolume = maxVolume,
-                elapsedMillis = elapsedSeconds * 1_000L,
-                durationMillis = durationSeconds * 1_000L
-            )
+        ): Int = AlarmVolumeController.calculateRampVolume(
+            startVolume = if (maxVolume > 0) 1 else 0,
+            maxVolume = maxVolume,
+            elapsedMillis = elapsedSeconds * 1_000L,
+            durationMillis = durationSeconds * 1_000L
+        )
     }
 }

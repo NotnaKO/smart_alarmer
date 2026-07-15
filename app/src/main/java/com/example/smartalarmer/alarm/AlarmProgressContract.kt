@@ -26,13 +26,12 @@ internal object AlarmProgressContract {
     fun intent(
         context: Context,
         event: AlarmProgressEvent
-    ): Intent =
-        Intent(ACTION)
-            .setPackage(context.packageName)
-            .putExtra(EXTRA_ALARM_ID, event.alarmId)
-            .putExtra(EXTRA_TASK_INDEX, event.taskIndex)
-            .putExtra(EXTRA_EVENT_TYPE, event.type.name)
-            .putExtra(EXTRA_PROGRESS, event.progress)
+    ): Intent = Intent(ACTION)
+        .setPackage(context.packageName)
+        .putExtra(EXTRA_ALARM_ID, event.alarmId)
+        .putExtra(EXTRA_TASK_INDEX, event.taskIndex)
+        .putExtra(EXTRA_EVENT_TYPE, event.type.name)
+        .putExtra(EXTRA_PROGRESS, event.progress)
 
     fun read(intent: Intent): AlarmProgressEvent? {
         if (intent.action != ACTION) return null
