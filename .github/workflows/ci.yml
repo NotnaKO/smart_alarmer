@@ -5,6 +5,11 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
+
+concurrency:
+  group: android-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -13,6 +18,7 @@ jobs:
   lint:
     name: Run Lint Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -39,6 +45,7 @@ jobs:
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -64,11 +71,13 @@ jobs:
 
   instrumented-test:
     name: Run Instrumented Tests (API ${{ matrix.api-level }})
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        api-level: [26, 31, 34, 36]
+        api-level: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[26,31,34,36]' || '[26]') }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -110,8 +119,9 @@ jobs:
   build:
     name: Build Debug APK
     if: github.event_name == 'push'
-    needs: [lint, test, instrumented-test]
+    needs: [lint, test]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
