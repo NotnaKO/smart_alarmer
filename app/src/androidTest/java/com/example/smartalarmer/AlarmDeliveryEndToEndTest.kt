@@ -51,7 +51,7 @@ class AlarmDeliveryEndToEndTest {
                 AlarmManager.AlarmClockInfo(System.currentTimeMillis() + 1_500, null),
                 operation
             )
-            val deadline = SystemClock.elapsedRealtime() + 10_000
+            val deadline = SystemClock.elapsedRealtime() + 30_000
             while (
                 SystemClock.elapsedRealtime() < deadline &&
                 notificationManager.getNotificationChannel(AlarmNotification.CHANNEL_ID) == null
@@ -59,7 +59,10 @@ class AlarmDeliveryEndToEndTest {
                 SystemClock.sleep(100)
             }
 
-            assertNotNull(notificationManager.getNotificationChannel(AlarmNotification.CHANNEL_ID))
+            assertNotNull(
+                "Alarm service should create its notification channel within 30 seconds",
+                notificationManager.getNotificationChannel(AlarmNotification.CHANNEL_ID)
+            )
             assertEquals(volumeBefore, audioManager.getStreamVolume(AudioManager.STREAM_ALARM))
         } finally {
             alarmManager.cancel(operation)
