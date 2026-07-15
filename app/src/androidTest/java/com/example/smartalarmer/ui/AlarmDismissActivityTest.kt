@@ -2,16 +2,24 @@ package com.example.smartalarmer.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmDismissActivityTest {
+    @get:Rule
+    val composeTestRule = createEmptyComposeRule()
+
     @org.junit.Before
     fun setUp() {
         // Ensure emulator screen is awake and unlocked
@@ -79,7 +87,7 @@ class AlarmDismissActivityTest {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
 
-        ActivityScenario.launch<AlarmDismissActivity>(firstIntent).use {
+        ActivityScenario.launch<AlarmDismissActivity>(firstIntent).use { scenario ->
             val secondIntent =
                 Intent(context, AlarmDismissActivity::class.java).apply {
                     putExtra("ALARM_ID", 2)
@@ -95,21 +103,12 @@ class AlarmDismissActivityTest {
                 }
             context.startActivity(secondIntent)
 
-            val device =
-                androidx.test.uiautomator.UiDevice.getInstance(
-                    androidx.test.platform.app.InstrumentationRegistry
-                        .getInstrumentation()
-                )
-            assertTrue(
-                "The latest overlapping alarm should replace the displayed session",
-                device.wait(
-                    androidx.test.uiautomator.Until.hasObject(
-                        androidx.test.uiautomator.By
-                            .text("Second alarm")
-                    ),
-                    5_000
-                )
-            )
+            composeTestRule.waitForIdle()
+            scenario.onActivity { activity ->
+                assertEquals(2, activity.intent.getIntExtra("ALARM_ID", -1))
+                assertEquals("Second alarm", activity.intent.getStringExtra("ALARM_LABEL"))
+            }
+            composeTestRule.onNodeWithText("Second alarm").assertIsDisplayed()
         }
     }
 }
