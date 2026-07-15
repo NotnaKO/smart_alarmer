@@ -9,6 +9,8 @@ import com.example.smartalarmer.puzzle.*
 import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
 import com.example.smartalarmer.ui.dismiss.MathPuzzleView
 import com.example.smartalarmer.ui.dismiss.MemoryPuzzleView
+import com.example.smartalarmer.ui.dismiss.PUZZLE_CONTAINER_TAG
+import com.example.smartalarmer.ui.dismiss.PUZZLE_CONTENT_TAG
 import com.example.smartalarmer.ui.dismiss.ShakePuzzleView
 import com.example.smartalarmer.ui.dismiss.TypingPuzzleView
 import com.example.smartalarmer.ui.dismiss.VirtualKeyboard
@@ -530,6 +532,37 @@ class AlarmDismissScreenTest {
                 .targetContext
         val expectedText = context.getString(com.example.smartalarmer.R.string.task_progress_format, 1, 1)
         composeTestRule.onNodeWithText(expectedText).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmDismissScreen_centersShortPuzzleInAvailableSpace() {
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake
+            )
+        }
+
+        val containerBounds =
+            composeTestRule
+                .onNodeWithTag(PUZZLE_CONTAINER_TAG)
+                .fetchSemanticsNode()
+                .boundsInRoot
+        val contentBounds =
+            composeTestRule
+                .onNodeWithTag(PUZZLE_CONTENT_TAG)
+                .fetchSemanticsNode()
+                .boundsInRoot
+
+        assertTrue(
+            "Short puzzle content should be vertically centered below the header",
+            kotlin.math.abs(contentBounds.center.y - containerBounds.center.y) < 1f
+        )
     }
 
     @Test
