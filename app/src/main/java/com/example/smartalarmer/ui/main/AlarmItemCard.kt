@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -96,19 +97,18 @@ fun AlarmItemCard(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit)
+            .testTag(ALARM_CARD_TAG)
             .border(1.dp, CardBorderGlass, RoundedCornerShape(24.dp)),
         colors = CardDefaults.cardColors(containerColor = CardBgGlass),
         shape = RoundedCornerShape(24.dp)
     ) {
-        Row(
+        Column(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(20.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 if (alarm.label.isNotEmpty()) {
                     Text(
                         text = alarm.label,
@@ -141,7 +141,8 @@ fun AlarmItemCard(
                 Text(
                     text = "$daysSummary • $puzzlesText ($puzzleCountText) • $soundName",
                     fontSize = 13.sp,
-                    color = Color.LightGray
+                    color = Color.LightGray,
+                    modifier = Modifier.testTag(ALARM_CARD_SUMMARY_TAG)
                 )
                 if (alarm.isEnabled) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -177,9 +178,12 @@ fun AlarmItemCard(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth().testTag(ALARM_CARD_ACTIONS_TAG),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(
                     onClick = onTest,
@@ -232,6 +236,10 @@ fun AlarmItemCard(
         }
     }
 }
+
+internal const val ALARM_CARD_TAG = "alarm_card"
+internal const val ALARM_CARD_SUMMARY_TAG = "alarm_card_summary"
+internal const val ALARM_CARD_ACTIONS_TAG = "alarm_card_actions"
 
 @Composable
 private fun ScheduleHealthText(

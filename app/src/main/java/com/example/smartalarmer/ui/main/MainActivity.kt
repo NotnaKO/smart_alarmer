@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -237,29 +238,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text =
-                                    androidx.compose.ui.res
-                                        .stringResource(com.example.smartalarmer.R.string.app_name),
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 16.dp)
-                                )
-                                TextButton(onClick = { showPrivacyPolicy = true }) {
-                                    Text(
-                                        androidx.compose.ui.res
-                                            .stringResource(com.example.smartalarmer.R.string.privacy_policy)
-                                    )
-                                }
-                            }
+                            MainScreenHeader(onPrivacyPolicyClick = { showPrivacyPolicy = true })
 
                             if (alarms.isEmpty()) {
                                 Box(
@@ -391,3 +370,49 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Composable
+internal fun MainScreenHeader(onPrivacyPolicyClick: () -> Unit) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().testTag(MAIN_HEADER_TAG)) {
+        val compact = maxWidth < 480.dp
+        if (compact) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                MainScreenTitle()
+                TextButton(
+                    onClick = onPrivacyPolicyClick,
+                    modifier = Modifier.align(Alignment.End).testTag(MAIN_HEADER_PRIVACY_TAG)
+                ) {
+                    Text(stringResource(com.example.smartalarmer.R.string.privacy_policy))
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MainScreenTitle(modifier = Modifier.weight(1f))
+                TextButton(
+                    onClick = onPrivacyPolicyClick,
+                    modifier = Modifier.testTag(MAIN_HEADER_PRIVACY_TAG)
+                ) {
+                    Text(stringResource(com.example.smartalarmer.R.string.privacy_policy))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainScreenTitle(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(com.example.smartalarmer.R.string.app_name),
+        style = MaterialTheme.typography.headlineLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+        modifier = modifier.padding(top = 16.dp, bottom = 8.dp).testTag(MAIN_HEADER_TITLE_TAG)
+    )
+}
+
+internal const val MAIN_HEADER_TAG = "main_header"
+internal const val MAIN_HEADER_TITLE_TAG = "main_header_title"
+internal const val MAIN_HEADER_PRIVACY_TAG = "main_header_privacy"
