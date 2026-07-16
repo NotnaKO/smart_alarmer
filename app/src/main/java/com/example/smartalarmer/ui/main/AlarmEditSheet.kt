@@ -407,7 +407,19 @@ fun AlarmEditSheet(
                                 selected = volumeRampSeconds == seconds,
                                 onClick = { volumeRampSeconds = seconds },
                                 label = {
-                                    Text(stringResource(com.example.smartalarmer.R.string.volume_ramp_seconds_format, seconds))
+                                    val durationText =
+                                        if (seconds < 60) {
+                                            stringResource(
+                                                com.example.smartalarmer.R.string.volume_ramp_seconds_format,
+                                                seconds
+                                            )
+                                        } else {
+                                            stringResource(
+                                                com.example.smartalarmer.R.string.volume_ramp_minutes_format,
+                                                seconds / 60
+                                            )
+                                        }
+                                    Text(durationText)
                                 },
                                 colors =
                                 FilterChipDefaults.filterChipColors(

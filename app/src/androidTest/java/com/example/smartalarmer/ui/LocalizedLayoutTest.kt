@@ -147,6 +147,15 @@ class LocalizedLayoutTest {
                 kotlin.math.abs(bounds.top - dayBounds.first().top) <= PIXEL_TOLERANCE
             }
         )
+
+        listOf(
+            localizedContext.getString(R.string.volume_ramp_seconds_format, 30),
+            localizedContext.getString(R.string.volume_ramp_minutes_format, 1),
+            localizedContext.getString(R.string.volume_ramp_minutes_format, 2),
+            localizedContext.getString(R.string.volume_ramp_minutes_format, 4)
+        ).forEach { duration ->
+            composeTestRule.onNodeWithText(duration).assertExists()
+        }
     }
 
     private fun assertDashboardFits(languageTag: String) {

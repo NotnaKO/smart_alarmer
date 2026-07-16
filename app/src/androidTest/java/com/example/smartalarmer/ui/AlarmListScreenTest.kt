@@ -157,8 +157,9 @@ class AlarmListScreenTest {
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
+        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 2, 2)
 
-        val expected = "$mon, $wed, $fri • $math, $memory (2 puzzles) • $defaultSound"
+        val expected = "$mon, $wed, $fri • $math, $memory ($puzzleCount) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
@@ -175,8 +176,9 @@ class AlarmListScreenTest {
         val oneTime = context.getString(com.example.smartalarmer.R.string.one_time)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
+        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 1, 1)
 
-        val expected = "$oneTime • $math (1 puzzle) • $defaultSound"
+        val expected = "$oneTime • $math ($puzzleCount) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
@@ -193,8 +195,9 @@ class AlarmListScreenTest {
         val weekdays = context.getString(com.example.smartalarmer.R.string.weekdays)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
+        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 1, 1)
 
-        val expected = "$weekdays • $math (1 puzzle) • $defaultSound"
+        val expected = "$weekdays • $math ($puzzleCount) • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
@@ -304,7 +307,7 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
             .assertDoesNotExist()
         composeTestRule
-            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_seconds_format, 120))
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_minutes_format, 2))
             .performScrollTo()
             .performClick()
         composeTestRule
