@@ -34,6 +34,7 @@
     <string name="volume_ramp_duration">Нарастание громкости</string>
     <string name="volume_ramp_duration_desc">Время до максимальной громкости</string>
     <string name="volume_ramp_seconds_format">%1$d с</string>
+    <string name="volume_ramp_minutes_format">%1$d мин</string>
     <string name="cancel">Отмена</string>
     <string name="save">Сохранить</string>
     <string name="sound_label">Звук будильника</string>

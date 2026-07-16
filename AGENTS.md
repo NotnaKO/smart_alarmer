@@ -32,6 +32,9 @@ This Android alarm clock app forces wake-ups by requiring cognitive puzzles to b
 
 # Convenience script (launches emulator + installs APK)
 bash run_app.sh
+
+# Launch the app with its per-app locale set to Russian
+bash run_app_ru.sh
 ```
 
 ### Testing
@@ -118,6 +121,8 @@ Puzzle behavior is provided through small injectable interfaces:
 - **Setup**: Room database created with `allowMainThreadQueries()` for simplicity
 - **Context injection**: Use `ApplicationProvider.getApplicationContext()` for Room and system services
 - **Schema changes**: Commit generated files under `app/schemas/` and extend `AlarmMigrationTest` across every supported upgrade path
+- **Emulator required**: Start and use an available Android emulator for Compose UI and other instrumented tests; do not treat Android-test compilation alone as sufficient verification when an AVD is available
+- **Agent workflow**: Use `bash run_app.sh` for the project-managed emulator, or start an AVD with `$ANDROID_HOME/emulator/emulator -avd <name>`, wait for boot completion, and run `./gradlew connectedAndroidTest`
 
 ### Test Fixtures
 - Use `IS_PREVIEW = true` flag in test mode to avoid loud audio and back-button traps

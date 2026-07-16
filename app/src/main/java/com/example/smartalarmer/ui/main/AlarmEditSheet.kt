@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -25,6 +26,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartalarmer.data.Alarm
@@ -113,7 +116,8 @@ fun AlarmEditSheet(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .testTag(ALARM_EDITOR_CONTENT_TAG),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
@@ -165,7 +169,8 @@ fun AlarmEditSheet(
                                 .is24HourFormat(context)
                         ).show()
                     }.border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .testTag(ALARM_EDITOR_TIME_ROW_TAG),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -173,7 +178,8 @@ fun AlarmEditSheet(
                     androidx.compose.ui.res
                         .stringResource(com.example.smartalarmer.R.string.time_label),
                     color = Color.LightGray,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f).padding(end = 12.dp)
                 )
                 Text(
                     text = AlarmTimeFormatter.formatTime(context, hour, minute),
@@ -190,16 +196,26 @@ fun AlarmEditSheet(
                     .fillMaxWidth()
                     .clickable { onPickSound() }
                     .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(com.example.smartalarmer.R.string.sound_label), color = Color.LightGray, fontSize = 16.sp)
+                Text(
+                    text = stringResource(com.example.smartalarmer.R.string.sound_label),
+                    color = Color.LightGray,
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f).padding(end = 12.dp)
+                )
                 Text(
                     text = selectedSoundName,
                     color = Color.White,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
             }
 
@@ -213,7 +229,7 @@ fun AlarmEditSheet(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_DAYS_TAG),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val dayLabels =
@@ -241,11 +257,9 @@ fun AlarmEditSheet(
                         Box(
                             modifier =
                             Modifier
-                                .size(48.dp)
-                                .background(
-                                    if (isSelected) IndigoPrimary else KeyButtonBg,
-                                    CircleShape
-                                ).clickable {
+                                .weight(1f)
+                                .height(48.dp)
+                                .clickable {
                                     if (isSelected) selectedDays.remove(day) else selectedDays.add(day)
                                 }.semantics {
                                     contentDescription = dayNames[index]
@@ -254,11 +268,22 @@ fun AlarmEditSheet(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = dayLabels[index],
-                                color = if (isSelected) Color.White else Color.Gray,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Box(
+                                modifier =
+                                Modifier
+                                    .size(40.dp)
+                                    .background(
+                                        if (isSelected) IndigoPrimary else KeyButtonBg,
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = dayLabels[index],
+                                    color = if (isSelected) Color.White else Color.Gray,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -316,7 +341,7 @@ fun AlarmEditSheet(
                 val decreasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.decrease_puzzle_count)
                 val increasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.increase_puzzle_count)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_PUZZLE_COUNT_TAG),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -324,11 +349,12 @@ fun AlarmEditSheet(
                         androidx.compose.ui.res
                             .stringResource(com.example.smartalarmer.R.string.puzzles_required),
                         color = Color.LightGray,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f).padding(end = 12.dp)
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = { if (puzzleCount > 1) puzzleCount-- },
@@ -381,7 +407,19 @@ fun AlarmEditSheet(
                                 selected = volumeRampSeconds == seconds,
                                 onClick = { volumeRampSeconds = seconds },
                                 label = {
-                                    Text(stringResource(com.example.smartalarmer.R.string.volume_ramp_seconds_format, seconds))
+                                    val durationText =
+                                        if (seconds < 60) {
+                                            stringResource(
+                                                com.example.smartalarmer.R.string.volume_ramp_seconds_format,
+                                                seconds
+                                            )
+                                        } else {
+                                            stringResource(
+                                                com.example.smartalarmer.R.string.volume_ramp_minutes_format,
+                                                seconds / 60
+                                            )
+                                        }
+                                    Text(durationText)
                                 },
                                 colors =
                                 FilterChipDefaults.filterChipColors(
@@ -441,3 +479,9 @@ fun AlarmEditSheet(
         }
     }
 }
+
+internal const val ALARM_EDITOR_CONTENT_TAG = "alarm_editor_content"
+internal const val ALARM_EDITOR_TIME_ROW_TAG = "alarm_editor_time_row"
+internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
+internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
+internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"

@@ -34,6 +34,7 @@
     <string name="volume_ramp_duration">Alarm volume rise</string>
     <string name="volume_ramp_duration_desc">Time to reach maximum volume</string>
     <string name="volume_ramp_seconds_format">%1$d s</string>
+    <string name="volume_ramp_minutes_format">%1$dm</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="sound_label">Alarm Sound</string>
