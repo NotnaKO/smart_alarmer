@@ -432,7 +432,14 @@ fun AlarmEditSheet(
                     }
                     Switch(
                         checked = wakeUpChecksEnabled,
-                        onCheckedChange = { wakeUpChecksEnabled = it }
+                        onCheckedChange = { wakeUpChecksEnabled = it },
+                        colors =
+                        SwitchDefaults.colors(
+                            checkedThumbColor = IndigoPrimary,
+                            checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
+                            uncheckedThumbColor = Color.Gray,
+                            uncheckedTrackColor = CardBorderGlass
+                        )
                     )
                 }
 
@@ -458,8 +465,13 @@ fun AlarmEditSheet(
                                         wakeUpCheckCount--
                                     }
                                 },
-                                modifier = Modifier.size(48.dp)
-                            ) { Text("−", color = Color.White) }
+                                modifier = Modifier.size(48.dp),
+                                colors =
+                                IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = KeyButtonBg,
+                                    contentColor = Color.White
+                                )
+                            ) { Text("−") }
                             Text(
                                 wakeUpCheckCount.toString(),
                                 color = Color.White,
@@ -471,8 +483,13 @@ fun AlarmEditSheet(
                                         wakeUpCheckCount++
                                     }
                                 },
-                                modifier = Modifier.size(48.dp)
-                            ) { Text("+", color = Color.White) }
+                                modifier = Modifier.size(48.dp),
+                                colors =
+                                IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = KeyButtonBg,
+                                    contentColor = Color.White
+                                )
+                            ) { Text("+") }
                         }
                     }
 
@@ -495,7 +512,14 @@ fun AlarmEditSheet(
                                             minutes
                                         )
                                     )
-                                }
+                                },
+                                colors =
+                                FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = IndigoPrimary,
+                                    selectedLabelColor = Color.White,
+                                    containerColor = KeyButtonBg,
+                                    labelColor = Color.Gray
+                                )
                             )
                         }
                     }
