@@ -21,10 +21,11 @@ import com.example.smartalarmer.ui.theme.*
 fun ShakePuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
-    shakeProvider: ShakeSensorProvider
+    shakeProvider: ShakeSensorProvider,
+    easyMode: Boolean = false
 ) {
-    var shakeCount by rememberSaveable { mutableStateOf(30) }
-    val targetShakes = 30
+    val targetShakes = if (easyMode) 8 else 30
+    var shakeCount by rememberSaveable(targetShakes) { mutableStateOf(targetShakes) }
 
     DisposableEffect(key1 = shakeProvider) {
         var lastUpdate = System.currentTimeMillis()

@@ -5,6 +5,11 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.domain.AlarmVolumeRamp
 import com.example.smartalarmer.domain.PuzzleSelection
 
+enum class AlarmLaunchType {
+    MAIN,
+    WAKE_UP_CHECK
+}
+
 data class AlarmLaunchPayload(
     val alarmId: Int = NO_ALARM_ID,
     val puzzlesList: String = PuzzleSelection.DEFAULT.encoded,
@@ -12,7 +17,13 @@ data class AlarmLaunchPayload(
     val soundUri: String? = null,
     val alarmLabel: String = "",
     val volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS,
-    val isPreview: Boolean = false
+    val isPreview: Boolean = false,
+    val launchType: AlarmLaunchType = AlarmLaunchType.MAIN,
+    val wakeUpCheckNumber: Int = 0,
+    val wakeUpCheckTotal: Int = 0,
+    val wakeUpCheckToken: String = "",
+    val wakeUpChecksEnabled: Boolean = false,
+    val wakeUpCheckIntervalMinutes: Int = 5
 ) {
     companion object {
         const val NO_ALARM_ID = -1
@@ -29,7 +40,9 @@ data class AlarmLaunchPayload(
                 soundUri = alarm.soundUri,
                 alarmLabel = alarm.label,
                 volumeRampSeconds = AlarmVolumeRamp.sanitize(alarm.volumeRampSeconds),
-                isPreview = isPreview
+                isPreview = isPreview,
+                wakeUpChecksEnabled = alarm.wakeUpChecksEnabled,
+                wakeUpCheckIntervalMinutes = alarm.wakeUpCheckIntervalMinutes
             )
         }
     }
@@ -43,6 +56,12 @@ object AlarmIntentContract {
     const val EXTRA_ALARM_LABEL = "ALARM_LABEL"
     const val EXTRA_VOLUME_RAMP_SECONDS = "VOLUME_RAMP_SECONDS"
     const val EXTRA_IS_PREVIEW = "IS_PREVIEW"
+    const val EXTRA_LAUNCH_TYPE = "LAUNCH_TYPE"
+    const val EXTRA_WAKE_UP_CHECK_NUMBER = "WAKE_UP_CHECK_NUMBER"
+    const val EXTRA_WAKE_UP_CHECK_TOTAL = "WAKE_UP_CHECK_TOTAL"
+    const val EXTRA_WAKE_UP_CHECK_TOKEN = "WAKE_UP_CHECK_TOKEN"
+    const val EXTRA_WAKE_UP_CHECKS_ENABLED = "WAKE_UP_CHECKS_ENABLED"
+    const val EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES = "WAKE_UP_CHECK_INTERVAL_MINUTES"
 
     fun write(
         intent: Intent,
@@ -55,6 +74,12 @@ object AlarmIntentContract {
         putExtra(EXTRA_ALARM_LABEL, payload.alarmLabel)
         putExtra(EXTRA_VOLUME_RAMP_SECONDS, payload.volumeRampSeconds)
         putExtra(EXTRA_IS_PREVIEW, payload.isPreview)
+        putExtra(EXTRA_LAUNCH_TYPE, payload.launchType.name)
+        putExtra(EXTRA_WAKE_UP_CHECK_NUMBER, payload.wakeUpCheckNumber)
+        putExtra(EXTRA_WAKE_UP_CHECK_TOTAL, payload.wakeUpCheckTotal)
+        putExtra(EXTRA_WAKE_UP_CHECK_TOKEN, payload.wakeUpCheckToken)
+        putExtra(EXTRA_WAKE_UP_CHECKS_ENABLED, payload.wakeUpChecksEnabled)
+        putExtra(EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES, payload.wakeUpCheckIntervalMinutes)
     }
 
     fun read(intent: Intent): AlarmLaunchPayload {
@@ -72,7 +97,17 @@ object AlarmIntentContract {
             AlarmVolumeRamp.sanitize(
                 intent.getIntExtra(EXTRA_VOLUME_RAMP_SECONDS, AlarmVolumeRamp.DEFAULT_SECONDS)
             ),
-            isPreview = intent.getBooleanExtra(EXTRA_IS_PREVIEW, false)
+            isPreview = intent.getBooleanExtra(EXTRA_IS_PREVIEW, false),
+            launchType =
+            runCatching {
+                AlarmLaunchType.valueOf(intent.getStringExtra(EXTRA_LAUNCH_TYPE).orEmpty())
+            }.getOrDefault(AlarmLaunchType.MAIN),
+            wakeUpCheckNumber = intent.getIntExtra(EXTRA_WAKE_UP_CHECK_NUMBER, 0).coerceAtLeast(0),
+            wakeUpCheckTotal = intent.getIntExtra(EXTRA_WAKE_UP_CHECK_TOTAL, 0).coerceAtLeast(0),
+            wakeUpCheckToken = intent.getStringExtra(EXTRA_WAKE_UP_CHECK_TOKEN).orEmpty(),
+            wakeUpChecksEnabled = intent.getBooleanExtra(EXTRA_WAKE_UP_CHECKS_ENABLED, false),
+            wakeUpCheckIntervalMinutes =
+            intent.getIntExtra(EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES, 5).coerceAtLeast(1)
         )
     }
 }

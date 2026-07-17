@@ -8,8 +8,10 @@ import android.os.Build
 import android.util.Log
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
+import com.example.smartalarmer.domain.WakeUpCheckCoordinator
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
+import com.example.smartalarmer.scheduler.AndroidWakeUpCheckSchedulingGateway
 import com.example.smartalarmer.scheduler.RescheduleEnabledAlarms
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,15 +37,18 @@ class BootReceiver : BroadcastReceiver() {
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val repository =
-                        RoomAlarmRepository(
-                            AlarmDatabase.getDatabase(context).alarmDao()
-                        )
+                    val database = AlarmDatabase.getDatabase(context)
+                    val repository = RoomAlarmRepository(database.alarmDao())
                     val report =
                         RescheduleEnabledAlarms(
                             repository,
                             AndroidAlarmSchedulingGateway(context)
                         )()
+                    WakeUpCheckCoordinator(
+                        alarmRepository = repository,
+                        sessionDao = database.wakeUpCheckDao(),
+                        scheduler = AndroidWakeUpCheckSchedulingGateway(context)
+                    ).restoreAll()
                     report.failures.forEach { failure ->
                         when (val result = failure.result) {
                             AlarmScheduleResult.PermissionRequired ->

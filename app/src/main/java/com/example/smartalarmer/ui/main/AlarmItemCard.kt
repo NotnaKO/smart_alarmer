@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmScheduleStatus
+import com.example.smartalarmer.data.WakeUpCheckSession
 import com.example.smartalarmer.data.scheduleHealth
 import com.example.smartalarmer.domain.AlarmDay
 import com.example.smartalarmer.domain.PuzzleType
@@ -38,10 +39,12 @@ import java.time.ZoneId
 @Composable
 fun AlarmItemCard(
     alarm: Alarm,
+    wakeUpCheckSession: WakeUpCheckSession? = null,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit = {},
-    onTest: () -> Unit = {}
+    onTest: () -> Unit = {},
+    onCancelWakeUpChecks: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = androidx.compose.ui.platform.LocalResources.current
@@ -144,6 +147,31 @@ fun AlarmItemCard(
                     color = Color.LightGray,
                     modifier = Modifier.testTag(ALARM_CARD_SUMMARY_TAG)
                 )
+                if (alarm.wakeUpChecksEnabled) {
+                    Text(
+                        text =
+                        stringResource(
+                            com.example.smartalarmer.R.string.wake_up_check_card_summary,
+                            alarm.wakeUpCheckCount,
+                            alarm.wakeUpCheckIntervalMinutes
+                        ),
+                        fontSize = 12.sp,
+                        color = IndigoPrimary
+                    )
+                }
+                wakeUpCheckSession?.let { session ->
+                    Text(
+                        text =
+                        stringResource(
+                            com.example.smartalarmer.R.string.wake_up_check_active_summary,
+                            session.totalChecks - session.nextCheckNumber + 1,
+                            AlarmTimeFormatter.formatNextTrigger(context, session.nextTriggerAtMillis)
+                        ),
+                        fontSize = 12.sp,
+                        color = GreenSuccess,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
                 if (alarm.isEnabled) {
                     Spacer(modifier = Modifier.height(4.dp))
                     when (alarm.scheduleHealth) {
@@ -185,6 +213,20 @@ fun AlarmItemCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 itemVerticalAlignment = Alignment.CenterVertically
             ) {
+                if (wakeUpCheckSession != null) {
+                    OutlinedButton(
+                        onClick = onCancelWakeUpChecks,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OrangeWarning),
+                        border = BorderStroke(1.dp, OrangeWarning.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            stringResource(com.example.smartalarmer.R.string.stop_wake_up_checks),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
                 OutlinedButton(
                     onClick = onTest,
                     modifier = Modifier,

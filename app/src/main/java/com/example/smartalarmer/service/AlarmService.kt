@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.example.smartalarmer.alarm.AlarmIntentContract
+import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEventType
 import kotlinx.coroutines.CoroutineScope
@@ -157,7 +158,9 @@ class AlarmService : Service() {
                 }
             }
 
-        deliveryFollowUp.start(payload.alarmId)
+        if (payload.launchType == AlarmLaunchType.MAIN) {
+            deliveryFollowUp.start(payload.alarmId)
+        }
 
         return START_REDELIVER_INTENT
     }

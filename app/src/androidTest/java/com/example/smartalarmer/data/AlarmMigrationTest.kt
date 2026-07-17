@@ -31,14 +31,19 @@ class AlarmMigrationTest {
     }
 
     @Test
-    fun migratesAlarmFromVersion1ThroughVersion5WithoutLosingData() = runBlocking {
+    fun migratesAlarmFromVersion1ThroughVersion6WithoutLosingData() = runBlocking {
         createVersion1Database()
         migrateAndValidateVersion2()
 
         val database =
             Room
                 .databaseBuilder(context, AlarmDatabase::class.java, TEST_DATABASE)
-                .addMigrations(AlarmDatabase.MIGRATION_2_3, AlarmDatabase.MIGRATION_3_4, AlarmDatabase.MIGRATION_4_5)
+                .addMigrations(
+                    AlarmDatabase.MIGRATION_2_3,
+                    AlarmDatabase.MIGRATION_3_4,
+                    AlarmDatabase.MIGRATION_4_5,
+                    AlarmDatabase.MIGRATION_5_6
+                )
                 .build()
         try {
             val alarm = requireNotNull(database.alarmDao().getAlarmById(7))
@@ -52,6 +57,10 @@ class AlarmMigrationTest {
             assertNull(alarm.soundUri)
             assertEquals(AlarmScheduleStatus.UNKNOWN.name, alarm.scheduleStatus)
             assertNull(alarm.scheduledTriggerAtMillis)
+            assertEquals(false, alarm.wakeUpChecksEnabled)
+            assertEquals(3, alarm.wakeUpCheckCount)
+            assertEquals(5, alarm.wakeUpCheckIntervalMinutes)
+            assertEquals(emptyList<WakeUpCheckSession>(), database.wakeUpCheckDao().getAllSessions())
         } finally {
             database.close()
         }

@@ -41,7 +41,9 @@ import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
+import com.example.smartalarmer.domain.WakeUpCheckCoordinator
 import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
+import com.example.smartalarmer.scheduler.AndroidWakeUpCheckSchedulingGateway
 import com.example.smartalarmer.service.ActiveAlarmRecovery
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import com.example.smartalarmer.ui.theme.*
@@ -52,13 +54,19 @@ import com.example.smartalarmer.utils.DeviceUtils
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels {
+        val database = AlarmDatabase.getDatabase(applicationContext)
+        val repository = RoomAlarmRepository(database.alarmDao())
         MainViewModel.Factory(
-            alarmRepository =
-            RoomAlarmRepository(
-                AlarmDatabase.getDatabase(applicationContext).alarmDao()
-            ),
+            alarmRepository = repository,
             alarmScheduler = AndroidAlarmSchedulingGateway(applicationContext),
-            activationGate = AndroidAlarmActivationGate(applicationContext)
+            activationGate = AndroidAlarmActivationGate(applicationContext),
+            wakeUpCheckCoordinator =
+            WakeUpCheckCoordinator(
+                alarmRepository = repository,
+                sessionDao = database.wakeUpCheckDao(),
+                scheduler = AndroidWakeUpCheckSchedulingGateway(applicationContext)
+            ),
+            wakeUpCheckSessionFlow = database.wakeUpCheckDao().observeAllSessions()
         )
     }
 
@@ -71,12 +79,14 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
                 val selectAlarmSoundTitle = stringResource(com.example.smartalarmer.R.string.select_alarm_sound)
                 val alarms by viewModel.alarms.collectAsStateWithLifecycle()
+                val wakeUpCheckSessions by viewModel.wakeUpCheckSessions.collectAsStateWithLifecycle()
                 val isSheetVisible by viewModel.isBottomSheetVisible.collectAsStateWithLifecycle()
                 val editingAlarm by viewModel.editingAlarm.collectAsStateWithLifecycle()
 
                 var capabilities by remember { mutableStateOf(AlarmCapabilityChecker.check(context)) }
                 var showPrivacyPolicy by rememberSaveable { mutableStateOf(false) }
                 var pendingDelete by remember { mutableStateOf<Alarm?>(null) }
+                var pendingWakeUpCheckCancel by remember { mutableStateOf<Alarm?>(null) }
                 val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
                 var isXiaomiDismissed by rememberSaveable { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
@@ -116,6 +126,7 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(viewModel) {
                     viewModel.reconcileEnabledAlarms()
+                    viewModel.reconcileWakeUpChecks()
                     viewModel.uiEvents.collect { event ->
                         handleMainUiEvent(context, event)
                     }
@@ -269,6 +280,8 @@ class MainActivity : ComponentActivity() {
                                     items(alarms, key = { it.id }) { alarm ->
                                         AlarmItemCard(
                                             alarm = alarm,
+                                            wakeUpCheckSession =
+                                            wakeUpCheckSessions.firstOrNull { it.alarmId == alarm.id },
                                             onToggle = { isChecked ->
                                                 viewModel.toggleAlarm(alarm, isChecked)
                                             },
@@ -285,6 +298,9 @@ class MainActivity : ComponentActivity() {
                                                         AlarmLaunchPayload.fromAlarm(alarm, isPreview = true)
                                                     )
                                                 context.startActivity(intent)
+                                            },
+                                            onCancelWakeUpChecks = {
+                                                pendingWakeUpCheckCancel = alarm
                                             }
                                         )
                                     }
@@ -359,6 +375,33 @@ class MainActivity : ComponentActivity() {
                                 },
                                 dismissButton = {
                                     TextButton(onClick = { pendingDelete = null }) {
+                                        Text(stringResource(com.example.smartalarmer.R.string.cancel))
+                                    }
+                                }
+                            )
+                        }
+
+                        pendingWakeUpCheckCancel?.let { alarm ->
+                            AlertDialog(
+                                onDismissRequest = { pendingWakeUpCheckCancel = null },
+                                title = {
+                                    Text(stringResource(com.example.smartalarmer.R.string.stop_wake_up_checks_title))
+                                },
+                                text = {
+                                    Text(stringResource(com.example.smartalarmer.R.string.stop_wake_up_checks_confirmation))
+                                },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.cancelWakeUpChecks(alarm.id)
+                                            pendingWakeUpCheckCancel = null
+                                        }
+                                    ) {
+                                        Text(stringResource(com.example.smartalarmer.R.string.stop_wake_up_checks))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { pendingWakeUpCheckCancel = null }) {
                                         Text(stringResource(com.example.smartalarmer.R.string.cancel))
                                     }
                                 }

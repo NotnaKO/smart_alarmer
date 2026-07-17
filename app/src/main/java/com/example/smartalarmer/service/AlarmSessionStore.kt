@@ -3,6 +3,7 @@ package com.example.smartalarmer.service
 import android.annotation.SuppressLint
 import android.content.Context
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.alarm.AlarmLaunchType
 
 internal data class AlarmAudioSession(
     val payload: AlarmLaunchPayload,
@@ -47,7 +48,16 @@ internal class AlarmSessionStore(
                 soundUri = preferences.getString(KEY_SOUND_URI, null),
                 alarmLabel = preferences.getString(KEY_ALARM_LABEL, null).orEmpty(),
                 volumeRampSeconds = preferences.getInt(KEY_VOLUME_RAMP_SECONDS, 60),
-                isPreview = false
+                isPreview = false,
+                launchType =
+                runCatching {
+                    AlarmLaunchType.valueOf(preferences.getString(KEY_LAUNCH_TYPE, null).orEmpty())
+                }.getOrDefault(AlarmLaunchType.MAIN),
+                wakeUpCheckNumber = preferences.getInt(KEY_WAKE_UP_CHECK_NUMBER, 0),
+                wakeUpCheckTotal = preferences.getInt(KEY_WAKE_UP_CHECK_TOTAL, 0),
+                wakeUpCheckToken = preferences.getString(KEY_WAKE_UP_CHECK_TOKEN, null).orEmpty(),
+                wakeUpChecksEnabled = preferences.getBoolean(KEY_WAKE_UP_CHECKS_ENABLED, false),
+                wakeUpCheckIntervalMinutes = preferences.getInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, 5)
             ),
             originalVolume = originalVolume,
             activeTaskIndex = preferences.getInt(KEY_ACTIVE_TASK_INDEX, 0).coerceAtLeast(0),
@@ -89,6 +99,12 @@ internal class AlarmSessionStore(
         .putInt(KEY_VOLUME_RAMP_SECONDS, session.payload.volumeRampSeconds)
         .putInt(KEY_ACTIVE_TASK_INDEX, session.activeTaskIndex)
         .putBoolean(KEY_DISMISS_REQUESTED, session.dismissRequested)
+        .putString(KEY_LAUNCH_TYPE, session.payload.launchType.name)
+        .putInt(KEY_WAKE_UP_CHECK_NUMBER, session.payload.wakeUpCheckNumber)
+        .putInt(KEY_WAKE_UP_CHECK_TOTAL, session.payload.wakeUpCheckTotal)
+        .putString(KEY_WAKE_UP_CHECK_TOKEN, session.payload.wakeUpCheckToken)
+        .putBoolean(KEY_WAKE_UP_CHECKS_ENABLED, session.payload.wakeUpChecksEnabled)
+        .putInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, session.payload.wakeUpCheckIntervalMinutes)
         .commit()
 
     companion object {
@@ -102,6 +118,12 @@ internal class AlarmSessionStore(
         private const val KEY_VOLUME_RAMP_SECONDS = "volume_ramp_seconds"
         private const val KEY_ACTIVE_TASK_INDEX = "active_task_index"
         private const val KEY_DISMISS_REQUESTED = "dismiss_requested"
+        private const val KEY_LAUNCH_TYPE = "launch_type"
+        private const val KEY_WAKE_UP_CHECK_NUMBER = "wake_up_check_number"
+        private const val KEY_WAKE_UP_CHECK_TOTAL = "wake_up_check_total"
+        private const val KEY_WAKE_UP_CHECK_TOKEN = "wake_up_check_token"
+        private const val KEY_WAKE_UP_CHECKS_ENABLED = "wake_up_checks_enabled"
+        private const val KEY_WAKE_UP_CHECK_INTERVAL_MINUTES = "wake_up_check_interval_minutes"
         private const val NO_VOLUME = -1
     }
 }
