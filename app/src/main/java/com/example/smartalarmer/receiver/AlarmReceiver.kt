@@ -49,7 +49,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 }
 
                 try {
-                    startAlarmService(context, AlarmLaunchPayload.fromAlarm(alarm))
+                    startAlarmService(context, payloadForDelivery(alarm, payload))
                 } catch (error: Exception) {
                     alarmDao.updateAlarm(
                         alarm.copy(
@@ -86,5 +86,13 @@ class AlarmReceiver : BroadcastReceiver() {
             }
         }
         internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
+
+        internal fun payloadForDelivery(
+            alarm: Alarm,
+            scheduledPayload: AlarmLaunchPayload
+        ) = when (scheduledPayload.launchType) {
+            AlarmLaunchType.MAIN -> AlarmLaunchPayload.fromAlarm(alarm)
+            AlarmLaunchType.WAKE_UP_CHECK -> scheduledPayload
+        }
     }
 }
