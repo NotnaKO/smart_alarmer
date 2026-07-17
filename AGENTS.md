@@ -40,7 +40,7 @@ bash run_app_ru.sh
 ### Testing
 ```bash
 ./gradlew test                     # Unit tests (src/test/)
-bash run_instrumented_tests.sh     # Instrumented tests with a resource-limited AVD
+bash run_instrumented_tests.sh     # Controlled tests on an already-running device
 ./gradlew testDebugUnitTest        # Debug unit tests only
 ```
 
@@ -122,7 +122,7 @@ Puzzle behavior is provided through small injectable interfaces:
 - **Context injection**: Use `ApplicationProvider.getApplicationContext()` for Room and system services
 - **Schema changes**: Commit generated files under `app/schemas/` and extend `AlarmMigrationTest` across every supported upgrade path
 - **Emulator required**: Start and use an available Android emulator for Compose UI and other instrumented tests; do not treat Android-test compilation alone as sufficient verification when an AVD is available
-- **Agent workflow**: Use `bash run_app.sh` for visual testing and `bash run_instrumented_tests.sh` for instrumented tests. Do not start the project AVD directly: the wrappers isolate the emulator in a resource-limited cgroup, use SwiftShader with Vulkan disabled, and enforce timeouts and cleanup to protect the host desktop.
+- **Agent workflow**: Start the emulator normally with `bash run_app.sh`, then use `bash run_instrumented_tests.sh`. Prefer a targeted test class while iterating. The wrapper prevents parallel runs, uses one Gradle worker, applies a timeout, and prevents accidental back-to-back full suites.
 
 ### Test Fixtures
 - Use `IS_PREVIEW = true` flag in test mode to avoid loud audio and back-button traps

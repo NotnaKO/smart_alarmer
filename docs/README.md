@@ -212,23 +212,19 @@ Declared in `AndroidManifest.xml`:
 # Run unit tests (JVM)
 ./gradlew test
 
-# Run instrumented UI tests with a headless, resource-limited emulator
+# Run controlled instrumented UI tests on an already-running emulator/device
 ./run_instrumented_tests.sh
 
 # Build debug APK
 ./gradlew assembleDebug
 ```
 
-The emulator wrappers deliberately use Google SwiftShader with Vulkan disabled, two pinned CPU
-cores, reduced process priority, a memory ceiling, and no snapshots. The
-instrumented-test wrapper additionally runs headless, enforces a 15-minute
-timeout, and always shuts down the AVD. Avoid starting the project AVD directly,
-because the host Vulkan/gfxstream path can destabilize the Linux desktop.
-The lightweight `small_phone` AVD is preferred when installed; set `ANDROID_AVD`
-to select another profile explicitly.
-Android Emulator 36.6.11 is fail-fast blocked on Fedora 44 because local host
-and software renderer boots both reproduce a QEMU `SIGSEGV`; use a physical
-device or a different emulator package version on that host combination.
+The app launchers keep the emulator's normal graphics and snapshot settings.
+The instrumented-test wrapper does not start or reconfigure the emulator: it
+requires an already-running device, prevents concurrent runs, uses one Gradle
+worker at reduced priority, applies a 10-minute timeout, and places a 10-minute
+cooldown between full suites. Targeted test classes are not subject to the
+full-suite cooldown.
 
 After building, the APK file can be retrieved at:
 `app/build/outputs/apk/debug/app-debug.apk`
