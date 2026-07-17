@@ -40,7 +40,7 @@ bash run_app_ru.sh
 ### Testing
 ```bash
 ./gradlew test                     # Unit tests (src/test/)
-./gradlew connectedAndroidTest     # Instrumented tests (src/androidTest/)
+bash run_instrumented_tests.sh     # Instrumented tests with a resource-limited AVD
 ./gradlew testDebugUnitTest        # Debug unit tests only
 ```
 
@@ -122,7 +122,7 @@ Puzzle behavior is provided through small injectable interfaces:
 - **Context injection**: Use `ApplicationProvider.getApplicationContext()` for Room and system services
 - **Schema changes**: Commit generated files under `app/schemas/` and extend `AlarmMigrationTest` across every supported upgrade path
 - **Emulator required**: Start and use an available Android emulator for Compose UI and other instrumented tests; do not treat Android-test compilation alone as sufficient verification when an AVD is available
-- **Agent workflow**: Use `bash run_app.sh` for the project-managed emulator, or start an AVD with `$ANDROID_HOME/emulator/emulator -avd <name>`, wait for boot completion, and run `./gradlew connectedAndroidTest`
+- **Agent workflow**: Use `bash run_app.sh` for visual testing and `bash run_instrumented_tests.sh` for instrumented tests. Do not start the project AVD directly: the wrappers isolate the emulator in a resource-limited cgroup, use SwiftShader with Vulkan disabled, and enforce timeouts and cleanup to protect the host desktop.
 
 ### Test Fixtures
 - Use `IS_PREVIEW = true` flag in test mode to avoid loud audio and back-button traps
@@ -189,5 +189,5 @@ Puzzle behavior is provided through small injectable interfaces:
 1. **Understand flow**: Alarm fires → AlarmReceiver → AlarmService (notification + audio) → AlarmDismissActivity (puzzle UI)
 2. **Know the data**: Persistence uses CSV, while application code uses `AlarmDays`, `PuzzleSelection`, and their enums
 3. **Test approach**: Use `runTest` for unit tests, in-memory Room for instrumented, preview mode for UI safety
-4. **Before committing**: Run `./gradlew build && ./gradlew test && ./gradlew connectedAndroidTest` (if emulator running)
+4. **Before committing**: Run `./gradlew build && ./gradlew test`, then `bash run_instrumented_tests.sh` when Android tests are relevant
 5. **Review manifest** when modifying permissions, services, or receivers

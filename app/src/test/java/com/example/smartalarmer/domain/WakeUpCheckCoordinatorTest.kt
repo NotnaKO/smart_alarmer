@@ -76,19 +76,36 @@ class WakeUpCheckCoordinatorTest {
         assertEquals(ALARM_ID, scheduler.cancelled.last())
     }
 
+    @Test
+    fun completingOnlyCheckDoesNotScheduleAnother() = runTest {
+        val dao = FakeWakeUpCheckDao()
+        val scheduler = FakeWakeUpCheckScheduler()
+        coordinator(dao, scheduler, NOW, totalChecks = 1).start(ALARM_ID)
+
+        val result = coordinator(dao, scheduler, NOW, totalChecks = 1).complete(ALARM_ID, "fixed-token", 1)
+
+        assertNull(result)
+        assertNull(dao.session)
+        assertEquals(1, scheduler.scheduled.size)
+        assertEquals(ALARM_ID, scheduler.cancelled.last())
+    }
+
     private fun coordinator(
         dao: FakeWakeUpCheckDao,
         scheduler: FakeWakeUpCheckScheduler,
-        instant: Instant
+        instant: Instant,
+        totalChecks: Int = 3
     ) = WakeUpCheckCoordinator(
-        alarmRepository = FakeAlarmRepository(),
+        alarmRepository = FakeAlarmRepository(totalChecks),
         sessionDao = dao,
         scheduler = scheduler,
         clock = Clock.fixed(instant, ZoneOffset.UTC),
         tokenFactory = { "fixed-token" }
     )
 
-    private class FakeAlarmRepository : AlarmRepository {
+    private class FakeAlarmRepository(
+        totalChecks: Int
+    ) : AlarmRepository {
         private val alarm =
             Alarm(
                 id = ALARM_ID,
@@ -98,7 +115,7 @@ class WakeUpCheckCoordinatorTest {
                 isEnabled = false,
                 puzzlesList = "MATH,MEMORY",
                 wakeUpChecksEnabled = true,
-                wakeUpCheckCount = 3,
+                wakeUpCheckCount = totalChecks,
                 wakeUpCheckIntervalMinutes = 5
             )
         override val alarms: Flow<List<Alarm>> = flowOf(listOf(alarm))
