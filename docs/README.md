@@ -223,10 +223,13 @@ After building, the APK file can be retrieved at:
 
 ### Release builds
 
-Production builds use the application ID `com.notnako.smartalarmer`, semantic
-version `0.1.0-alpha.1` by default, and R8 code/resource shrinking. Override versioning
-in CI or a release shell with `SMART_ALARMER_VERSION_CODE` and
-`SMART_ALARMER_VERSION_NAME`.
+Production builds use the application ID `com.notnako.smartalarmer` and R8
+code/resource shrinking. Local builds derive a monotonically increasing
+`versionCode` from the Git commit count. `build_release.sh` accepts a version
+name by itself (for example, `./build_release.sh 0.1.0-alpha.3`) and, with no
+arguments, derives the name from the latest reachable `v...` Git tag. CI and
+release shells can still override both values with
+`SMART_ALARMER_VERSION_CODE` and `SMART_ALARMER_VERSION_NAME`.
 
 Release signing never falls back to the Android debug key. Set all four signing
 variables to produce a signed artifact:
