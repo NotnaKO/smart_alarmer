@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
@@ -248,6 +249,26 @@ class AlarmListScreenTest {
         composeTestRule.onNodeWithText("Morning Gym").assertDoesNotExist()
     }
 
+    @Test
+    fun alarmCard_showsWakeUpCheckConfiguration() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        setAlarmCard(
+            alarm =
+            testAlarm().copy(
+                wakeUpChecksEnabled = true,
+                wakeUpCheckCount = 3,
+                wakeUpCheckIntervalMinutes = 5
+            )
+        )
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_card_summary, 3, 5))
+            .assertIsDisplayed()
+    }
+
     // ── Multiple alarms list ──────────────────────────────────────────────
 
     @Test
@@ -349,5 +370,53 @@ class AlarmListScreenTest {
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.increase_puzzle_count))
             .performScrollTo()
             .assertHeightIsAtLeast(48.dp)
+    }
+
+    @Test
+    fun alarmEditSheet_enablesAndSavesWakeUpChecks() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var savedEnabled = false
+        var savedCount = 0
+        var savedInterval = 0
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = null,
+                    onDismiss = {},
+                    onSave = { draft ->
+                        savedEnabled = draft.wakeUpChecksEnabled
+                        savedCount = draft.wakeUpCheckCount
+                        savedInterval = draft.wakeUpCheckIntervalMinutes
+                    },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_checks_label))
+            .performScrollTo()
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)))
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_minutes_format, 10))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.save))
+            .performScrollTo()
+            .performClick()
+
+        assertTrue(savedEnabled)
+        assertEquals(3, savedCount)
+        assertEquals(10, savedInterval)
     }
 }

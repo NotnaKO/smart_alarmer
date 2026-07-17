@@ -11,6 +11,9 @@ data class AlarmDraft(
     val puzzleCount: Int,
     val label: String,
     val soundUri: String?,
+    val wakeUpChecksEnabled: Boolean = false,
+    val wakeUpCheckCount: Int = WakeUpCheckConfig.DEFAULT_COUNT,
+    val wakeUpCheckIntervalMinutes: Int = WakeUpCheckConfig.DEFAULT_INTERVAL_MINUTES,
     val volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS
 ) {
     init {
@@ -21,6 +24,12 @@ data class AlarmDraft(
         }
         require(volumeRampSeconds in AlarmVolumeRamp.OPTIONS_SECONDS) {
             "Volume ramp duration must be a supported preset"
+        }
+        require(wakeUpCheckCount in WakeUpCheckConfig.COUNT_RANGE) {
+            "Wake-up check count must be supported"
+        }
+        require(wakeUpCheckIntervalMinutes in WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES) {
+            "Wake-up check interval must be a supported preset"
         }
     }
 
@@ -39,7 +48,17 @@ data class AlarmDraft(
         volumeRampSeconds = volumeRampSeconds,
         label = label.trim(),
         soundUri = soundUri,
+        wakeUpChecksEnabled = wakeUpChecksEnabled,
+        wakeUpCheckCount = wakeUpCheckCount,
+        wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
         scheduleStatus = if (isEnabled) AlarmScheduleStatus.UNKNOWN.name else AlarmScheduleStatus.DISABLED.name,
         scheduledTriggerAtMillis = null
     )
+}
+
+object WakeUpCheckConfig {
+    const val DEFAULT_COUNT = 3
+    const val DEFAULT_INTERVAL_MINUTES = 5
+    val COUNT_RANGE = 1..5
+    val INTERVAL_OPTIONS_MINUTES = listOf(5, 10, 15)
 }

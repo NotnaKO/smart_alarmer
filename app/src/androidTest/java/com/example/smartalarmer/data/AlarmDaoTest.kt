@@ -97,6 +97,29 @@ class AlarmDaoTest {
     }
 
     @Test
+    fun wakeUpCheckSession_canBePersistedAndCleared() = runTest {
+        val dao = database.wakeUpCheckDao()
+        val session =
+            WakeUpCheckSession(
+                alarmId = 9,
+                token = "token",
+                nextCheckNumber = 1,
+                totalChecks = 3,
+                intervalMinutes = 5,
+                nextTriggerAtMillis = 1234L,
+                puzzlesList = "MATH",
+                soundUri = null,
+                alarmLabel = "Morning"
+            )
+
+        dao.upsertSession(session)
+        assertEquals(session, dao.getSession(9))
+
+        dao.deleteSession(9)
+        assertNull(dao.getSession(9))
+    }
+
+    @Test
     fun updateAlarm_changesIsEnabled() = runTest {
         val id = dao.insertAlarm(alarm(isEnabled = true)).toInt()
         val inserted = dao.getAllAlarms().first().first()

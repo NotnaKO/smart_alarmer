@@ -26,11 +26,12 @@ import com.example.smartalarmer.ui.theme.*
 fun MemoryPuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
-    memoryProvider: MemoryPuzzleProvider = MemoryEngine
+    memoryProvider: MemoryPuzzleProvider = MemoryEngine,
+    easyMode: Boolean = false
 ) {
     val sequence =
         rememberSaveable {
-            val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
+            val difficulty = if (easyMode) Difficulty.EASY else listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
             val length =
                 when (difficulty) {
                     Difficulty.EASY -> 3

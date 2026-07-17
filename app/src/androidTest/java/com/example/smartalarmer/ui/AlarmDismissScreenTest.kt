@@ -567,6 +567,44 @@ class AlarmDismissScreenTest {
     }
 
     @Test
+    fun wakeUpCheck_showsCheckProgressAndUsesEasyMath() {
+        var requestedDifficulty: Difficulty? = null
+        val trackingMath =
+            object : MathPuzzleProvider {
+                override fun generate(difficulty: Difficulty): MathPuzzle {
+                    requestedDifficulty = difficulty
+                    return MathPuzzle("2 + 2", 4, difficulty)
+                }
+            }
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH",
+                puzzleCount = 1,
+                isWakeUpCheck = true,
+                wakeUpCheckNumber = 1,
+                wakeUpCheckTotal = 3,
+                onDismissComplete = {},
+                mathProvider = trackingMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake
+            )
+        }
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_title))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_progress, 1, 3))
+            .assertIsDisplayed()
+        assertEquals(Difficulty.EASY, requestedDifficulty)
+    }
+
+    @Test
     fun alarmDismissScreen_centersShortPuzzleInAvailableSpace() {
         composeTestRule.setContent {
             AlarmDismissScreen(

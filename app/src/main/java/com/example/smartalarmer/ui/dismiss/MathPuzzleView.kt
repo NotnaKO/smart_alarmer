@@ -23,7 +23,8 @@ import com.example.smartalarmer.ui.theme.*
 fun MathPuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
-    mathProvider: MathPuzzleProvider = MathEngine
+    mathProvider: MathPuzzleProvider = MathEngine,
+    easyMode: Boolean = false
 ) {
     val puzzle =
         rememberSaveable(
@@ -45,7 +46,7 @@ fun MathPuzzleView(
                 }
             )
         ) {
-            val difficulty = listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
+            val difficulty = if (easyMode) Difficulty.EASY else listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
             mathProvider.generate(difficulty)
         }
     var input by rememberSaveable { mutableStateOf("") }

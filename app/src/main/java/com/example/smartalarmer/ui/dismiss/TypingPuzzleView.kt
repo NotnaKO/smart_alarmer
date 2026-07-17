@@ -22,10 +22,14 @@ import com.example.smartalarmer.ui.theme.*
 fun TypingPuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
-    typingProvider: TypingPuzzleProvider = TypingEngine
+    typingProvider: TypingPuzzleProvider = TypingEngine,
+    easyMode: Boolean = false
 ) {
     val quotes = stringArrayResource(R.array.typing_quotes).toList()
-    val targetQuote = rememberSaveable { typingProvider.getRandomQuote(quotes) }
+    val targetQuote = rememberSaveable(easyMode) {
+        val quote = typingProvider.getRandomQuote(quotes)
+        if (easyMode) quote.split(" ").take(4).joinToString(" ") else quote
+    }
     var input by rememberSaveable { mutableStateOf("") }
     var showError by rememberSaveable { mutableStateOf(false) }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {

@@ -30,6 +30,9 @@ fun AlarmDismissScreen(
     onVerifiedProgress: (taskIndex: Int, progress: Float) -> Unit = { _, _ -> },
     onIntermediateTaskCompleted: (taskIndex: Int) -> Unit = {},
     alarmLabel: String = "",
+    isWakeUpCheck: Boolean = false,
+    wakeUpCheckNumber: Int = 0,
+    wakeUpCheckTotal: Int = 0,
     mathProvider: MathPuzzleProvider = MathEngine,
     typingProvider: TypingPuzzleProvider = TypingEngine,
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
@@ -39,6 +42,7 @@ fun AlarmDismissScreen(
         rememberSaveable(
             puzzlesList,
             puzzleCount,
+            isWakeUpCheck,
             shakeProvider.isAvailable,
             saver =
             listSaver(
@@ -99,6 +103,25 @@ fun AlarmDismissScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (isWakeUpCheck) {
+                Text(
+                    text = stringResource(R.string.wake_up_check_title),
+                    color = IndigoPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text =
+                    stringResource(
+                        R.string.wake_up_check_progress,
+                        wakeUpCheckNumber,
+                        wakeUpCheckTotal
+                    ),
+                    color = Color.LightGray,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             if (alarmLabel.isNotEmpty()) {
                 Text(
                     text = alarmLabel,
@@ -146,25 +169,29 @@ fun AlarmDismissScreen(
                         MathPuzzleView(
                             onComplete = completeCurrentTask,
                             onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            mathProvider = mathProvider
+                            mathProvider = mathProvider,
+                            easyMode = isWakeUpCheck
                         )
                     PuzzleType.TYPING ->
                         TypingPuzzleView(
                             onComplete = completeCurrentTask,
                             onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            typingProvider = typingProvider
+                            typingProvider = typingProvider,
+                            easyMode = isWakeUpCheck
                         )
                     PuzzleType.MEMORY ->
                         MemoryPuzzleView(
                             onComplete = completeCurrentTask,
                             onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            memoryProvider = memoryProvider
+                            memoryProvider = memoryProvider,
+                            easyMode = isWakeUpCheck
                         )
                     PuzzleType.SHAKE ->
                         ShakePuzzleView(
                             onComplete = completeCurrentTask,
                             onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            shakeProvider = shakeProvider
+                            shakeProvider = shakeProvider,
+                            easyMode = isWakeUpCheck
                         )
                 }
             }

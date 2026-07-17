@@ -43,7 +43,14 @@ object AlarmNotification {
                             .Builder()
                             .scheme("smartalarmer")
                             .authority("dismiss")
-                            .appendPath(if (payload.isPreview) "preview" else payload.alarmId.toString())
+                            .appendPath(
+                                when {
+                                    payload.isPreview -> "preview"
+                                    payload.launchType == com.example.smartalarmer.alarm.AlarmLaunchType.WAKE_UP_CHECK ->
+                                        "wake-up-check-${payload.alarmId}-${payload.wakeUpCheckNumber}"
+                                    else -> payload.alarmId.toString()
+                                }
+                            )
                             .build()
                     addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK or

@@ -45,4 +45,25 @@ class AlarmConfigurationTest {
             Locale.setDefault(previousLocale)
         }
     }
+
+    @Test
+    fun alarmDraftPersistsWakeUpCheckConfiguration() {
+        val alarm =
+            AlarmDraft(
+                hour = 7,
+                minute = 30,
+                repeatDays = AlarmDays.ONE_TIME,
+                puzzleSelection = PuzzleSelection.DEFAULT,
+                puzzleCount = 1,
+                label = "Morning",
+                soundUri = null,
+                wakeUpChecksEnabled = true,
+                wakeUpCheckCount = 4,
+                wakeUpCheckIntervalMinutes = 10
+            ).toAlarm(isEnabled = true)
+
+        assertEquals(true, alarm.wakeUpChecksEnabled)
+        assertEquals(4, alarm.wakeUpCheckCount)
+        assertEquals(10, alarm.wakeUpCheckIntervalMinutes)
+    }
 }

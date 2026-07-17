@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.AlarmScheduleStatus
@@ -29,9 +30,20 @@ class AlarmReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val alarmDao = AlarmDatabase.getDatabase(context).alarmDao()
+                val database = AlarmDatabase.getDatabase(context)
+                val alarmDao = database.alarmDao()
                 val alarm = alarmDao.getAlarmById(payload.alarmId)
-                if (!shouldDeliver(alarm) || alarm == null) {
+                val shouldDeliver =
+                    when (payload.launchType) {
+                        AlarmLaunchType.MAIN -> shouldDeliver(alarm)
+                        AlarmLaunchType.WAKE_UP_CHECK -> {
+                            val session = database.wakeUpCheckDao().getSession(payload.alarmId)
+                            session != null &&
+                                session.token == payload.wakeUpCheckToken &&
+                                session.nextCheckNumber == payload.wakeUpCheckNumber
+                        }
+                    }
+                if (!shouldDeliver || alarm == null) {
                     Log.i(TAG, "Ignoring stale alarm delivery for id ${payload.alarmId}")
                     return@launch
                 }

@@ -23,3 +23,21 @@ interface AlarmDao {
     @Delete
     suspend fun deleteAlarm(alarm: Alarm)
 }
+
+@Dao
+interface WakeUpCheckDao {
+    @Query("SELECT * FROM wake_up_check_sessions")
+    fun observeAllSessions(): Flow<List<WakeUpCheckSession>>
+
+    @Query("SELECT * FROM wake_up_check_sessions WHERE alarmId = :alarmId")
+    suspend fun getSession(alarmId: Int): WakeUpCheckSession?
+
+    @Query("SELECT * FROM wake_up_check_sessions")
+    suspend fun getAllSessions(): List<WakeUpCheckSession>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertSession(session: WakeUpCheckSession)
+
+    @Query("DELETE FROM wake_up_check_sessions WHERE alarmId = :alarmId")
+    suspend fun deleteSession(alarmId: Int)
+}

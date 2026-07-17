@@ -56,4 +56,22 @@ class AlarmProgressContractTest {
         val unknown = supported.putExtra(AlarmIntentContract.EXTRA_VOLUME_RAMP_SECONDS, 90)
         assertEquals(60, AlarmIntentContract.read(unknown).volumeRampSeconds)
     }
+
+    @Test
+    fun alarmLaunchContractPreservesWakeUpCheckIdentity() {
+        val payload =
+            AlarmLaunchPayload(
+                alarmId = 7,
+                launchType = AlarmLaunchType.WAKE_UP_CHECK,
+                wakeUpCheckNumber = 2,
+                wakeUpCheckTotal = 3,
+                wakeUpCheckToken = "session-token",
+                wakeUpChecksEnabled = true,
+                wakeUpCheckIntervalMinutes = 10
+            )
+
+        val restored = AlarmIntentContract.read(AlarmIntentContract.write(Intent(), payload))
+
+        assertEquals(payload, restored)
+    }
 }

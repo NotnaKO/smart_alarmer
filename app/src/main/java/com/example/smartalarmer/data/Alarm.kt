@@ -16,8 +16,24 @@ data class Alarm(
     val volumeRampSeconds: Int = 60,
     val label: String = "",
     val soundUri: String? = null,
+    val wakeUpChecksEnabled: Boolean = false,
+    val wakeUpCheckCount: Int = 3,
+    val wakeUpCheckIntervalMinutes: Int = 5,
     val scheduleStatus: String = AlarmScheduleStatus.UNKNOWN.name,
     val scheduledTriggerAtMillis: Long? = null
+)
+
+@Entity(tableName = "wake_up_check_sessions")
+data class WakeUpCheckSession(
+    @PrimaryKey val alarmId: Int,
+    val token: String,
+    val nextCheckNumber: Int,
+    val totalChecks: Int,
+    val intervalMinutes: Int,
+    val nextTriggerAtMillis: Long,
+    val puzzlesList: String,
+    val soundUri: String?,
+    val alarmLabel: String
 )
 
 enum class AlarmScheduleStatus {
