@@ -12,19 +12,15 @@ if [ -z "$SDK_DIR" ] || [ ! -x "$SDK_DIR/platform-tools/adb" ]; then
 fi
 
 readonly ADB="$SDK_DIR/platform-tools/adb"
-DEFAULT_AVD="small_phone"
-if ! "$SDK_DIR/emulator/emulator" -list-avds | grep -qx "$DEFAULT_AVD"; then
-    DEFAULT_AVD="$("$SDK_DIR/emulator/emulator" -list-avds | head -n 1)"
-fi
-EMULATOR_NAME="${ANDROID_AVD:-$DEFAULT_AVD}"
+EMULATOR_NAME="${ANDROID_AVD:-$("$SDK_DIR/emulator/emulator" -list-avds | head -n 1)}"
 
 if [ -z "$EMULATOR_NAME" ]; then
     echo "ERROR: No Android emulator found. Create an AVD or set ANDROID_AVD."
     exit 1
 fi
 
-echo "Starting safe emulator: $EMULATOR_NAME"
-bash scripts/start_safe_emulator.sh "$EMULATOR_NAME"
+echo "Starting emulator: $EMULATOR_NAME"
+android emulator start "$EMULATOR_NAME"
 
 DEVICE_SERIAL="${ANDROID_SERIAL:-$("$ADB" devices | awk '$1 ~ /^emulator-/ && $2 == "device" { print $1; exit }')}"
 if [ -z "$DEVICE_SERIAL" ]; then
@@ -35,7 +31,7 @@ fi
 ADB_DEVICE=("$ADB" -s "$DEVICE_SERIAL")
 
 echo "Building and installing the debug app"
-./gradlew assembleDebug --max-workers=2
+./gradlew assembleDebug
 "${ADB_DEVICE[@]}" install -r "$APK_PATH"
 
 echo "Setting Smart Alarmer locale to Russian"

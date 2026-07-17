@@ -12,48 +12,49 @@ if [[ -z "$SDK_DIR" || ! -x "$SDK_DIR/platform-tools/adb" ]]; then
 fi
 
 readonly ADB="$SDK_DIR/platform-tools/adb"
-started_emulator=false
-
-shutdown_managed_emulator() {
-    if [[ "$started_emulator" == "true" ]]; then
-        serial="$($ADB devices | awk '$1 ~ /^emulator-/ && $2 == "device" { print $1; exit }')"
-        if [[ -n "$serial" ]]; then
-            "$ADB" -s "$serial" emu kill >/dev/null 2>&1 || true
-        fi
-        pid_file="/tmp/smart-alarmer-${ANDROID_AVD:-small_phone}-headless.pid"
-        if [[ -f "$pid_file" ]]; then
-            emulator_pid="$(<"$pid_file")"
-            for _ in $(seq 1 10); do
-                kill -0 "$emulator_pid" 2>/dev/null || break
-                sleep 1
-            done
-            kill "$emulator_pid" 2>/dev/null || true
-            rm -f "$pid_file"
-        fi
-        safe_avd_name="$(tr '[:upper:]_' '[:lower:]-' <<<"${ANDROID_AVD:-small_phone}")"
-        systemctl --user stop "smart-alarmer-emulator-${safe_avd_name}-headless.service" >/dev/null 2>&1 || true
-    fi
-}
-trap shutdown_managed_emulator EXIT INT TERM
-
-device_serial="$($ADB devices | awk 'NR > 1 && $2 == "device" && $1 !~ /^emulator-/ { print $1; exit }')"
+device_serial="${ANDROID_SERIAL:-$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')}"
 if [[ -z "$device_serial" ]]; then
-    if "$ADB" devices | awk '$1 ~ /^emulator-/ && $2 == "device" { found=1 } END { exit !found }'; then
-        echo "ERROR: Refusing to run against an emulator started without project safety limits." >&2
-        echo "Stop it and rerun this script, or connect a physical device." >&2
-        exit 1
-    fi
-    export SAFE_EMULATOR_MODE=headless
-    bash scripts/start_safe_emulator.sh "${ANDROID_AVD:-small_phone}"
-    started_emulator=true
-    device_serial="$($ADB devices | awk '$1 ~ /^emulator-/ && $2 == "device" { print $1; exit }')"
+    echo "ERROR: No running emulator or physical device." >&2
+    echo "Start the emulator normally with run_app.sh, then rerun this script." >&2
+    exit 1
 fi
 export ANDROID_SERIAL="$device_serial"
 
+readonly LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/smart-alarmer-instrumented-tests.lock"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    echo "ERROR: Another instrumented test run is already active." >&2
+    exit 1
+fi
+
+is_full_run=true
+for argument in "$@"; do
+    if [[ "$argument" == *"testInstrumentationRunnerArguments.class"* ]]; then
+        is_full_run=false
+        break
+    fi
+done
+
+readonly FULL_RUN_STAMP="${XDG_RUNTIME_DIR:-/tmp}/smart-alarmer-last-full-instrumented-run"
+cooldown_seconds="${INSTRUMENTED_FULL_RUN_COOLDOWN_SECONDS:-600}"
+if [[ "$is_full_run" == "true" && -f "$FULL_RUN_STAMP" && "${ALLOW_REPEATED_FULL_INSTRUMENTED_RUN:-0}" != "1" ]]; then
+    last_run="$(<"$FULL_RUN_STAMP")"
+    [[ "$last_run" =~ ^[0-9]+$ ]] || last_run=0
+    elapsed="$(( $(date +%s) - last_run ))"
+    if ((elapsed < cooldown_seconds)); then
+        echo "ERROR: A full instrumented suite started ${elapsed}s ago." >&2
+        echo "Wait $((cooldown_seconds - elapsed))s, run a targeted class, or explicitly set ALLOW_REPEATED_FULL_INSTRUMENTED_RUN=1." >&2
+        exit 1
+    fi
+fi
+if [[ "$is_full_run" == "true" ]]; then
+    date +%s >"$FULL_RUN_STAMP"
+fi
+
 echo "Preparing deterministic English test locale on $ANDROID_SERIAL"
-./gradlew installDebug --no-daemon --max-workers=2
+./gradlew installDebug --no-daemon --max-workers=1
 "$ADB" -s "$ANDROID_SERIAL" shell cmd locale set-app-locales com.notnako.smartalarmer --user 0 --locales en-US
 
-echo "Running instrumented tests with a 15-minute hard timeout"
-timeout --foreground --signal=TERM --kill-after=20s "${INSTRUMENTED_TEST_TIMEOUT:-15m}" \
-    ./gradlew connectedDebugAndroidTest --no-daemon --max-workers=2 "$@"
+echo "Running instrumented tests once, with one worker and a 10-minute hard timeout"
+nice -n 10 timeout --foreground --signal=TERM --kill-after=20s "${INSTRUMENTED_TEST_TIMEOUT:-10m}" \
+    ./gradlew connectedDebugAndroidTest --no-daemon --max-workers=1 "$@"
