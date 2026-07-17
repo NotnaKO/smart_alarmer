@@ -109,6 +109,8 @@
     <string name="your_answer_format">Ваш ответ: %1$s</string>
     <string name="type_sentence_label">Введите это предложение точно:</string>
     <string name="submit_btn">Отправить</string>
+    <string name="memory_ready_prompt">Готовы запомнить узор?</string>
+    <string name="show_pattern">Показать узор</string>
     <string name="memorize_pattern">Запомните узор…</string>
     <string name="repeat_pattern">Повторите узор!</string>
     <string name="shake_device">Встряхните устройство!</string>

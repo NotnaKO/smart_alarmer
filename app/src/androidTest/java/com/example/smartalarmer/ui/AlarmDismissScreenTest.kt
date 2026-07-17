@@ -320,6 +320,32 @@ class AlarmDismissScreenTest {
 
     // ── Memory puzzle ─────────────────────────────────────────────────────
 
+    @Test
+    fun memoryPuzzle_waitsForUserBeforeShowingSequence() {
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            MemoryPuzzleView(onComplete = {}, memoryProvider = fakeMemory)
+        }
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val readyPrompt = context.getString(com.example.smartalarmer.R.string.memory_ready_prompt)
+        val showPattern = context.getString(com.example.smartalarmer.R.string.show_pattern)
+        val memorizePattern = context.getString(com.example.smartalarmer.R.string.memorize_pattern)
+        val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
+
+        composeTestRule.onNodeWithText(readyPrompt).assertIsDisplayed()
+        composeTestRule.mainClock.advanceTimeBy(10_000)
+        composeTestRule.onNodeWithText(readyPrompt).assertIsDisplayed()
+        composeTestRule.onNodeWithText(repeatPattern).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText(showPattern).performClick()
+        composeTestRule.mainClock.advanceTimeByFrame()
+        composeTestRule.onNodeWithText(memorizePattern).assertIsDisplayed()
+        composeTestRule.mainClock.autoAdvance = true
+    }
+
     /**
      * After the flash animation completes we need to wait for state change.
      * We use [waitUntil] to wait for "Repeat Pattern!" to appear.
@@ -342,6 +368,9 @@ class AlarmDismissScreenTest {
                 .getInstrumentation()
                 .targetContext
         val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.show_pattern))
+            .performClick()
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule.onAllNodesWithText(repeatPattern).fetchSemanticsNodes().isNotEmpty()
         }
@@ -373,6 +402,9 @@ class AlarmDismissScreenTest {
                 .getInstrumentation()
                 .targetContext
         val repeatPattern = context.getString(com.example.smartalarmer.R.string.repeat_pattern)
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.show_pattern))
+            .performClick()
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule.onAllNodesWithText(repeatPattern).fetchSemanticsNodes().isNotEmpty()
         }
