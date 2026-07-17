@@ -6,14 +6,23 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
-val releaseVersionCode =
+val sourceVersionCode =
+    providers
+        .exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            isIgnoreExitValue = true
+        }.standardOutput
+        .asText
+        .map { output -> output.trim().ifEmpty { "1" } }
+
+val appVersionCode =
     providers
         .environmentVariable("SMART_ALARMER_VERSION_CODE")
-        .orElse("1")
+        .orElse(sourceVersionCode)
         .get()
         .toIntOrNull()
         ?: error("SMART_ALARMER_VERSION_CODE must be a positive integer")
-require(releaseVersionCode > 0) { "SMART_ALARMER_VERSION_CODE must be a positive integer" }
+require(appVersionCode > 0) { "SMART_ALARMER_VERSION_CODE must be a positive integer" }
 
 val releaseVersionName =
     providers
@@ -43,7 +52,7 @@ android {
         applicationId = "com.notnako.smartalarmer"
         minSdk = 26
         targetSdk = 36
-        versionCode = releaseVersionCode
+        versionCode = appVersionCode
         versionName = releaseVersionName
     }
 

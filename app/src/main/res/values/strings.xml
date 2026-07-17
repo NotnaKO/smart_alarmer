@@ -103,6 +103,8 @@
     <string name="your_answer_format">Your Answer: %1$s</string>
     <string name="type_sentence_label">Type this exact sentence:</string>
     <string name="submit_btn">Submit</string>
+    <string name="memory_ready_prompt">Ready to memorize the pattern?</string>
+    <string name="show_pattern">Show pattern</string>
     <string name="memorize_pattern">Memorize Pattern…</string>
     <string name="repeat_pattern">Repeat Pattern!</string>
     <string name="shake_device">Shake the device!</string>

@@ -27,8 +27,13 @@ The easiest local option is the included helper, which prompts for passwords
 without saving them or placing them in shell history:
 
 ```bash
-./build_release.sh 1 0.1.0-alpha.1
+./build_release.sh 0.1.0-alpha.3
 ```
+
+The version name is the only required argument. The script derives a forward
+`versionCode` from the Git commit count. With no arguments, it also derives the
+version name from the latest reachable `v...` Git tag. The legacy
+`./build_release.sh <versionCode> <versionName>` form remains supported.
 
 Alternatively, provide all signing values through environment variables or CI
 secrets:

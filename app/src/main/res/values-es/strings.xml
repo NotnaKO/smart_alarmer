@@ -106,6 +106,8 @@
     <string name="your_answer_format">Tu respuesta: %1$s</string>
     <string name="type_sentence_label">Escribe esta frase exacta:</string>
     <string name="submit_btn">Enviar</string>
+    <string name="memory_ready_prompt">¿Listo para memorizar el patrón?</string>
+    <string name="show_pattern">Mostrar patrón</string>
     <string name="memorize_pattern">Memoriza el patrón…</string>
     <string name="repeat_pattern">¡Repite el patrón!</string>
     <string name="shake_device">¡Agita el dispositivo!</string>
