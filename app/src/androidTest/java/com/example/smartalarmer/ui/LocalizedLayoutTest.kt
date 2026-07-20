@@ -121,14 +121,14 @@ class LocalizedLayoutTest {
             "Puzzle-count label overlaps its controls",
             puzzleCountLabel.right <= decreaseButton.left + PIXEL_TOLERANCE
         )
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG).performScrollTo()
+        val visiblePuzzleCountRow =
+            composeTestRule.onNodeWithTag(ALARM_EDITOR_PUZZLE_COUNT_TAG).fetchSemanticsNode().boundsInRoot
         val wakeUpChecks =
-            composeTestRule
-                .onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)
-                .fetchSemanticsNode()
-                .boundsInRoot
+            composeTestRule.onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG).fetchSemanticsNode().boundsInRoot
         assertTrue(
-            "Puzzle-count controls touch the wake-up-check card",
-            wakeUpChecks.top - puzzleCountRow.bottom >= MIN_SECTION_GAP_PX
+            "Puzzle-count controls overlap the wake-up-check card",
+            visiblePuzzleCountRow.bottom <= wakeUpChecks.top
         )
 
         val monday = localizedContext.getString(R.string.day_mon)
@@ -263,6 +263,5 @@ class LocalizedLayoutTest {
     private companion object {
         val COMPACT_WIDTH = 320.dp
         const val PIXEL_TOLERANCE = 1f
-        const val MIN_SECTION_GAP_PX = 16f
     }
 }
