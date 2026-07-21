@@ -1,6 +1,7 @@
 package com.example.smartalarmer.service
 
 import android.app.Notification
+import android.app.PendingIntent
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import com.example.smartalarmer.R
@@ -9,7 +10,8 @@ import com.example.smartalarmer.alarm.AlarmLaunchType
 
 internal data class AlarmForegroundNotification(
     val id: Int,
-    val notification: Notification
+    val notification: Notification,
+    val dismissPendingIntent: PendingIntent
 )
 
 internal class AlarmForegroundNotificationFactory(
@@ -43,7 +45,8 @@ internal class AlarmForegroundNotificationFactory(
         }
         return AlarmForegroundNotification(
             id = AlarmNotification.notificationIdForAlarm(payload.alarmId, payload.isPreview),
-            notification = builder.build()
+            notification = builder.build(),
+            dismissPendingIntent = dismissPendingIntent
         )
     }
 }

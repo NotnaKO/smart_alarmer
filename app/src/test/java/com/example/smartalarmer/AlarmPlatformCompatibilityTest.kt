@@ -2,6 +2,7 @@ package com.example.smartalarmer
 
 import android.app.ActivityOptions
 import com.example.smartalarmer.service.AlarmNotification
+import com.example.smartalarmer.service.AlarmScreenLauncher
 import com.example.smartalarmer.utils.AlarmCapabilityChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +31,39 @@ class AlarmPlatformCompatibilityTest {
         assertEquals(
             ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS,
             AlarmNotification.creatorBackgroundStartMode(36)
+        )
+
+        assertNull(AlarmScreenLauncher.senderBackgroundStartMode(33))
+        @Suppress("DEPRECATION")
+        assertEquals(
+            ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED,
+            AlarmScreenLauncher.senderBackgroundStartMode(34)
+        )
+        assertEquals(
+            ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS,
+            AlarmScreenLauncher.senderBackgroundStartMode(36)
+        )
+    }
+
+    @Test
+    fun immediateAlarmScreenLaunchOnlyAppliesWhileUnlockedAndInteractive() {
+        assertTrue(
+            AlarmScreenLauncher.shouldLaunchImmediately(
+                isInteractive = true,
+                isKeyguardLocked = false
+            )
+        )
+        assertFalse(
+            AlarmScreenLauncher.shouldLaunchImmediately(
+                isInteractive = false,
+                isKeyguardLocked = false
+            )
+        )
+        assertFalse(
+            AlarmScreenLauncher.shouldLaunchImmediately(
+                isInteractive = true,
+                isKeyguardLocked = true
+            )
         )
     }
 }
