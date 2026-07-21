@@ -301,3 +301,12 @@ is exercised at each relevant platform boundary.
 | `AlarmDismissScreenTest` | Verifies Math, Memory, Typing, and Shake behavior, accessibility semantics, saved puzzle input, and rotation-safe task progression. |
 | `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |
 | `AlarmDeliveryEndToEndTest` | Schedules a safe preview alarm through `AlarmManager` and verifies receiver/service delivery without audio or volume changes. |
+
+---
+
+## License
+
+Copyright 2026 Anton Kopanov.
+
+Licensed under the [Apache License, Version 2.0](../LICENSE)
+(`SPDX-License-Identifier: Apache-2.0`).
