@@ -161,6 +161,7 @@ class AlarmService : Service() {
         if (payload.launchType == AlarmLaunchType.MAIN) {
             deliveryFollowUp.start(payload.alarmId)
         }
+        AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
 
         return START_REDELIVER_INTENT
     }
