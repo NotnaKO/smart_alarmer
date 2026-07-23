@@ -75,7 +75,6 @@
     <string name="select_alarm_sound">Выбрать звук будильника</string>
     <string name="preview_sound">Прослушать</string>
     <string name="use_default_sound">По умолчанию</string>
-    <string name="advanced_settings">Дополнительные настройки</string>
     <string name="decrease_puzzle_count">Уменьшить число заданий</string>
     <string name="increase_puzzle_count">Увеличить число заданий</string>
     <plurals name="puzzles_plural">

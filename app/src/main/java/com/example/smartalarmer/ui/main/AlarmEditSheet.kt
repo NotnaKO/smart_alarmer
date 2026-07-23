@@ -127,10 +127,6 @@ fun AlarmEditSheet(
                 ?: WakeUpCheckConfig.DEFAULT_INTERVAL_MINUTES
         )
     }
-    var advancedExpanded by rememberSaveable(alarm?.id) {
-        mutableStateOf(alarm?.wakeUpChecksEnabled == true)
-    }
-
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val saveDraft = {
         val puzzleSelection = PuzzleSelection.of(selectedPuzzles)
@@ -492,186 +488,116 @@ fun AlarmEditSheet(
                     }
                 }
 
-                OutlinedButton(
-                    onClick = { advancedExpanded = !advancedExpanded },
-                    modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_ADVANCED_TAG),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                    border = BorderStroke(1.dp, CardBorderGlass)
-                ) {
-                    Text(
-                        text = stringResource(com.example.smartalarmer.R.string.advanced_settings),
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Start
-                    )
-                    Text(if (advancedExpanded) "−" else "+")
-                }
-
-                if (advancedExpanded) {
-                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                        Column(
-                            modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                                .padding(16.dp)
-                                .testTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Column(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                            .testTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text(
+                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_label),
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_description),
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Switch(
+                                checked = wakeUpChecksEnabled,
+                                onCheckedChange = { wakeUpChecksEnabled = it },
+                                colors =
+                                SwitchDefaults.colors(
+                                    checkedThumbColor = IndigoPrimary,
+                                    checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
+                                    uncheckedThumbColor = Color.Gray,
+                                    uncheckedTrackColor = CardBorderGlass
+                                )
+                            )
+                        }
+
+                        if (wakeUpChecksEnabled) {
+                            HorizontalDivider(color = CardBorderGlass)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text(
+                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_check_count_label),
+                                    color = Color.LightGray,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    FilledTonalIconButton(
+                                        onClick = {
+                                            if (wakeUpCheckCount > WakeUpCheckConfig.COUNT_RANGE.first) {
+                                                wakeUpCheckCount--
+                                            }
+                                        },
+                                        modifier = Modifier.size(48.dp),
+                                        colors =
+                                        IconButtonDefaults.filledTonalIconButtonColors(
+                                            containerColor = KeyButtonBg,
+                                            contentColor = Color.White
+                                        )
+                                    ) { Text("−") }
                                     Text(
-                                        text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_label),
+                                        wakeUpCheckCount.toString(),
                                         color = Color.White,
-                                        fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Text(
-                                        text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_description),
-                                        color = Color.LightGray,
-                                        fontSize = 12.sp
-                                    )
+                                    FilledTonalIconButton(
+                                        onClick = {
+                                            if (wakeUpCheckCount < WakeUpCheckConfig.COUNT_RANGE.last) {
+                                                wakeUpCheckCount++
+                                            }
+                                        },
+                                        modifier = Modifier.size(48.dp),
+                                        colors =
+                                        IconButtonDefaults.filledTonalIconButtonColors(
+                                            containerColor = KeyButtonBg,
+                                            contentColor = Color.White
+                                        )
+                                    ) { Text("+") }
                                 }
-                                Switch(
-                                    checked = wakeUpChecksEnabled,
-                                    onCheckedChange = { wakeUpChecksEnabled = it },
-                                    colors =
-                                    SwitchDefaults.colors(
-                                        checkedThumbColor = IndigoPrimary,
-                                        checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
-                                        uncheckedThumbColor = Color.Gray,
-                                        uncheckedTrackColor = CardBorderGlass
-                                    )
-                                )
                             }
 
-                            if (wakeUpChecksEnabled) {
-                                HorizontalDivider(color = CardBorderGlass)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(com.example.smartalarmer.R.string.wake_up_check_count_label),
-                                        color = Color.LightGray,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        FilledTonalIconButton(
-                                            onClick = {
-                                                if (wakeUpCheckCount > WakeUpCheckConfig.COUNT_RANGE.first) {
-                                                    wakeUpCheckCount--
-                                                }
-                                            },
-                                            modifier = Modifier.size(48.dp),
-                                            colors =
-                                            IconButtonDefaults.filledTonalIconButtonColors(
-                                                containerColor = KeyButtonBg,
-                                                contentColor = Color.White
-                                            )
-                                        ) { Text("−") }
-                                        Text(
-                                            wakeUpCheckCount.toString(),
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        FilledTonalIconButton(
-                                            onClick = {
-                                                if (wakeUpCheckCount < WakeUpCheckConfig.COUNT_RANGE.last) {
-                                                    wakeUpCheckCount++
-                                                }
-                                            },
-                                            modifier = Modifier.size(48.dp),
-                                            colors =
-                                            IconButtonDefaults.filledTonalIconButtonColors(
-                                                containerColor = KeyButtonBg,
-                                                contentColor = Color.White
-                                            )
-                                        ) { Text("+") }
-                                    }
-                                }
-
-                                Text(
-                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_check_interval_label),
-                                    color = Color.LightGray
-                                )
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES.forEach { minutes ->
-                                        FilterChip(
-                                            selected = wakeUpCheckIntervalMinutes == minutes,
-                                            onClick = { wakeUpCheckIntervalMinutes = minutes },
-                                            label = {
-                                                Text(
-                                                    stringResource(
-                                                        com.example.smartalarmer.R.string.wake_up_check_minutes_format,
-                                                        minutes
-                                                    )
-                                                )
-                                            },
-                                            colors =
-                                            FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = IndigoPrimary,
-                                                selectedLabelColor = Color.White,
-                                                containerColor = KeyButtonBg,
-                                                labelColor = Color.Gray
-                                            )
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_check_easy_task_description),
-                                    color = Color.LightGray,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-
-                        Column {
                             Text(
-                                text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration),
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
+                                text = stringResource(com.example.smartalarmer.R.string.wake_up_check_interval_label),
+                                color = Color.LightGray
                             )
-                            Text(
-                                text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration_desc),
-                                color = Color.LightGray,
-                                fontSize = 12.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
                             FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                AlarmVolumeRamp.OPTIONS_SECONDS.forEach { seconds ->
+                                WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES.forEach { minutes ->
                                     FilterChip(
-                                        selected = volumeRampSeconds == seconds,
-                                        onClick = { volumeRampSeconds = seconds },
+                                        selected = wakeUpCheckIntervalMinutes == minutes,
+                                        onClick = { wakeUpCheckIntervalMinutes = minutes },
                                         label = {
-                                            val durationText =
-                                                if (seconds < 60) {
-                                                    stringResource(
-                                                        com.example.smartalarmer.R.string.volume_ramp_seconds_format,
-                                                        seconds
-                                                    )
-                                                } else {
-                                                    stringResource(
-                                                        com.example.smartalarmer.R.string.volume_ramp_minutes_format,
-                                                        seconds / 60
-                                                    )
-                                                }
-                                            Text(durationText)
+                                            Text(
+                                                stringResource(
+                                                    com.example.smartalarmer.R.string.wake_up_check_minutes_format,
+                                                    minutes
+                                                )
+                                            )
                                         },
                                         colors =
                                         FilterChipDefaults.filterChipColors(
@@ -682,6 +608,60 @@ fun AlarmEditSheet(
                                         )
                                     )
                                 }
+                            }
+                            Text(
+                                text = stringResource(com.example.smartalarmer.R.string.wake_up_check_easy_task_description),
+                                color = Color.LightGray,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+
+                    Column {
+                        Text(
+                            text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration_desc),
+                            color = Color.LightGray,
+                            fontSize = 12.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            AlarmVolumeRamp.OPTIONS_SECONDS.forEach { seconds ->
+                                FilterChip(
+                                    selected = volumeRampSeconds == seconds,
+                                    onClick = { volumeRampSeconds = seconds },
+                                    label = {
+                                        val durationText =
+                                            if (seconds < 60) {
+                                                stringResource(
+                                                    com.example.smartalarmer.R.string.volume_ramp_seconds_format,
+                                                    seconds
+                                                )
+                                            } else {
+                                                stringResource(
+                                                    com.example.smartalarmer.R.string.volume_ramp_minutes_format,
+                                                    seconds / 60
+                                                )
+                                            }
+                                        Text(durationText)
+                                    },
+                                    colors =
+                                    FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = IndigoPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = KeyButtonBg,
+                                        labelColor = Color.Gray
+                                    )
+                                )
                             }
                         }
                     }
@@ -730,6 +710,5 @@ internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
 internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"
 internal const val ALARM_EDITOR_WAKE_UP_CHECKS_TAG = "alarm_editor_wake_up_checks"
-internal const val ALARM_EDITOR_ADVANCED_TAG = "alarm_editor_advanced"
 internal const val ALARM_EDITOR_SAVE_TAG = "alarm_editor_save"
 internal const val ALARM_LABEL_MAX_LENGTH = 60

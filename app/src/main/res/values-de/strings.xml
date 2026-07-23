@@ -69,7 +69,6 @@
     <string name="select_alarm_sound">Alarmton auswählen</string>
     <string name="preview_sound">Anhören</string>
     <string name="use_default_sound">Standard verwenden</string>
-    <string name="advanced_settings">Erweiterte Einstellungen</string>
     <string name="decrease_puzzle_count">Anzahl der Rätsel verringern</string>
     <string name="increase_puzzle_count">Anzahl der Rätsel erhöhen</string>
     <plurals name="puzzles_plural">

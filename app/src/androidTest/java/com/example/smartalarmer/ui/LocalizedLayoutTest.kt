@@ -17,7 +17,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -27,7 +26,6 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.main.ALARM_CARD_ACTIONS_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_SUMMARY_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_ADVANCED_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_DAYS_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_PUZZLE_COUNT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_ROW_TAG
@@ -123,10 +121,6 @@ class LocalizedLayoutTest {
             "Puzzle-count label overlaps its controls",
             puzzleCountLabel.right <= decreaseButton.left + PIXEL_TOLERANCE
         )
-        composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_ADVANCED_TAG)
-            .performScrollTo()
-            .performClick()
         composeTestRule.onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG).performScrollTo()
         val visiblePuzzleCountRow =
             composeTestRule.onNodeWithTag(ALARM_EDITOR_PUZZLE_COUNT_TAG).fetchSemanticsNode().boundsInRoot

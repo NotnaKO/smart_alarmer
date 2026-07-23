@@ -72,7 +72,6 @@
     <string name="select_alarm_sound">Seleccionar sonido de alarma</string>
     <string name="preview_sound">Escuchar</string>
     <string name="use_default_sound">Usar predeterminado</string>
-    <string name="advanced_settings">Ajustes avanzados</string>
     <string name="decrease_puzzle_count">Reducir número de acertijos</string>
     <string name="increase_puzzle_count">Aumentar número de acertijos</string>
     <plurals name="puzzles_plural">

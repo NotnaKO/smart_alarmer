@@ -6,7 +6,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_ADVANCED_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
@@ -309,10 +308,6 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
             .assertDoesNotExist()
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_ADVANCED_TAG)
-            .performScrollTo()
-            .performClick()
-        composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_minutes_format, 2))
             .performScrollTo()
             .performClick()
@@ -447,10 +442,6 @@ class AlarmListScreenTest {
             }
         }
 
-        composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_ADVANCED_TAG)
-            .performScrollTo()
-            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)))
             .performScrollTo()

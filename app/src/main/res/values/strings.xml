@@ -69,7 +69,6 @@
     <string name="select_alarm_sound">Select Alarm Sound</string>
     <string name="preview_sound">Preview</string>
     <string name="use_default_sound">Use default</string>
-    <string name="advanced_settings">Advanced settings</string>
     <string name="decrease_puzzle_count">Decrease puzzle count</string>
     <string name="increase_puzzle_count">Increase puzzle count</string>
     <plurals name="puzzles_plural">

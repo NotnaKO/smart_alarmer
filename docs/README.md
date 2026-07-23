@@ -9,7 +9,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 ### Key Features
 
 - **Four puzzle types**: Math equations, typing challenges, memory pattern games, and physical shake challenges with a sensor-safe fallback.
-- **Customizable Alarm Configuration**: A slide-up editor offers repeat presets, puzzle selection, sticky save actions, ringtone preview/reset, and collapsible advanced settings.
+- **Customizable Alarm Configuration**: A slide-up editor offers repeat presets, puzzle selection, visible wake-up and volume controls, sticky save actions, and ringtone preview/reset.
 - **Modern Glassmorphic Dark Theme**: Premium styling featuring semi-transparent overlays, glowing accents, and smooth feedback animations.
 - **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
