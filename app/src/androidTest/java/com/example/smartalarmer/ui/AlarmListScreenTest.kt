@@ -6,7 +6,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
-import com.example.smartalarmer.domain.BackupAlarmConfig
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SCROLL_TAG
@@ -647,38 +646,5 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_duration))
             .assertIsDisplayed()
         composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).assertIsDisplayed()
-    }
-
-    @Test
-    fun alarmEditSheet_resetsLegacyBackupSettingsToInternalDefaults() {
-        val context =
-            androidx.test.platform.app.InstrumentationRegistry
-                .getInstrumentation()
-                .targetContext
-        var savedAlarm: Alarm? = null
-        val existing =
-            testAlarm().copy(
-                backupAlarmTimeoutMinutes = 15,
-                backupAlarmRepeatCount = 1
-            )
-        composeTestRule.setContent {
-            SmartAlarmerTheme {
-                AlarmEditSheet(
-                    alarm = existing,
-                    onDismiss = {},
-                    onSave = { savedAlarm = it.toAlarm(existing = existing, isEnabled = true) },
-                    onPickSound = {},
-                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
-                    pickedSoundUri = null,
-                    shakeSensorAvailable = false
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
-
-        assertEquals(BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES, savedAlarm?.backupAlarmTimeoutMinutes)
-        assertEquals(BackupAlarmConfig.DEFAULT_REPEAT_COUNT, savedAlarm?.backupAlarmRepeatCount)
     }
 }

@@ -76,12 +76,10 @@ class AlarmProgressContractTest {
     }
 
     @Test
-    fun alarmLaunchContractPreservesBackupEscalationConfiguration() {
+    fun alarmLaunchContractPreservesOccurrenceIdentity() {
         val payload =
             AlarmLaunchPayload(
                 alarmId = 8,
-                backupAlarmTimeoutMinutes = 15,
-                backupAlarmRepeatCount = 2,
                 occurrenceTriggerAtMillis = 123_456L
             )
 

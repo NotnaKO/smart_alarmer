@@ -244,8 +244,8 @@ class AlarmService : Service() {
             backupEscalator =
                 BackupAlarmEscalator(
                     scope = serviceScope,
-                    timeoutMillis = payload.backupAlarmTimeoutMinutes * 60_000L,
-                    repeatCount = payload.backupAlarmRepeatCount
+                    timeoutMillis = BackupAlarmEscalator.DEFAULT_TIMEOUT_MINUTES * 60_000L,
+                    repeatCount = BackupAlarmEscalator.DEFAULT_REPEAT_COUNT
                 ) { attempt ->
                     backupEscalated = true
                     if (attempt == 1) {

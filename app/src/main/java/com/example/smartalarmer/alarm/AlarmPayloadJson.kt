@@ -1,7 +1,6 @@
 package com.example.smartalarmer.alarm
 
 import com.example.smartalarmer.domain.AlarmVolumeRamp
-import com.example.smartalarmer.domain.BackupAlarmConfig
 import org.json.JSONObject
 
 internal object AlarmPayloadJson {
@@ -19,8 +18,6 @@ internal object AlarmPayloadJson {
         .put("wakeUpCheckToken", payload.wakeUpCheckToken)
         .put("wakeUpChecksEnabled", payload.wakeUpChecksEnabled)
         .put("wakeUpCheckIntervalMinutes", payload.wakeUpCheckIntervalMinutes)
-        .put("backupAlarmTimeoutMinutes", payload.backupAlarmTimeoutMinutes)
-        .put("backupAlarmRepeatCount", payload.backupAlarmRepeatCount)
         .put("occurrenceTriggerAtMillis", payload.occurrenceTriggerAtMillis)
 
     fun decode(json: JSONObject): AlarmLaunchPayload = AlarmLaunchPayload(
@@ -43,15 +40,6 @@ internal object AlarmPayloadJson {
         wakeUpCheckToken = json.optString("wakeUpCheckToken"),
         wakeUpChecksEnabled = json.optBoolean("wakeUpChecksEnabled", false),
         wakeUpCheckIntervalMinutes = json.optInt("wakeUpCheckIntervalMinutes", 5).coerceAtLeast(1),
-        backupAlarmTimeoutMinutes =
-        json
-            .optInt("backupAlarmTimeoutMinutes", BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES)
-            .takeIf { it in BackupAlarmConfig.TIMEOUT_OPTIONS_MINUTES }
-            ?: BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
-        backupAlarmRepeatCount =
-        json
-            .optInt("backupAlarmRepeatCount", BackupAlarmConfig.DEFAULT_REPEAT_COUNT)
-            .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE),
         occurrenceTriggerAtMillis =
         json
             .optLong("occurrenceTriggerAtMillis", AlarmLaunchPayload.NO_OCCURRENCE)

@@ -19,8 +19,6 @@ data class Alarm(
     val wakeUpChecksEnabled: Boolean = false,
     val wakeUpCheckCount: Int = 3,
     val wakeUpCheckIntervalMinutes: Int = 5,
-    val backupAlarmTimeoutMinutes: Int = 10,
-    val backupAlarmRepeatCount: Int = 3,
     val scheduleStatus: String = AlarmScheduleStatus.UNKNOWN.name,
     val scheduledTriggerAtMillis: Long? = null
 )

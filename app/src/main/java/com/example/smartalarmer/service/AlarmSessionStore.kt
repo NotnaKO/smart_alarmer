@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmLaunchType
-import com.example.smartalarmer.domain.BackupAlarmConfig
 
 internal data class AlarmAudioSession(
     val payload: AlarmLaunchPayload,
@@ -62,16 +61,6 @@ internal class AlarmSessionStore(
                 wakeUpCheckToken = preferences.getString(KEY_WAKE_UP_CHECK_TOKEN, null).orEmpty(),
                 wakeUpChecksEnabled = preferences.getBoolean(KEY_WAKE_UP_CHECKS_ENABLED, false),
                 wakeUpCheckIntervalMinutes = preferences.getInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, 5),
-                backupAlarmTimeoutMinutes =
-                preferences.getInt(
-                    KEY_BACKUP_ALARM_TIMEOUT_MINUTES,
-                    BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES
-                ),
-                backupAlarmRepeatCount =
-                preferences.getInt(
-                    KEY_BACKUP_ALARM_REPEAT_COUNT,
-                    BackupAlarmConfig.DEFAULT_REPEAT_COUNT
-                ),
                 occurrenceTriggerAtMillis =
                 preferences
                     .getLong(KEY_OCCURRENCE_TRIGGER_AT_MILLIS, AlarmLaunchPayload.NO_OCCURRENCE)
@@ -123,8 +112,6 @@ internal class AlarmSessionStore(
         .putString(KEY_WAKE_UP_CHECK_TOKEN, session.payload.wakeUpCheckToken)
         .putBoolean(KEY_WAKE_UP_CHECKS_ENABLED, session.payload.wakeUpChecksEnabled)
         .putInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, session.payload.wakeUpCheckIntervalMinutes)
-        .putInt(KEY_BACKUP_ALARM_TIMEOUT_MINUTES, session.payload.backupAlarmTimeoutMinutes)
-        .putInt(KEY_BACKUP_ALARM_REPEAT_COUNT, session.payload.backupAlarmRepeatCount)
         .putLong(KEY_OCCURRENCE_TRIGGER_AT_MILLIS, session.payload.occurrenceTriggerAtMillis)
         .commit()
 
@@ -145,8 +132,6 @@ internal class AlarmSessionStore(
         private const val KEY_WAKE_UP_CHECK_TOKEN = "wake_up_check_token"
         private const val KEY_WAKE_UP_CHECKS_ENABLED = "wake_up_checks_enabled"
         private const val KEY_WAKE_UP_CHECK_INTERVAL_MINUTES = "wake_up_check_interval_minutes"
-        private const val KEY_BACKUP_ALARM_TIMEOUT_MINUTES = "backup_alarm_timeout_minutes"
-        private const val KEY_BACKUP_ALARM_REPEAT_COUNT = "backup_alarm_repeat_count"
         private const val KEY_OCCURRENCE_TRIGGER_AT_MILLIS = "occurrence_trigger_at_millis"
         private const val NO_VOLUME = -1
     }
