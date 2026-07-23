@@ -47,7 +47,7 @@ fun AlarmDismissScreen(
             saver =
             listSaver(
                 save = { puzzleTypes -> puzzleTypes.map(PuzzleType::name) },
-                restore = { names -> names.map(PuzzleType::valueOf) }
+                restore = { names -> names.map(PuzzleType::valueOf).toMutableStateList() }
             )
         ) {
             val configuredPuzzles =
@@ -66,9 +66,12 @@ fun AlarmDismissScreen(
                 .shuffled()
                 .take(puzzleCount.coerceAtLeast(1))
                 .ifEmpty { listOf(PuzzleType.MATH) }
+                .toMutableStateList()
         }
 
-    var currentTaskIndex by rememberSaveable(puzzles) { mutableStateOf(0) }
+    var currentTaskIndex by rememberSaveable(puzzlesList, puzzleCount, isWakeUpCheck) {
+        mutableIntStateOf(0)
+    }
 
     if (currentTaskIndex >= puzzles.size) {
         LaunchedEffect(Unit) {
@@ -79,6 +82,35 @@ fun AlarmDismissScreen(
 
     val activeTaskIndex = currentTaskIndex
     val currentPuzzle = puzzles[activeTaskIndex]
+    val alternatePuzzles =
+        remember(puzzlesList, shakeProvider.isAvailable) {
+            buildList {
+                addAll(
+                    PuzzleSelection
+                        .parse(puzzlesList)
+                        .values
+                        .filter { it != PuzzleType.SHAKE || shakeProvider.isAvailable }
+                )
+                addAll(listOf(PuzzleType.MATH, PuzzleType.TYPING, PuzzleType.MEMORY))
+                if (shakeProvider.isAvailable) add(PuzzleType.SHAKE)
+            }.distinct()
+        }
+    var failureCount by rememberSaveable(activeTaskIndex, currentPuzzle) {
+        mutableIntStateOf(0)
+    }
+    var isAlternateAvailable by rememberSaveable(activeTaskIndex, currentPuzzle) {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(activeTaskIndex, currentPuzzle) {
+        kotlinx.coroutines.delay(ALTERNATE_PUZZLE_DELAY_MILLIS)
+        isAlternateAvailable = true
+    }
+    val recordFailure = {
+        failureCount++
+        if (failureCount >= ALTERNATE_PUZZLE_FAILURE_THRESHOLD) {
+            isAlternateAvailable = true
+        }
+    }
     val completeCurrentTask = {
         if (currentTaskIndex == activeTaskIndex) {
             if (activeTaskIndex + 1 < puzzles.size) {
@@ -156,43 +188,63 @@ fun AlarmDismissScreen(
                 .testTag(PUZZLE_CONTAINER_TAG),
             contentAlignment = Alignment.Center
         ) {
-            Box(
+            Column(
                 modifier =
                 Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .testTag(PUZZLE_CONTENT_TAG),
-                contentAlignment = Alignment.Center
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                when (currentPuzzle) {
-                    PuzzleType.MATH ->
-                        MathPuzzleView(
-                            onComplete = completeCurrentTask,
-                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            mathProvider = mathProvider,
-                            easyMode = isWakeUpCheck
-                        )
-                    PuzzleType.TYPING ->
-                        TypingPuzzleView(
-                            onComplete = completeCurrentTask,
-                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            typingProvider = typingProvider,
-                            easyMode = isWakeUpCheck
-                        )
-                    PuzzleType.MEMORY ->
-                        MemoryPuzzleView(
-                            onComplete = completeCurrentTask,
-                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            memoryProvider = memoryProvider,
-                            easyMode = isWakeUpCheck
-                        )
-                    PuzzleType.SHAKE ->
-                        ShakePuzzleView(
-                            onComplete = completeCurrentTask,
-                            onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
-                            shakeProvider = shakeProvider,
-                            easyMode = isWakeUpCheck
-                        )
+                key(activeTaskIndex, currentPuzzle) {
+                    when (currentPuzzle) {
+                        PuzzleType.MATH ->
+                            MathPuzzleView(
+                                onComplete = completeCurrentTask,
+                                onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                                onFailure = recordFailure,
+                                mathProvider = mathProvider,
+                                easyMode = isWakeUpCheck
+                            )
+                        PuzzleType.TYPING ->
+                            TypingPuzzleView(
+                                onComplete = completeCurrentTask,
+                                onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                                onFailure = recordFailure,
+                                typingProvider = typingProvider,
+                                easyMode = isWakeUpCheck
+                            )
+                        PuzzleType.MEMORY ->
+                            MemoryPuzzleView(
+                                onComplete = completeCurrentTask,
+                                onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                                onFailure = recordFailure,
+                                memoryProvider = memoryProvider,
+                                easyMode = isWakeUpCheck
+                            )
+                        PuzzleType.SHAKE ->
+                            ShakePuzzleView(
+                                onComplete = completeCurrentTask,
+                                onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
+                                shakeProvider = shakeProvider,
+                                easyMode = isWakeUpCheck
+                            )
+                    }
+                }
+                if (isAlternateAvailable) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    OutlinedButton(
+                        onClick = {
+                            puzzles[activeTaskIndex] =
+                                nextAlternatePuzzle(
+                                    current = currentPuzzle,
+                                    candidates = alternatePuzzles
+                                )
+                        },
+                        modifier = Modifier.testTag(ALTERNATE_PUZZLE_BUTTON_TAG)
+                    ) {
+                        Text(stringResource(R.string.try_different_puzzle))
+                    }
                 }
             }
         }
@@ -201,3 +253,11 @@ fun AlarmDismissScreen(
 
 internal const val PUZZLE_CONTAINER_TAG = "alarm_dismiss_puzzle_container"
 internal const val PUZZLE_CONTENT_TAG = "alarm_dismiss_puzzle_content"
+internal const val ALTERNATE_PUZZLE_BUTTON_TAG = "alternate_puzzle_button"
+internal const val ALTERNATE_PUZZLE_FAILURE_THRESHOLD = 3
+internal const val ALTERNATE_PUZZLE_DELAY_MILLIS = 30_000L
+
+internal fun nextAlternatePuzzle(
+    current: PuzzleType,
+    candidates: List<PuzzleType>
+): PuzzleType = candidates.firstOrNull { it != current } ?: PuzzleType.MATH

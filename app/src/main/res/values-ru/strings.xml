@@ -40,12 +40,27 @@
     <string name="wake_up_check_card_summary">Проверки пробуждения: %1$d × каждые %2$d мин</string>
     <string name="wake_up_check_title">Проверка пробуждения</string>
     <string name="wake_up_check_progress">Проверка %1$d из %2$d</string>
-    <string name="wake_up_check_active_summary">Осталось проверок: %1$d • следующая: %2$s</string>
+    <plurals name="wake_up_check_active_summary">
+        <item quantity="one">Осталась %1$d проверка • следующая: %2$s</item>
+        <item quantity="few">Осталось %1$d проверки • следующая: %2$s</item>
+        <item quantity="many">Осталось %1$d проверок • следующая: %2$s</item>
+        <item quantity="other">Осталось %1$d проверки • следующая: %2$s</item>
+    </plurals>
     <string name="stop_wake_up_checks">Остановить проверки</string>
     <string name="stop_wake_up_checks_title">Остановить проверки пробуждения?</string>
     <string name="stop_wake_up_checks_confirmation">Оставшиеся повторные будильники будут отменены.</string>
-    <string name="first_wake_up_check_in_minutes">Вы проснулись. Первая проверка через %1$d мин.</string>
-    <string name="next_wake_up_check_in_minutes">Готово. Следующая проверка через %1$d мин.</string>
+    <plurals name="first_wake_up_check_in_minutes">
+        <item quantity="one">Вы проснулись. Первая проверка через %1$d минуту.</item>
+        <item quantity="few">Вы проснулись. Первая проверка через %1$d минуты.</item>
+        <item quantity="many">Вы проснулись. Первая проверка через %1$d минут.</item>
+        <item quantity="other">Вы проснулись. Первая проверка через %1$d минуты.</item>
+    </plurals>
+    <plurals name="next_wake_up_check_in_minutes">
+        <item quantity="one">Готово. Следующая проверка через %1$d минуту.</item>
+        <item quantity="few">Готово. Следующая проверка через %1$d минуты.</item>
+        <item quantity="many">Готово. Следующая проверка через %1$d минут.</item>
+        <item quantity="other">Готово. Следующая проверка через %1$d минуты.</item>
+    </plurals>
     <string name="all_wake_up_checks_complete">Все проверки пробуждения завершены.</string>
     <string name="volume_ramp_duration">Нарастание громкости</string>
     <string name="volume_ramp_duration_desc">Время до максимальной громкости</string>
@@ -56,7 +71,11 @@
     <string name="sound_label">Звук будильника</string>
     <string name="sound_default">По умолчанию</string>
     <string name="label_placeholder">Название будильника (например, Работа)</string>
+    <string name="label_character_count">%1$d/%2$d</string>
     <string name="select_alarm_sound">Выбрать звук будильника</string>
+    <string name="preview_sound">Прослушать</string>
+    <string name="use_default_sound">По умолчанию</string>
+    <string name="advanced_settings">Дополнительные настройки</string>
     <string name="decrease_puzzle_count">Уменьшить число заданий</string>
     <string name="increase_puzzle_count">Увеличить число заданий</string>
     <plurals name="puzzles_plural">
@@ -140,6 +159,7 @@
     <string name="shift_off">Выключен</string>
     <string name="space_key">Пробел</string>
     <string name="memory_cell_desc">Ячейка памяти %1$d</string>
+    <string name="try_different_puzzle">Выбрать другую головоломку</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Активный будильник</string>

@@ -2,10 +2,11 @@ package com.example.smartalarmer.ui
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.StateRestorationTester
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.puzzle.*
+import com.example.smartalarmer.ui.dismiss.ALTERNATE_PUZZLE_BUTTON_TAG
 import com.example.smartalarmer.ui.dismiss.AlarmDismissScreen
 import com.example.smartalarmer.ui.dismiss.MathPuzzleView
 import com.example.smartalarmer.ui.dismiss.MemoryPuzzleView
@@ -545,6 +546,43 @@ class AlarmDismissScreenTest {
     }
 
     @Test
+    fun alarmDismissScreen_afterThreeFailures_offersRestorableAlternatePuzzle() {
+        val restorationTester = StateRestorationTester(composeTestRule)
+        restorationTester.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MATH",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake
+            )
+        }
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val confirmAnswer = context.getString(com.example.smartalarmer.R.string.confirm_answer_desc)
+
+        repeat(3) {
+            composeTestRule.onNodeWithText("1").performClick()
+            composeTestRule.onNodeWithContentDescription(confirmAnswer).performClick()
+        }
+
+        composeTestRule
+            .onNodeWithTag(ALTERNATE_PUZZLE_BUTTON_TAG)
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.onNodeWithText("Wake up now").assertIsDisplayed()
+
+        restorationTester.emulateSavedInstanceStateRestore()
+
+        composeTestRule.onNodeWithText("Wake up now").assertIsDisplayed()
+        composeTestRule.onNodeWithText("5 + 3").assertDoesNotExist()
+    }
+
+    @Test
     fun alarmDismissScreen_showsProgressHeader() {
         composeTestRule.setContent {
             AlarmDismissScreen(
@@ -786,19 +824,11 @@ class AlarmDismissScreenTest {
     @Test
     fun virtualKeyboard_inSpanish_displaysSpanishSpecificKeys() {
         composeTestRule.setContent {
-            val config =
-                androidx.compose.ui.platform.LocalConfiguration.current.apply {
-                    val locale = java.util.Locale.forLanguageTag("es")
-                    setLocale(locale)
-                }
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalConfiguration provides config
-            ) {
-                VirtualKeyboard(
-                    onKeyClick = {},
-                    onBackspace = {}
-                )
-            }
+            VirtualKeyboard(
+                onKeyClick = {},
+                onBackspace = {},
+                language = "es"
+            )
         }
 
         // Spanish layout should have 'ñ' key displayed
@@ -808,19 +838,11 @@ class AlarmDismissScreenTest {
     @Test
     fun virtualKeyboard_inGerman_displaysGermanSpecificKeys() {
         composeTestRule.setContent {
-            val config =
-                androidx.compose.ui.platform.LocalConfiguration.current.apply {
-                    val locale = java.util.Locale.forLanguageTag("de")
-                    setLocale(locale)
-                }
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalConfiguration provides config
-            ) {
-                VirtualKeyboard(
-                    onKeyClick = {},
-                    onBackspace = {}
-                )
-            }
+            VirtualKeyboard(
+                onKeyClick = {},
+                onBackspace = {},
+                language = "de"
+            )
         }
 
         // German layout should have 'ü' key displayed
@@ -830,19 +852,11 @@ class AlarmDismissScreenTest {
     @Test
     fun virtualKeyboard_inRussian_displaysRussianSpecificKeys() {
         composeTestRule.setContent {
-            val config =
-                androidx.compose.ui.platform.LocalConfiguration.current.apply {
-                    val locale = java.util.Locale.forLanguageTag("ru")
-                    setLocale(locale)
-                }
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalConfiguration provides config
-            ) {
-                VirtualKeyboard(
-                    onKeyClick = {},
-                    onBackspace = {}
-                )
-            }
+            VirtualKeyboard(
+                onKeyClick = {},
+                onBackspace = {},
+                language = "ru"
+            )
         }
 
         // Russian layout should have 'й' key displayed

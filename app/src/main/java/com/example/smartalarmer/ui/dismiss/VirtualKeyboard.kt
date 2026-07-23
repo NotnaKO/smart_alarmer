@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -26,12 +27,10 @@ import com.example.smartalarmer.ui.theme.*
 fun VirtualKeyboard(
     onKeyClick: (Char) -> Unit,
     onBackspace: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    language: String = LocalLocale.current.language
 ) {
     var isShifted by rememberSaveable { mutableStateOf(false) }
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val locale = configuration.locales[0] ?: java.util.Locale.getDefault()
-    val language = locale.language
 
     val rows =
         remember(isShifted, language) {

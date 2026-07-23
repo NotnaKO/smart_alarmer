@@ -40,12 +40,21 @@
     <string name="wake_up_check_card_summary">Aufwachkontrollen: %1$d × alle %2$d Min.</string>
     <string name="wake_up_check_title">Aufwachkontrolle</string>
     <string name="wake_up_check_progress">Kontrolle %1$d von %2$d</string>
-    <string name="wake_up_check_active_summary">%1$d Kontrollen übrig • nächste: %2$s</string>
+    <plurals name="wake_up_check_active_summary">
+        <item quantity="one">%1$d Kontrolle übrig • nächste: %2$s</item>
+        <item quantity="other">%1$d Kontrollen übrig • nächste: %2$s</item>
+    </plurals>
     <string name="stop_wake_up_checks">Kontrollen stoppen</string>
     <string name="stop_wake_up_checks_title">Aufwachkontrollen stoppen?</string>
     <string name="stop_wake_up_checks_confirmation">Die verbleibenden Folgewecker werden abgebrochen.</string>
-    <string name="first_wake_up_check_in_minutes">Du bist wach. Erste Kontrolle in %1$d Minuten.</string>
-    <string name="next_wake_up_check_in_minutes">Erledigt. Nächste Kontrolle in %1$d Minuten.</string>
+    <plurals name="first_wake_up_check_in_minutes">
+        <item quantity="one">Du bist wach. Erste Kontrolle in %1$d Minute.</item>
+        <item quantity="other">Du bist wach. Erste Kontrolle in %1$d Minuten.</item>
+    </plurals>
+    <plurals name="next_wake_up_check_in_minutes">
+        <item quantity="one">Erledigt. Nächste Kontrolle in %1$d Minute.</item>
+        <item quantity="other">Erledigt. Nächste Kontrolle in %1$d Minuten.</item>
+    </plurals>
     <string name="all_wake_up_checks_complete">Alle Aufwachkontrollen abgeschlossen.</string>
     <string name="volume_ramp_duration">Lautstärkeanstieg</string>
     <string name="volume_ramp_duration_desc">Zeit bis zur maximalen Lautstärke</string>
@@ -56,7 +65,11 @@
     <string name="sound_label">Alarmton</string>
     <string name="sound_default">Standard-Alarm</string>
     <string name="label_placeholder">Alarm-Label (z. B. Arbeit)</string>
+    <string name="label_character_count">%1$d/%2$d</string>
     <string name="select_alarm_sound">Alarmton auswählen</string>
+    <string name="preview_sound">Anhören</string>
+    <string name="use_default_sound">Standard verwenden</string>
+    <string name="advanced_settings">Erweiterte Einstellungen</string>
     <string name="decrease_puzzle_count">Anzahl der Rätsel verringern</string>
     <string name="increase_puzzle_count">Anzahl der Rätsel erhöhen</string>
     <plurals name="puzzles_plural">
@@ -134,6 +147,7 @@
     <string name="shift_off">Aus</string>
     <string name="space_key">Leertaste</string>
     <string name="memory_cell_desc">Gedächtnisfeld %1$d</string>
+    <string name="try_different_puzzle">Andere Aufgabe versuchen</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Aktiver Alarm</string>

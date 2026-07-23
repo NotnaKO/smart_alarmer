@@ -35,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
@@ -99,6 +101,7 @@ class MainActivity : ComponentActivity() {
 
                 var pickedSoundUri by rememberSaveable { mutableStateOf<String?>(null) }
                 var labelInput by rememberSaveable { mutableStateOf("") }
+                var previewRingtone by remember { mutableStateOf<android.media.Ringtone?>(null) }
 
                 val ringtonePickerLauncher =
                     rememberLauncherForActivityResult(
@@ -120,8 +123,16 @@ class MainActivity : ComponentActivity() {
                     }
 
                 LaunchedEffect(editingAlarm) {
+                    previewRingtone?.stop()
+                    previewRingtone = null
                     pickedSoundUri = editingAlarm?.soundUri
                     labelInput = editingAlarm?.label ?: ""
+                }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        previewRingtone?.stop()
+                    }
                 }
 
                 LaunchedEffect(viewModel) {
@@ -189,7 +200,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     onDismiss = {
-                                        sharedPrefs.edit().putBoolean("xiaomi_warning_dismissed", true).apply()
+                                        sharedPrefs.edit { putBoolean("xiaomi_warning_dismissed", true) }
                                         isXiaomiDismissed = true
                                     }
                                 )
@@ -208,10 +219,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onOpenNotificationSettings = {
                                         val settingsIntent =
-                                            if (
-                                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                                                capabilities.notificationsEnabled
-                                            ) {
+                                            if (capabilities.notificationsEnabled) {
                                                 Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
                                                     putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                                                     putExtra(
@@ -219,12 +227,10 @@ class MainActivity : ComponentActivity() {
                                                         com.example.smartalarmer.service.AlarmNotification.CHANNEL_ID
                                                     )
                                                 }
-                                            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            } else {
                                                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                                                     putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                                                 }
-                                            } else {
-                                                DeviceUtils.getStandardAppInfoIntent(context)
                                             }
                                         context.startActivity(settingsIntent)
                                     },
@@ -232,7 +238,7 @@ class MainActivity : ComponentActivity() {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                             context.startActivity(
                                                 Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                                                    data = Uri.parse("package:${context.packageName}")
+                                                    data = "package:${context.packageName}".toUri()
                                                 }
                                             )
                                         }
@@ -241,7 +247,7 @@ class MainActivity : ComponentActivity() {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                                             context.startActivity(
                                                 Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
-                                                    data = Uri.parse("package:${context.packageName}")
+                                                    data = "package:${context.packageName}".toUri()
                                                 }
                                             )
                                         }
@@ -312,7 +318,7 @@ class MainActivity : ComponentActivity() {
                             val resolvedSoundName =
                                 pickedSoundUri?.let { uriStr ->
                                     runCatching {
-                                        RingtoneManager.getRingtone(context, Uri.parse(uriStr))?.getTitle(context)
+                                        RingtoneManager.getRingtone(context, uriStr.toUri())?.getTitle(context)
                                     }.getOrNull()
                                 } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
 
@@ -321,6 +327,8 @@ class MainActivity : ComponentActivity() {
                                 onDismiss = { viewModel.closeEditSheet() },
                                 onSave = viewModel::saveAlarm,
                                 onPickSound = {
+                                    previewRingtone?.stop()
+                                    previewRingtone = null
                                     val intent =
                                         Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
                                             putExtra(
@@ -331,10 +339,26 @@ class MainActivity : ComponentActivity() {
                                             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
                                             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
                                             pickedSoundUri?.let {
-                                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(it))
+                                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, it.toUri())
                                             }
                                         }
                                     ringtonePickerLauncher.launch(intent)
+                                },
+                                onPreviewSound = {
+                                    previewRingtone?.stop()
+                                    previewRingtone =
+                                        runCatching {
+                                            val previewUri =
+                                                pickedSoundUri
+                                                    ?.let(Uri::parse)
+                                                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                                            RingtoneManager.getRingtone(context, previewUri)?.also { it.play() }
+                                        }.getOrNull()
+                                },
+                                onResetSound = {
+                                    previewRingtone?.stop()
+                                    previewRingtone = null
+                                    pickedSoundUri = null
                                 },
                                 selectedSoundName = resolvedSoundName,
                                 initialLabel = labelInput,

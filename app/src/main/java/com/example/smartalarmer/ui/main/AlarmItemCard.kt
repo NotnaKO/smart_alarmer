@@ -1,7 +1,6 @@
 package com.example.smartalarmer.ui.main
 
 import android.media.RingtoneManager
-import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +21,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmScheduleStatus
 import com.example.smartalarmer.data.WakeUpCheckSession
@@ -138,7 +138,7 @@ fun AlarmItemCard(
                 val soundName =
                     alarm.soundUri?.let { uriStr ->
                         runCatching {
-                            RingtoneManager.getRingtone(context, Uri.parse(uriStr))?.getTitle(context)
+                            RingtoneManager.getRingtone(context, uriStr.toUri())?.getTitle(context)
                         }.getOrNull()
                     } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
                 Text(
@@ -160,11 +160,13 @@ fun AlarmItemCard(
                     )
                 }
                 wakeUpCheckSession?.let { session ->
+                    val remainingChecks = session.totalChecks - session.nextCheckNumber + 1
                     Text(
                         text =
-                        stringResource(
-                            com.example.smartalarmer.R.string.wake_up_check_active_summary,
-                            session.totalChecks - session.nextCheckNumber + 1,
+                        resources.getQuantityString(
+                            com.example.smartalarmer.R.plurals.wake_up_check_active_summary,
+                            remainingChecks,
+                            remainingChecks,
                             AlarmTimeFormatter.formatNextTrigger(context, session.nextTriggerAtMillis)
                         ),
                         fontSize = 12.sp,

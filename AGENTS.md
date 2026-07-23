@@ -135,7 +135,7 @@ Puzzle behavior is provided through small injectable interfaces:
 
 | Component | Library | Version | Notes |
 |-----------|---------|---------|-------|
-| **UI Framework** | Jetpack Compose | Latest BOM (2026.03.01) | Material 3 theme, Glassmorphic design |
+| **UI Framework** | Jetpack Compose | Latest BOM (2026.06.01) | Material 3 theme, Glassmorphic design |
 | **Language** | Kotlin | 2.4.10 | JVM target 17; new compiler required |
 | **Persistence** | Room | 2.8.4 | Coroutine support, auto-migrations |
 | **Async** | Coroutines + Flow | 1.11.0 | No Rx; pure Flow for reactivity |

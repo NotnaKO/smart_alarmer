@@ -31,7 +31,7 @@ class AlarmMigrationTest {
     }
 
     @Test
-    fun migratesAlarmFromVersion1ThroughVersion6WithoutLosingData() = runBlocking {
+    fun migratesAlarmFromVersion1ThroughVersion7WithoutLosingData() = runBlocking {
         createVersion1Database()
         migrateAndValidateVersion2()
 
@@ -42,7 +42,8 @@ class AlarmMigrationTest {
                     AlarmDatabase.MIGRATION_2_3,
                     AlarmDatabase.MIGRATION_3_4,
                     AlarmDatabase.MIGRATION_4_5,
-                    AlarmDatabase.MIGRATION_5_6
+                    AlarmDatabase.MIGRATION_5_6,
+                    AlarmDatabase.MIGRATION_6_7
                 )
                 .build()
         try {
@@ -51,7 +52,6 @@ class AlarmMigrationTest {
             assertEquals(45, alarm.minute)
             assertEquals("1,3,5", alarm.daysOfWeek)
             assertEquals("MATH,TYPING", alarm.puzzlesList)
-            assertEquals(true, alarm.isGradualVolume)
             assertEquals(60, alarm.volumeRampSeconds)
             assertEquals("", alarm.label)
             assertNull(alarm.soundUri)
@@ -61,6 +61,15 @@ class AlarmMigrationTest {
             assertEquals(3, alarm.wakeUpCheckCount)
             assertEquals(5, alarm.wakeUpCheckIntervalMinutes)
             assertEquals(emptyList<WakeUpCheckSession>(), database.wakeUpCheckDao().getAllSessions())
+            database.openHelper.readableDatabase
+                .query("PRAGMA table_info(alarms)")
+                .use { cursor ->
+                    val nameIndex = cursor.getColumnIndexOrThrow("name")
+                    val columnNames = buildList {
+                        while (cursor.moveToNext()) add(cursor.getString(nameIndex))
+                    }
+                    assertEquals(false, "isGradualVolume" in columnNames)
+                }
         } finally {
             database.close()
         }

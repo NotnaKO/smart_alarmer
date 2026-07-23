@@ -23,6 +23,7 @@ import com.example.smartalarmer.ui.theme.*
 fun MathPuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
+    onFailure: () -> Unit = {},
     mathProvider: MathPuzzleProvider = MathEngine,
     easyMode: Boolean = false
 ) {
@@ -115,6 +116,7 @@ fun MathPuzzleView(
                         } else {
                             input = ""
                             showError = true
+                            onFailure()
                         }
                     },
                     modifier =

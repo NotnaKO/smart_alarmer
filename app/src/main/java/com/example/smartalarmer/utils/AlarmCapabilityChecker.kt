@@ -31,10 +31,9 @@ object AlarmCapabilityChecker {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
                 PackageManager.PERMISSION_GRANTED
         val channelUsable =
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
-                notificationManager
-                    .getNotificationChannel(AlarmNotification.CHANNEL_ID)
-                    ?.let { it.importance >= NotificationManager.IMPORTANCE_HIGH } == true
+            notificationManager
+                .getNotificationChannel(AlarmNotification.CHANNEL_ID)
+                ?.let { it.importance >= NotificationManager.IMPORTANCE_HIGH } == true
         val exactAlarmAccess =
             if (Build.VERSION.SDK_INT in Build.VERSION_CODES.S..Build.VERSION_CODES.S_V2) {
                 alarmManager.canScheduleExactAlarms()

@@ -51,14 +51,17 @@ fun AlarmEditSheet(
     onDismiss: () -> Unit,
     onSave: (AlarmDraft) -> Unit,
     onPickSound: () -> Unit,
+    onPreviewSound: () -> Unit = {},
+    onResetSound: () -> Unit = {},
     selectedSoundName: String,
     initialLabel: String,
     pickedSoundUri: String?,
     shakeSensorAvailable: Boolean = AndroidShakeSensorProvider(LocalContext.current).isAvailable
 ) {
     val context = LocalContext.current
-    var hour by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.hour ?: 8) }
-    var minute by rememberSaveable(alarm?.id) { mutableStateOf(alarm?.minute ?: 0) }
+    var hour by rememberSaveable(alarm?.id) { mutableIntStateOf(alarm?.hour ?: 8) }
+    var minute by rememberSaveable(alarm?.id) { mutableIntStateOf(alarm?.minute ?: 0) }
+    var label by rememberSaveable(alarm?.id) { mutableStateOf(initialLabel.take(ALARM_LABEL_MAX_LENGTH)) }
 
     val initialDays = alarm?.repeatDays?.values.orEmpty()
     val selectedDays =
@@ -97,29 +100,50 @@ fun AlarmEditSheet(
         ) { mutableStateListOf<PuzzleType>().apply { addAll(initialPuzzles) } }
 
     var puzzleCount by rememberSaveable(alarm?.id) {
-        mutableStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
+        mutableIntStateOf((alarm?.puzzleCount ?: 1).coerceIn(1, initialPuzzles.size))
     }
     var volumeRampSeconds by rememberSaveable(alarm?.id) {
-        mutableStateOf(AlarmVolumeRamp.sanitize(alarm?.volumeRampSeconds ?: AlarmVolumeRamp.DEFAULT_SECONDS))
+        mutableIntStateOf(AlarmVolumeRamp.sanitize(alarm?.volumeRampSeconds ?: AlarmVolumeRamp.DEFAULT_SECONDS))
     }
     var wakeUpChecksEnabled by rememberSaveable(alarm?.id) {
         mutableStateOf(alarm?.wakeUpChecksEnabled ?: false)
     }
     var wakeUpCheckCount by rememberSaveable(alarm?.id) {
-        mutableStateOf(
+        mutableIntStateOf(
             (alarm?.wakeUpCheckCount ?: WakeUpCheckConfig.DEFAULT_COUNT)
                 .coerceIn(WakeUpCheckConfig.COUNT_RANGE)
         )
     }
     var wakeUpCheckIntervalMinutes by rememberSaveable(alarm?.id) {
-        mutableStateOf(
+        mutableIntStateOf(
             alarm?.wakeUpCheckIntervalMinutes
                 ?.takeIf { it in WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES }
                 ?: WakeUpCheckConfig.DEFAULT_INTERVAL_MINUTES
         )
     }
+    var advancedExpanded by rememberSaveable(alarm?.id) {
+        mutableStateOf(alarm?.wakeUpChecksEnabled == true)
+    }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val saveDraft = {
+        val puzzleSelection = PuzzleSelection.of(selectedPuzzles)
+        onSave(
+            AlarmDraft(
+                hour = hour,
+                minute = minute,
+                repeatDays = AlarmDays.of(selectedDays),
+                puzzleSelection = puzzleSelection,
+                puzzleCount = puzzleCount.coerceIn(1, puzzleSelection.values.size),
+                label = label,
+                soundUri = pickedSoundUri,
+                wakeUpChecksEnabled = wakeUpChecksEnabled,
+                wakeUpCheckCount = wakeUpCheckCount,
+                wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
+                volumeRampSeconds = volumeRampSeconds
+            )
+        )
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -131,388 +155,275 @@ fun AlarmEditSheet(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp)
+                .fillMaxHeight(0.92f)
                 .navigationBarsPadding()
-                .testTag(ALARM_EDITOR_CONTENT_TAG),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .testTag(ALARM_EDITOR_CONTENT_TAG)
         ) {
-            Text(
-                text =
-                if (alarm ==
-                    null
-                ) {
-                    androidx.compose.ui.res
-                        .stringResource(com.example.smartalarmer.R.string.new_alarm)
-                } else {
-                    androidx.compose.ui.res
-                        .stringResource(com.example.smartalarmer.R.string.edit_alarm)
-                },
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-
-            var label by rememberSaveable(alarm?.id) { mutableStateOf(initialLabel) }
-            OutlinedTextField(
-                value = label,
-                onValueChange = { label = it },
-                label = { Text(stringResource(com.example.smartalarmer.R.string.label_placeholder)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors =
-                OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = IndigoPrimary,
-                    unfocusedBorderColor = CardBorderGlass
-                )
-            )
-
-            // Time Button
-            Row(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        TimePickerDialog(
-                            context,
-                            { _, selectedHour, selectedMinute ->
-                                hour = selectedHour
-                                minute = selectedMinute
-                            },
-                            hour,
-                            minute,
-                            android.text.format.DateFormat
-                                .is24HourFormat(context)
-                        ).show()
-                    }.border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                    .padding(16.dp)
-                    .testTag(ALARM_EDITOR_TIME_ROW_TAG),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    androidx.compose.ui.res
-                        .stringResource(com.example.smartalarmer.R.string.time_label),
-                    color = Color.LightGray,
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f).padding(end = 12.dp)
-                )
-                Text(
-                    text = AlarmTimeFormatter.formatTime(context, hour, minute),
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            // Sound Button
-            Row(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onPickSound() }
-                    .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                    .padding(16.dp)
-                    .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(com.example.smartalarmer.R.string.sound_label),
-                    color = Color.LightGray,
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f).padding(end = 12.dp)
-                )
-                Text(
-                    text = selectedSoundName,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.End,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Days of week
-            Column {
-                Text(
-                    androidx.compose.ui.res
-                        .stringResource(com.example.smartalarmer.R.string.repeat_days_label),
-                    color = Color.LightGray,
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_DAYS_TAG),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val dayLabels =
-                        listOf(
-                            stringResource(com.example.smartalarmer.R.string.day_m),
-                            stringResource(com.example.smartalarmer.R.string.day_t),
-                            stringResource(com.example.smartalarmer.R.string.day_w),
-                            stringResource(com.example.smartalarmer.R.string.day_th),
-                            stringResource(com.example.smartalarmer.R.string.day_f),
-                            stringResource(com.example.smartalarmer.R.string.day_sa),
-                            stringResource(com.example.smartalarmer.R.string.day_su)
-                        )
-                    val dayNames =
-                        listOf(
-                            stringResource(com.example.smartalarmer.R.string.day_mon),
-                            stringResource(com.example.smartalarmer.R.string.day_tue),
-                            stringResource(com.example.smartalarmer.R.string.day_wed),
-                            stringResource(com.example.smartalarmer.R.string.day_thu),
-                            stringResource(com.example.smartalarmer.R.string.day_fri),
-                            stringResource(com.example.smartalarmer.R.string.day_sat),
-                            stringResource(com.example.smartalarmer.R.string.day_sun)
-                        )
-                    AlarmDay.entries.forEachIndexed { index, day ->
-                        val isSelected = selectedDays.contains(day)
-                        Box(
-                            modifier =
-                            Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                                .clickable {
-                                    if (isSelected) selectedDays.remove(day) else selectedDays.add(day)
-                                }.semantics {
-                                    contentDescription = dayNames[index]
-                                    selected = isSelected
-                                    role = Role.Checkbox
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Box(
-                                modifier =
-                                Modifier
-                                    .size(40.dp)
-                                    .background(
-                                        if (isSelected) IndigoPrimary else KeyButtonBg,
-                                        CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = dayLabels[index],
-                                    color = if (isSelected) Color.White else Color.Gray,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Puzzle selection
-            Column {
-                Text(
-                    androidx.compose.ui.res
-                        .stringResource(com.example.smartalarmer.R.string.dismiss_puzzles_label),
-                    color = Color.LightGray,
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    puzzleTypes.forEach { type ->
-                        val isSelected = selectedPuzzles.contains(type)
-                        val displayName =
-                            when (type) {
-                                PuzzleType.MATH -> stringResource(com.example.smartalarmer.R.string.puzzle_math)
-                                PuzzleType.MEMORY -> stringResource(com.example.smartalarmer.R.string.puzzle_memory)
-                                PuzzleType.TYPING -> stringResource(com.example.smartalarmer.R.string.puzzle_typing)
-                                PuzzleType.SHAKE -> stringResource(com.example.smartalarmer.R.string.puzzle_shake)
-                            }
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                if (isSelected) {
-                                    if (selectedPuzzles.size > 1) {
-                                        selectedPuzzles.remove(type)
-                                        if (puzzleCount > selectedPuzzles.size) {
-                                            puzzleCount = selectedPuzzles.size
-                                        }
-                                    }
-                                } else {
-                                    selectedPuzzles.add(type)
-                                }
-                            },
-                            label = { Text(displayName) },
-                            colors =
-                            FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = IndigoPrimary,
-                                selectedLabelColor = Color.White,
-                                containerColor = KeyButtonBg,
-                                labelColor = Color.Gray
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Puzzle Count Stepper
-            val decreasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.decrease_puzzle_count)
-            val increasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.increase_puzzle_count)
-            Row(
-                modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_PUZZLE_COUNT_TAG),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    androidx.compose.ui.res
-                        .stringResource(com.example.smartalarmer.R.string.puzzles_required),
-                    color = Color.LightGray,
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f).padding(end = 12.dp)
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { if (puzzleCount > 1) puzzleCount-- },
-                        colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
-                        contentPadding = PaddingValues(0.dp),
-                        modifier =
-                        Modifier.size(48.dp).semantics {
-                            contentDescription = decreasePuzzleCountDescription
-                        },
-                        shape = CircleShape
-                    ) {
-                        Text("-", color = Color.White, fontSize = 18.sp)
-                    }
-                    Text(text = puzzleCount.toString(), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Button(
-                        onClick = { if (puzzleCount < selectedPuzzles.size) puzzleCount++ },
-                        colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
-                        contentPadding = PaddingValues(0.dp),
-                        modifier =
-                        Modifier.size(48.dp).semantics {
-                            contentDescription = increasePuzzleCountDescription
-                        },
-                        shape = CircleShape
-                    ) {
-                        Text("+", color = Color.White, fontSize = 18.sp)
-                    }
-                }
-            }
-
             Column(
                 modifier =
                 Modifier
+                    .weight(1f)
                     .fillMaxWidth()
-                    .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                    .padding(16.dp)
-                    .testTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Row(
+                Text(
+                    text =
+                    if (alarm ==
+                        null
+                    ) {
+                        androidx.compose.ui.res
+                            .stringResource(com.example.smartalarmer.R.string.new_alarm)
+                    } else {
+                        androidx.compose.ui.res
+                            .stringResource(com.example.smartalarmer.R.string.edit_alarm)
+                    },
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { updated ->
+                        label = updated.take(ALARM_LABEL_MAX_LENGTH)
+                    },
+                    label = { Text(stringResource(com.example.smartalarmer.R.string.label_placeholder)) },
+                    supportingText = {
+                        Text(
+                            stringResource(
+                                com.example.smartalarmer.R.string.label_character_count,
+                                label.length,
+                                ALARM_LABEL_MAX_LENGTH
+                            )
+                        )
+                    },
+                    maxLines = 2,
                     modifier = Modifier.fillMaxWidth(),
+                    colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = IndigoPrimary,
+                        unfocusedBorderColor = CardBorderGlass
+                    )
+                )
+
+                // Time Button
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            TimePickerDialog(
+                                context,
+                                { _, selectedHour, selectedMinute ->
+                                    hour = selectedHour
+                                    minute = selectedMinute
+                                },
+                                hour,
+                                minute,
+                                android.text.format.DateFormat
+                                    .is24HourFormat(context)
+                            ).show()
+                        }.border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                        .testTag(ALARM_EDITOR_TIME_ROW_TAG),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                        Text(
-                            text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_label),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_description),
-                            color = Color.LightGray,
-                            fontSize = 12.sp
-                        )
-                    }
-                    Switch(
-                        checked = wakeUpChecksEnabled,
-                        onCheckedChange = { wakeUpChecksEnabled = it },
-                        colors =
-                        SwitchDefaults.colors(
-                            checkedThumbColor = IndigoPrimary,
-                            checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = CardBorderGlass
-                        )
+                    Text(
+                        androidx.compose.ui.res
+                            .stringResource(com.example.smartalarmer.R.string.time_label),
+                        color = Color.LightGray,
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f).padding(end = 12.dp)
+                    )
+                    Text(
+                        text = AlarmTimeFormatter.formatTime(context, hour, minute),
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                if (wakeUpChecksEnabled) {
-                    HorizontalDivider(color = CardBorderGlass)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(com.example.smartalarmer.R.string.wake_up_check_count_label),
-                            color = Color.LightGray,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilledTonalIconButton(
-                                onClick = {
-                                    if (wakeUpCheckCount > WakeUpCheckConfig.COUNT_RANGE.first) {
-                                        wakeUpCheckCount--
-                                    }
-                                },
-                                modifier = Modifier.size(48.dp),
-                                colors =
-                                IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = KeyButtonBg,
-                                    contentColor = Color.White
-                                )
-                            ) { Text("−") }
-                            Text(
-                                wakeUpCheckCount.toString(),
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                            FilledTonalIconButton(
-                                onClick = {
-                                    if (wakeUpCheckCount < WakeUpCheckConfig.COUNT_RANGE.last) {
-                                        wakeUpCheckCount++
-                                    }
-                                },
-                                modifier = Modifier.size(48.dp),
-                                colors =
-                                IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = KeyButtonBg,
-                                    contentColor = Color.White
-                                )
-                            ) { Text("+") }
-                        }
-                    }
-
+                // Sound Button
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onPickSound() }
+                        .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                        .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = stringResource(com.example.smartalarmer.R.string.wake_up_check_interval_label),
-                        color = Color.LightGray
+                        text = stringResource(com.example.smartalarmer.R.string.sound_label),
+                        color = Color.LightGray,
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f).padding(end = 12.dp)
                     )
+                    Text(
+                        text = selectedSoundName,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.End,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(onClick = onPreviewSound) {
+                        Text(stringResource(com.example.smartalarmer.R.string.preview_sound))
+                    }
+                    TextButton(
+                        onClick = onResetSound,
+                        enabled = pickedSoundUri != null
+                    ) {
+                        Text(stringResource(com.example.smartalarmer.R.string.use_default_sound))
+                    }
+                }
+
+                // Days of week
+                Column {
+                    Text(
+                        androidx.compose.ui.res
+                            .stringResource(com.example.smartalarmer.R.string.repeat_days_label),
+                        color = Color.LightGray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES.forEach { minutes ->
+                        listOf(
+                            stringResource(com.example.smartalarmer.R.string.weekdays) to
+                                AlarmDay.entries.take(5).toSet(),
+                            stringResource(com.example.smartalarmer.R.string.weekends) to
+                                AlarmDay.entries.takeLast(2).toSet(),
+                            stringResource(com.example.smartalarmer.R.string.every_day) to
+                                AlarmDay.entries.toSet()
+                        ).forEach { (label, days) ->
                             FilterChip(
-                                selected = wakeUpCheckIntervalMinutes == minutes,
-                                onClick = { wakeUpCheckIntervalMinutes = minutes },
-                                label = {
-                                    Text(
-                                        stringResource(
-                                            com.example.smartalarmer.R.string.wake_up_check_minutes_format,
-                                            minutes
-                                        )
-                                    )
+                                selected = selectedDays.toSet() == days,
+                                onClick = {
+                                    selectedDays.clear()
+                                    selectedDays.addAll(days)
                                 },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_DAYS_TAG),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val dayLabels =
+                            listOf(
+                                stringResource(com.example.smartalarmer.R.string.day_m),
+                                stringResource(com.example.smartalarmer.R.string.day_t),
+                                stringResource(com.example.smartalarmer.R.string.day_w),
+                                stringResource(com.example.smartalarmer.R.string.day_th),
+                                stringResource(com.example.smartalarmer.R.string.day_f),
+                                stringResource(com.example.smartalarmer.R.string.day_sa),
+                                stringResource(com.example.smartalarmer.R.string.day_su)
+                            )
+                        val dayNames =
+                            listOf(
+                                stringResource(com.example.smartalarmer.R.string.day_mon),
+                                stringResource(com.example.smartalarmer.R.string.day_tue),
+                                stringResource(com.example.smartalarmer.R.string.day_wed),
+                                stringResource(com.example.smartalarmer.R.string.day_thu),
+                                stringResource(com.example.smartalarmer.R.string.day_fri),
+                                stringResource(com.example.smartalarmer.R.string.day_sat),
+                                stringResource(com.example.smartalarmer.R.string.day_sun)
+                            )
+                        AlarmDay.entries.forEachIndexed { index, day ->
+                            val isSelected = selectedDays.contains(day)
+                            Box(
+                                modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .clickable {
+                                        if (isSelected) selectedDays.remove(day) else selectedDays.add(day)
+                                    }.semantics {
+                                        contentDescription = dayNames[index]
+                                        selected = isSelected
+                                        role = Role.Checkbox
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier =
+                                    Modifier
+                                        .size(40.dp)
+                                        .background(
+                                            if (isSelected) IndigoPrimary else KeyButtonBg,
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = dayLabels[index],
+                                        color = if (isSelected) Color.White else Color.Gray,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Puzzle selection
+                Column {
+                    Text(
+                        androidx.compose.ui.res
+                            .stringResource(com.example.smartalarmer.R.string.dismiss_puzzles_label),
+                        color = Color.LightGray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        puzzleTypes.forEach { type ->
+                            val isSelected = selectedPuzzles.contains(type)
+                            val displayName =
+                                when (type) {
+                                    PuzzleType.MATH -> stringResource(com.example.smartalarmer.R.string.puzzle_math)
+                                    PuzzleType.MEMORY -> stringResource(com.example.smartalarmer.R.string.puzzle_memory)
+                                    PuzzleType.TYPING -> stringResource(com.example.smartalarmer.R.string.puzzle_typing)
+                                    PuzzleType.SHAKE -> stringResource(com.example.smartalarmer.R.string.puzzle_shake)
+                                }
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    if (isSelected) {
+                                        if (selectedPuzzles.size > 1) {
+                                            selectedPuzzles.remove(type)
+                                            if (puzzleCount > selectedPuzzles.size) {
+                                                puzzleCount = selectedPuzzles.size
+                                            }
+                                        }
+                                    } else {
+                                        selectedPuzzles.add(type)
+                                    }
+                                },
+                                label = { Text(displayName) },
                                 colors =
                                 FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = IndigoPrimary,
@@ -523,106 +434,281 @@ fun AlarmEditSheet(
                             )
                         }
                     }
-                    Text(
-                        text = stringResource(com.example.smartalarmer.R.string.wake_up_check_easy_task_description),
-                        color = Color.LightGray,
-                        fontSize = 12.sp
-                    )
                 }
-            }
 
-            Column {
-                Text(
-                    text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration),
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration_desc),
-                    color = Color.LightGray,
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // Puzzle Count Stepper
+                val decreasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.decrease_puzzle_count)
+                val increasePuzzleCountDescription = stringResource(com.example.smartalarmer.R.string.increase_puzzle_count)
+                Row(
+                    modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_PUZZLE_COUNT_TAG),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AlarmVolumeRamp.OPTIONS_SECONDS.forEach { seconds ->
-                        FilterChip(
-                            selected = volumeRampSeconds == seconds,
-                            onClick = { volumeRampSeconds = seconds },
-                            label = {
-                                val durationText =
-                                    if (seconds < 60) {
-                                        stringResource(
-                                            com.example.smartalarmer.R.string.volume_ramp_seconds_format,
-                                            seconds
+                    Text(
+                        androidx.compose.ui.res
+                            .stringResource(com.example.smartalarmer.R.string.puzzles_required),
+                        color = Color.LightGray,
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f).padding(end = 12.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { if (puzzleCount > 1) puzzleCount-- },
+                            colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
+                            contentPadding = PaddingValues(0.dp),
+                            modifier =
+                            Modifier.size(48.dp).semantics {
+                                contentDescription = decreasePuzzleCountDescription
+                            },
+                            shape = CircleShape
+                        ) {
+                            Text("-", color = Color.White, fontSize = 18.sp)
+                        }
+                        Text(text = puzzleCount.toString(), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = { if (puzzleCount < selectedPuzzles.size) puzzleCount++ },
+                            colors = ButtonDefaults.buttonColors(containerColor = KeyButtonBg),
+                            contentPadding = PaddingValues(0.dp),
+                            modifier =
+                            Modifier.size(48.dp).semantics {
+                                contentDescription = increasePuzzleCountDescription
+                            },
+                            shape = CircleShape
+                        ) {
+                            Text("+", color = Color.White, fontSize = 18.sp)
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = { advancedExpanded = !advancedExpanded },
+                    modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_ADVANCED_TAG),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    border = BorderStroke(1.dp, CardBorderGlass)
+                ) {
+                    Text(
+                        text = stringResource(com.example.smartalarmer.R.string.advanced_settings),
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Start
+                    )
+                    Text(if (advancedExpanded) "−" else "+")
+                }
+
+                if (advancedExpanded) {
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        Column(
+                            modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                                .padding(16.dp)
+                                .testTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text(
+                                        text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_label),
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_description),
+                                        color = Color.LightGray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                Switch(
+                                    checked = wakeUpChecksEnabled,
+                                    onCheckedChange = { wakeUpChecksEnabled = it },
+                                    colors =
+                                    SwitchDefaults.colors(
+                                        checkedThumbColor = IndigoPrimary,
+                                        checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
+                                        uncheckedThumbColor = Color.Gray,
+                                        uncheckedTrackColor = CardBorderGlass
+                                    )
+                                )
+                            }
+
+                            if (wakeUpChecksEnabled) {
+                                HorizontalDivider(color = CardBorderGlass)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(com.example.smartalarmer.R.string.wake_up_check_count_label),
+                                        color = Color.LightGray,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        FilledTonalIconButton(
+                                            onClick = {
+                                                if (wakeUpCheckCount > WakeUpCheckConfig.COUNT_RANGE.first) {
+                                                    wakeUpCheckCount--
+                                                }
+                                            },
+                                            modifier = Modifier.size(48.dp),
+                                            colors =
+                                            IconButtonDefaults.filledTonalIconButtonColors(
+                                                containerColor = KeyButtonBg,
+                                                contentColor = Color.White
+                                            )
+                                        ) { Text("−") }
+                                        Text(
+                                            wakeUpCheckCount.toString(),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
                                         )
-                                    } else {
-                                        stringResource(
-                                            com.example.smartalarmer.R.string.volume_ramp_minutes_format,
-                                            seconds / 60
+                                        FilledTonalIconButton(
+                                            onClick = {
+                                                if (wakeUpCheckCount < WakeUpCheckConfig.COUNT_RANGE.last) {
+                                                    wakeUpCheckCount++
+                                                }
+                                            },
+                                            modifier = Modifier.size(48.dp),
+                                            colors =
+                                            IconButtonDefaults.filledTonalIconButtonColors(
+                                                containerColor = KeyButtonBg,
+                                                contentColor = Color.White
+                                            )
+                                        ) { Text("+") }
+                                    }
+                                }
+
+                                Text(
+                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_check_interval_label),
+                                    color = Color.LightGray
+                                )
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES.forEach { minutes ->
+                                        FilterChip(
+                                            selected = wakeUpCheckIntervalMinutes == minutes,
+                                            onClick = { wakeUpCheckIntervalMinutes = minutes },
+                                            label = {
+                                                Text(
+                                                    stringResource(
+                                                        com.example.smartalarmer.R.string.wake_up_check_minutes_format,
+                                                        minutes
+                                                    )
+                                                )
+                                            },
+                                            colors =
+                                            FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = IndigoPrimary,
+                                                selectedLabelColor = Color.White,
+                                                containerColor = KeyButtonBg,
+                                                labelColor = Color.Gray
+                                            )
                                         )
                                     }
-                                Text(durationText)
-                            },
-                            colors =
-                            FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = IndigoPrimary,
-                                selectedLabelColor = Color.White,
-                                containerColor = KeyButtonBg,
-                                labelColor = Color.Gray
+                                }
+                                Text(
+                                    text = stringResource(com.example.smartalarmer.R.string.wake_up_check_easy_task_description),
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        Column {
+                            Text(
+                                text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
                             )
-                        )
+                            Text(
+                                text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration_desc),
+                                color = Color.LightGray,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                AlarmVolumeRamp.OPTIONS_SECONDS.forEach { seconds ->
+                                    FilterChip(
+                                        selected = volumeRampSeconds == seconds,
+                                        onClick = { volumeRampSeconds = seconds },
+                                        label = {
+                                            val durationText =
+                                                if (seconds < 60) {
+                                                    stringResource(
+                                                        com.example.smartalarmer.R.string.volume_ramp_seconds_format,
+                                                        seconds
+                                                    )
+                                                } else {
+                                                    stringResource(
+                                                        com.example.smartalarmer.R.string.volume_ramp_minutes_format,
+                                                        seconds / 60
+                                                    )
+                                                }
+                                            Text(durationText)
+                                        },
+                                        colors =
+                                        FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = IndigoPrimary,
+                                            selectedLabelColor = Color.White,
+                                            containerColor = KeyButtonBg,
+                                            labelColor = Color.Gray
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
-
-            // Actions
-            Row(
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                color = BottomSheetBg,
+                tonalElevation = 6.dp
             ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                    border = BorderStroke(1.dp, BottomSheetDrag)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        androidx.compose.ui.res
-                            .stringResource(com.example.smartalarmer.R.string.cancel)
-                    )
-                }
-                Button(
-                    onClick = {
-                        val puzzleSelection = PuzzleSelection.of(selectedPuzzles)
-                        onSave(
-                            AlarmDraft(
-                                hour = hour,
-                                minute = minute,
-                                repeatDays = AlarmDays.of(selectedDays),
-                                puzzleSelection = puzzleSelection,
-                                puzzleCount = puzzleCount.coerceIn(1, puzzleSelection.values.size),
-                                label = label,
-                                soundUri = pickedSoundUri,
-                                wakeUpChecksEnabled = wakeUpChecksEnabled,
-                                wakeUpCheckCount = wakeUpCheckCount,
-                                wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
-                                volumeRampSeconds = volumeRampSeconds
-                            )
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        border = BorderStroke(1.dp, BottomSheetDrag)
+                    ) {
+                        Text(
+                            androidx.compose.ui.res
+                                .stringResource(com.example.smartalarmer.R.string.cancel)
                         )
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
-                ) {
-                    Text(
-                        androidx.compose.ui.res
-                            .stringResource(com.example.smartalarmer.R.string.save),
-                        color = Color.White
-                    )
+                    }
+                    Button(
+                        onClick = saveDraft,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
+                    ) {
+                        Text(
+                            androidx.compose.ui.res
+                                .stringResource(com.example.smartalarmer.R.string.save),
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
@@ -635,3 +721,5 @@ internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
 internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"
 internal const val ALARM_EDITOR_WAKE_UP_CHECKS_TAG = "alarm_editor_wake_up_checks"
+internal const val ALARM_EDITOR_ADVANCED_TAG = "alarm_editor_advanced"
+internal const val ALARM_LABEL_MAX_LENGTH = 60

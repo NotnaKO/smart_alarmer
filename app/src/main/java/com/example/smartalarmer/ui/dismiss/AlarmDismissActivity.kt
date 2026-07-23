@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -244,10 +245,19 @@ class AlarmDismissActivity : ComponentActivity() {
         val message =
             when {
                 !config.isWakeUpCheck ->
-                    stringResource(R.string.first_wake_up_check_in_minutes, config.intervalMinutes)
+                    pluralStringResource(
+                        R.plurals.first_wake_up_check_in_minutes,
+                        config.intervalMinutes,
+                        config.intervalMinutes
+                    )
                 config.checkNumber >= config.totalChecks ->
                     stringResource(R.string.all_wake_up_checks_complete)
-                else -> stringResource(R.string.next_wake_up_check_in_minutes, config.intervalMinutes)
+                else ->
+                    pluralStringResource(
+                        R.plurals.next_wake_up_check_in_minutes,
+                        config.intervalMinutes,
+                        config.intervalMinutes
+                    )
             }
         Column(
             modifier = Modifier.fillMaxSize().padding(32.dp),

@@ -40,12 +40,24 @@
     <string name="wake_up_check_card_summary">Comprobaciones: %1$d × cada %2$d min</string>
     <string name="wake_up_check_title">Comprobación de despertar</string>
     <string name="wake_up_check_progress">Comprobación %1$d de %2$d</string>
-    <string name="wake_up_check_active_summary">Quedan %1$d comprobaciones • siguiente: %2$s</string>
+    <plurals name="wake_up_check_active_summary">
+        <item quantity="one">Queda %1$d comprobación • siguiente: %2$s</item>
+        <item quantity="many">Quedan %1$d comprobaciones • siguiente: %2$s</item>
+        <item quantity="other">Quedan %1$d comprobaciones • siguiente: %2$s</item>
+    </plurals>
     <string name="stop_wake_up_checks">Detener comprobaciones</string>
     <string name="stop_wake_up_checks_title">¿Detener las comprobaciones?</string>
     <string name="stop_wake_up_checks_confirmation">Se cancelarán las alarmas de seguimiento restantes.</string>
-    <string name="first_wake_up_check_in_minutes">Ya estás despierto. Primera comprobación en %1$d minutos.</string>
-    <string name="next_wake_up_check_in_minutes">Listo. Siguiente comprobación en %1$d minutos.</string>
+    <plurals name="first_wake_up_check_in_minutes">
+        <item quantity="one">Ya estás despierto. Primera comprobación en %1$d minuto.</item>
+        <item quantity="many">Ya estás despierto. Primera comprobación en %1$d minutos.</item>
+        <item quantity="other">Ya estás despierto. Primera comprobación en %1$d minutos.</item>
+    </plurals>
+    <plurals name="next_wake_up_check_in_minutes">
+        <item quantity="one">Listo. Siguiente comprobación en %1$d minuto.</item>
+        <item quantity="many">Listo. Siguiente comprobación en %1$d minutos.</item>
+        <item quantity="other">Listo. Siguiente comprobación en %1$d minutos.</item>
+    </plurals>
     <string name="all_wake_up_checks_complete">Todas las comprobaciones están completas.</string>
     <string name="volume_ramp_duration">Subida de volumen</string>
     <string name="volume_ramp_duration_desc">Tiempo hasta alcanzar el volumen máximo</string>
@@ -56,7 +68,11 @@
     <string name="sound_label">Sonido de alarma</string>
     <string name="sound_default">Alarma predeterminada</string>
     <string name="label_placeholder">Etiqueta de alarma (ej. Trabajo)</string>
+    <string name="label_character_count">%1$d/%2$d</string>
     <string name="select_alarm_sound">Seleccionar sonido de alarma</string>
+    <string name="preview_sound">Escuchar</string>
+    <string name="use_default_sound">Usar predeterminado</string>
+    <string name="advanced_settings">Ajustes avanzados</string>
     <string name="decrease_puzzle_count">Reducir número de acertijos</string>
     <string name="increase_puzzle_count">Aumentar número de acertijos</string>
     <plurals name="puzzles_plural">
@@ -137,6 +153,7 @@
     <string name="shift_off">Desactivado</string>
     <string name="space_key">Espacio</string>
     <string name="memory_cell_desc">Casilla de memoria %1$d</string>
+    <string name="try_different_puzzle">Probar otro rompecabezas</string>
 
     <!-- Notification Service -->
     <string name="active_alarm_channel_name">Alarma activa</string>

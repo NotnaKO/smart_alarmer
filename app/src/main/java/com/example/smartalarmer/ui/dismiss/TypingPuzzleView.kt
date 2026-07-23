@@ -22,6 +22,7 @@ import com.example.smartalarmer.ui.theme.*
 fun TypingPuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
+    onFailure: () -> Unit = {},
     typingProvider: TypingPuzzleProvider = TypingEngine,
     easyMode: Boolean = false
 ) {
@@ -70,6 +71,7 @@ fun TypingPuzzleView(
                     onComplete()
                 } else {
                     showError = true
+                    onFailure()
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Purple600)
