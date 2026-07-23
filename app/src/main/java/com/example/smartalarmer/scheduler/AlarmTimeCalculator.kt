@@ -2,12 +2,14 @@ package com.example.smartalarmer.scheduler
 
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.domain.repeatDays
+import com.example.smartalarmer.domain.repeatWeekParity
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.IsoFields
 
 class AlarmTimeCalculator(
     private val clock: Clock,
@@ -17,12 +19,15 @@ class AlarmTimeCalculator(
         val now = clock.instant()
         val today = now.atZone(zoneId).toLocalDate()
         val repeatDays = alarm.repeatDays
-        val searchRange = if (repeatDays.isOneTime) 0..1 else 0..7
+        val repeatWeekParity = alarm.repeatWeekParity
+        val searchRange = if (repeatDays.isOneTime) 0..1 else 0..14
 
         for (daysAhead in searchRange) {
             val date = today.plusDays(daysAhead.toLong())
-            if (!repeatDays.isOneTime && repeatDays.values.none { it.isoValue == date.dayOfWeek.value }) {
-                continue
+            if (!repeatDays.isOneTime) {
+                val matchesDay = repeatDays.values.any { it.isoValue == date.dayOfWeek.value }
+                val isoWeekNumber = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+                if (!matchesDay || !repeatWeekParity.includes(isoWeekNumber)) continue
             }
 
             resolveOccurrences(date, alarm, now).firstOrNull()?.let { return it }

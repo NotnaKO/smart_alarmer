@@ -19,6 +19,14 @@ class AlarmConfigurationTest {
     }
 
     @Test
+    fun alarmWeekParity_parsesKnownValuesAndFallsBackToEveryWeek() {
+        assertEquals(AlarmWeekParity.ODD, AlarmWeekParity.parse(" odd "))
+        assertEquals(AlarmWeekParity.EVEN, AlarmWeekParity.parse("EVEN"))
+        assertEquals(AlarmWeekParity.EVERY, AlarmWeekParity.parse("unexpected"))
+        assertEquals(AlarmWeekParity.EVERY, AlarmWeekParity.parse(null))
+    }
+
+    @Test
     fun puzzleSelection_normalizesKnownLegacyValues() {
         val selection = PuzzleSelection.parse("shake, MATH,shake,unknown")
 
@@ -65,5 +73,34 @@ class AlarmConfigurationTest {
         assertEquals(true, alarm.wakeUpChecksEnabled)
         assertEquals(4, alarm.wakeUpCheckCount)
         assertEquals(10, alarm.wakeUpCheckIntervalMinutes)
+    }
+
+    @Test
+    fun alarmDraftPersistsWeekParityOnlyForRecurringAlarms() {
+        val recurring =
+            AlarmDraft(
+                hour = 7,
+                minute = 30,
+                repeatDays = AlarmDays.of(listOf(AlarmDay.MONDAY)),
+                repeatWeekParity = AlarmWeekParity.ODD,
+                puzzleSelection = PuzzleSelection.DEFAULT,
+                puzzleCount = 1,
+                label = "",
+                soundUri = null
+            ).toAlarm(isEnabled = true)
+        val oneTime =
+            AlarmDraft(
+                hour = 7,
+                minute = 30,
+                repeatDays = AlarmDays.ONE_TIME,
+                repeatWeekParity = AlarmWeekParity.ODD,
+                puzzleSelection = PuzzleSelection.DEFAULT,
+                puzzleCount = 1,
+                label = "",
+                soundUri = null
+            ).toAlarm(isEnabled = true)
+
+        assertEquals(AlarmWeekParity.ODD.name, recurring.weekParity)
+        assertEquals(AlarmWeekParity.EVERY.name, oneTime.weekParity)
     }
 }

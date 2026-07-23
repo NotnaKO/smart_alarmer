@@ -31,7 +31,7 @@ class AlarmMigrationTest {
     }
 
     @Test
-    fun migratesAlarmFromVersion1ThroughVersion7WithoutLosingData() = runBlocking {
+    fun migratesAlarmFromVersion1ThroughVersion8WithoutLosingData() = runBlocking {
         createVersion1Database()
         migrateAndValidateVersion2()
 
@@ -43,7 +43,8 @@ class AlarmMigrationTest {
                     AlarmDatabase.MIGRATION_3_4,
                     AlarmDatabase.MIGRATION_4_5,
                     AlarmDatabase.MIGRATION_5_6,
-                    AlarmDatabase.MIGRATION_6_7
+                    AlarmDatabase.MIGRATION_6_7,
+                    AlarmDatabase.MIGRATION_7_8
                 )
                 .build()
         try {
@@ -51,6 +52,7 @@ class AlarmMigrationTest {
             assertEquals(6, alarm.hour)
             assertEquals(45, alarm.minute)
             assertEquals("1,3,5", alarm.daysOfWeek)
+            assertEquals("EVERY", alarm.weekParity)
             assertEquals("MATH,TYPING", alarm.puzzlesList)
             assertEquals(60, alarm.volumeRampSeconds)
             assertEquals("", alarm.label)

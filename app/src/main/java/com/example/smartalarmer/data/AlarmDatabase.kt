@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Alarm::class, WakeUpCheckSession::class], version = 7, exportSchema = true)
+@Database(entities = [Alarm::class, WakeUpCheckSession::class], version = 8, exportSchema = true)
 abstract class AlarmDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun wakeUpCheckDao(): WakeUpCheckDao
@@ -115,6 +115,13 @@ abstract class AlarmDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_7_8 =
+            object : Migration(7, 8) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE alarms ADD COLUMN weekParity TEXT NOT NULL DEFAULT 'EVERY'")
+                }
+            }
+
         fun getDatabase(context: Context): AlarmDatabase = INSTANCE ?: synchronized(this) {
             val instance =
                 Room
@@ -128,7 +135,8 @@ abstract class AlarmDatabase : RoomDatabase() {
                         MIGRATION_3_4,
                         MIGRATION_4_5,
                         MIGRATION_5_6,
-                        MIGRATION_6_7
+                        MIGRATION_6_7,
+                        MIGRATION_7_8
                     )
                     .build()
             INSTANCE = instance

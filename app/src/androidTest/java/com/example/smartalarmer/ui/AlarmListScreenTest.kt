@@ -30,6 +30,7 @@ class AlarmListScreenTest {
         hour: Int = 7,
         minute: Int = 30,
         daysOfWeek: String = "1,2,3,4,5",
+        weekParity: String = "EVERY",
         isEnabled: Boolean = true,
         puzzlesList: String = "MATH",
         puzzleCount: Int = 1,
@@ -41,6 +42,7 @@ class AlarmListScreenTest {
         hour = hour,
         minute = minute,
         daysOfWeek = daysOfWeek,
+        weekParity = weekParity,
         isEnabled = isEnabled,
         puzzlesList = puzzlesList,
         puzzleCount = puzzleCount,
@@ -383,6 +385,59 @@ class AlarmListScreenTest {
             .performClick()
 
         assertEquals("1,2,3,4,5", savedDays)
+    }
+
+    @Test
+    fun alarmEditSheet_weekParityAppearsForRecurringAlarmAndPersistsSelection() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var savedWeekParity: String? = null
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = null,
+                    onDismiss = {},
+                    onSave = { savedWeekParity = it.repeatWeekParity.name },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.repeat_week_pattern_label))
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.repeat_week_odd))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
+
+        assertEquals("ODD", savedWeekParity)
+    }
+
+    @Test
+    fun alarmCard_showsAlternatingWeekPattern() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        setAlarmCard(testAlarm(weekParity = "ODD"))
+
+        composeTestRule
+            .onNodeWithText(
+                context.getString(com.example.smartalarmer.R.string.repeat_week_odd_summary),
+                substring = true
+            ).assertExists()
     }
 
     @Test

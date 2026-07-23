@@ -64,6 +64,14 @@ Alarm repeat days are stored as **comma-separated ISO-8601 integers** (1=Monday,
 **When modifying alarm queries or filters**, use `Alarm.repeatDays`; parse or
 encode CSV only at persistence and Intent boundaries.
 
+Recurring alarms store ISO-week filtering in `Alarm.weekParity`:
+- `"EVERY"` = every matching week
+- `"ODD"` = odd-numbered ISO weeks
+- `"EVEN"` = even-numbered ISO weeks
+
+Use `Alarm.repeatWeekParity` / `AlarmWeekParity.parse()` so malformed or legacy
+values safely fall back to every week. One-time alarms always persist `"EVERY"`.
+
 ### Puzzle Type Encoding
 Puzzle types in config are stored as **comma-separated string values**:
 - `"MATH,TYPING,MEMORY,SHAKE"` = all four types

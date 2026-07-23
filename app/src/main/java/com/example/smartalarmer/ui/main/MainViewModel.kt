@@ -12,6 +12,7 @@ import com.example.smartalarmer.domain.AlarmCommandResult
 import com.example.smartalarmer.domain.AlarmDays
 import com.example.smartalarmer.domain.AlarmDraft
 import com.example.smartalarmer.domain.AlarmVolumeRamp
+import com.example.smartalarmer.domain.AlarmWeekParity
 import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.domain.WakeUpCheckCoordinator
 import com.example.smartalarmer.scheduler.AlarmCancelResult
@@ -116,7 +117,8 @@ class MainViewModel(
         puzzleCount: Int,
         label: String,
         soundUri: String?,
-        volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS
+        volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS,
+        weekParity: String = AlarmWeekParity.EVERY.name
     ) {
         val selection = PuzzleSelection.parse(puzzlesList)
         saveAlarm(
@@ -124,6 +126,7 @@ class MainViewModel(
                 hour = hour.coerceIn(0, 23),
                 minute = minute.coerceIn(0, 59),
                 repeatDays = AlarmDays.parse(daysOfWeek),
+                repeatWeekParity = AlarmWeekParity.parse(weekParity),
                 puzzleSelection = selection,
                 puzzleCount = puzzleCount.coerceIn(1, selection.values.size),
                 label = label,

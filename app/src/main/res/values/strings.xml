@@ -29,6 +29,12 @@
     <string name="edit_alarm">Edit Alarm</string>
     <string name="time_label">Time</string>
     <string name="repeat_days_label">Repeat Days</string>
+    <string name="repeat_week_pattern_label">Weeks</string>
+    <string name="repeat_week_every">Every</string>
+    <string name="repeat_week_odd">Odd</string>
+    <string name="repeat_week_even">Even</string>
+    <string name="repeat_week_odd_summary">Odd-numbered weeks</string>
+    <string name="repeat_week_even_summary">Even-numbered weeks</string>
     <string name="dismiss_puzzles_label">Dismiss Puzzles</string>
     <string name="puzzles_required">Puzzles Required</string>
     <string name="wake_up_checks_label">Wake-up checks</string>
