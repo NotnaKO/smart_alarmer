@@ -594,7 +594,14 @@ class AlarmListScreenTest {
             .performScrollTo()
             .performClick()
         composeTestRule
-            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_minutes_format, 10))
+            .onNode(
+                hasText(
+                    context.getString(
+                        com.example.smartalarmer.R.string.wake_up_check_minutes_format,
+                        10
+                    )
+                ) and hasAnyAncestor(hasTestTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG))
+            )
             .performScrollTo()
             .performClick()
         composeTestRule
