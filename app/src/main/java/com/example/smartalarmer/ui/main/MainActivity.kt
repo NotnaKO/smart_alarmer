@@ -40,6 +40,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.alarm.AlarmSoundResolver
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
@@ -112,16 +113,8 @@ class MainActivity : ComponentActivity() {
                         contract = ActivityResultContracts.StartActivityForResult()
                     ) { result ->
                         if (result.resultCode == RESULT_OK) {
-                            val uri =
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    result.data?.getParcelableExtra(
-                                        RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
-                                        Uri::class.java
-                                    )
-                                } else {
-                                    @Suppress("DEPRECATION")
-                                    result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-                                }
+                            val uri = AlarmSoundResolver.readPickerSelection(result.data)
+                            uri?.let { AlarmSoundResolver.retainReadAccessIfOffered(context, result.data, it) }
                             pickedSoundUri = uri?.toString()
                         }
                     }
@@ -340,18 +333,10 @@ class MainActivity : ComponentActivity() {
                                 onPickSound = {
                                     stopSoundPreview()
                                     val intent =
-                                        Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                                            putExtra(
-                                                RingtoneManager.EXTRA_RINGTONE_TYPE,
-                                                RingtoneManager.TYPE_ALARM or RingtoneManager.TYPE_RINGTONE
-                                            )
-                                            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, selectAlarmSoundTitle)
-                                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-                                            pickedSoundUri?.let {
-                                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, it.toUri())
-                                            }
-                                        }
+                                        AlarmSoundResolver.pickerIntent(
+                                            title = selectAlarmSoundTitle,
+                                            selectedUri = pickedSoundUri?.toUri()
+                                        )
                                     ringtonePickerLauncher.launch(intent)
                                 },
                                 onPreviewSound = {
@@ -362,9 +347,11 @@ class MainActivity : ComponentActivity() {
                                         previewRingtone =
                                             runCatching {
                                                 val previewUri =
-                                                    pickedSoundUri
-                                                        ?.let(Uri::parse)
-                                                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                                                    AlarmSoundResolver
+                                                        .playbackCandidates(
+                                                            context,
+                                                            pickedSoundUri?.let(Uri::parse)
+                                                        ).first()
                                                 RingtoneManager.getRingtone(context, previewUri)?.also { it.play() }
                                             }.getOrNull()
                                     }

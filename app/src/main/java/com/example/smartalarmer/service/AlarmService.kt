@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
-import android.media.RingtoneManager
 import android.net.Uri
 import android.os.IBinder
 import androidx.core.content.ContextCompat
@@ -15,6 +14,7 @@ import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEventType
+import com.example.smartalarmer.alarm.AlarmSoundResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -129,13 +129,7 @@ class AlarmService : Service() {
         wakeLockController.acquire()
 
         val userUri = payload.soundUri?.let(Uri::parse)
-        val fallbackUris =
-            listOfNotNull(
-                userUri,
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            ).distinct()
+        val fallbackUris = AlarmSoundResolver.playbackCandidates(this, userUri)
         audioPlayback.start(fallbackUris)
 
         // Lock volume while allowing verified puzzle progress to reduce it.
