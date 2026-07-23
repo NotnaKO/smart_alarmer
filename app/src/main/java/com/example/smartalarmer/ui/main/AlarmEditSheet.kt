@@ -82,6 +82,9 @@ fun AlarmEditSheet(
                 restore = { names -> mutableStateListOf<AlarmDay>().apply { addAll(names.map(AlarmDay::valueOf)) } }
             )
         ) { mutableStateListOf<AlarmDay>().apply { addAll(initialDays) } }
+    var repeatEnabled by rememberSaveable(alarm?.id) {
+        mutableStateOf(initialDays.isNotEmpty())
+    }
     var repeatWeekParity by rememberSaveable(alarm?.id) {
         mutableStateOf(alarm?.repeatWeekParity ?: AlarmWeekParity.EVERY)
     }
@@ -140,8 +143,8 @@ fun AlarmEditSheet(
             AlarmDraft(
                 hour = hour,
                 minute = minute,
-                repeatDays = AlarmDays.of(selectedDays),
-                repeatWeekParity = repeatWeekParity,
+                repeatDays = if (repeatEnabled) AlarmDays.of(selectedDays) else AlarmDays.ONE_TIME,
+                repeatWeekParity = if (repeatEnabled) repeatWeekParity else AlarmWeekParity.EVERY,
                 puzzleSelection = puzzleSelection,
                 puzzleCount = puzzleCount.coerceIn(1, puzzleSelection.values.size),
                 label = label,
@@ -217,8 +220,13 @@ fun AlarmEditSheet(
                     OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = IndigoPrimary,
-                        unfocusedBorderColor = CardBorderGlass
+                        cursorColor = IndigoContent,
+                        focusedBorderColor = IndigoContent,
+                        unfocusedBorderColor = CardBorderGlass,
+                        focusedLabelColor = IndigoContent,
+                        unfocusedLabelColor = SecondaryText,
+                        focusedSupportingTextColor = SecondaryText,
+                        unfocusedSupportingTextColor = SecondaryText
                     )
                 )
 
@@ -248,7 +256,7 @@ fun AlarmEditSheet(
                     Text(
                         androidx.compose.ui.res
                             .stringResource(com.example.smartalarmer.R.string.time_label),
-                        color = Color.LightGray,
+                        color = SecondaryText,
                         fontSize = 16.sp,
                         modifier = Modifier.weight(1f).padding(end = 12.dp)
                     )
@@ -261,193 +269,262 @@ fun AlarmEditSheet(
                 }
 
                 // Sound Button
-                Row(
-                    modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onPickSound() }
-                        .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                        .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(com.example.smartalarmer.R.string.sound_label),
-                        color = Color.LightGray,
-                        fontSize = 16.sp,
-                        modifier = Modifier.weight(1f).padding(end = 12.dp)
-                    )
-                    Text(
-                        text = selectedSoundName,
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.End,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TextButton(onClick = onPreviewSound) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onPickSound() }
+                            .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                            .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            stringResource(
-                                if (isSoundPreviewPlaying) {
-                                    com.example.smartalarmer.R.string.stop_sound_preview
-                                } else {
-                                    com.example.smartalarmer.R.string.preview_sound
-                                }
-                            )
+                            text = stringResource(com.example.smartalarmer.R.string.sound_label),
+                            color = SecondaryText,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(1f).padding(end = 12.dp)
+                        )
+                        Text(
+                            text = selectedSoundName,
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.End,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    TextButton(
-                        onClick = onResetSound,
-                        enabled = pickedSoundUri != null
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(stringResource(com.example.smartalarmer.R.string.use_default_sound))
+                        TextButton(
+                            onClick = onPreviewSound,
+                            colors =
+                            ButtonDefaults.textButtonColors(
+                                contentColor = IndigoContent,
+                                disabledContentColor = DisabledControlText
+                            )
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (isSoundPreviewPlaying) {
+                                        com.example.smartalarmer.R.string.stop_sound_preview
+                                    } else {
+                                        com.example.smartalarmer.R.string.preview_sound
+                                    }
+                                )
+                            )
+                        }
+                        TextButton(
+                            onClick = onResetSound,
+                            enabled = pickedSoundUri != null,
+                            colors =
+                            ButtonDefaults.textButtonColors(
+                                contentColor = IndigoContent,
+                                disabledContentColor = DisabledControlText
+                            )
+                        ) {
+                            Text(stringResource(com.example.smartalarmer.R.string.use_default_sound))
+                        }
                     }
                 }
 
-                // Days of week
-                Column {
-                    Text(
-                        androidx.compose.ui.res
-                            .stringResource(com.example.smartalarmer.R.string.repeat_days_label),
-                        color = Color.LightGray,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                // Repeat schedule
+                Column(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                        .testTag(ALARM_EDITOR_REPEAT_TAG),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        listOf(
-                            stringResource(com.example.smartalarmer.R.string.weekdays) to
-                                AlarmDay.entries.take(5).toSet(),
-                            stringResource(com.example.smartalarmer.R.string.weekends) to
-                                AlarmDay.entries.takeLast(2).toSet(),
-                            stringResource(com.example.smartalarmer.R.string.every_day) to
-                                AlarmDay.entries.toSet()
-                        ).forEach { (label, days) ->
-                            FilterChip(
-                                selected = selectedDays.toSet() == days,
-                                onClick = {
-                                    selectedDays.clear()
-                                    selectedDays.addAll(days)
-                                },
-                                label = { Text(label) }
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Text(
+                                text = stringResource(com.example.smartalarmer.R.string.repeat_days_label),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = stringResource(com.example.smartalarmer.R.string.repeat_alarm_description),
+                                color = SecondaryText,
+                                fontSize = 12.sp
                             )
                         }
+                        Switch(
+                            checked = repeatEnabled,
+                            onCheckedChange = { enabled ->
+                                repeatEnabled = enabled
+                                if (enabled && selectedDays.isEmpty()) {
+                                    selectedDays.addAll(AlarmDay.entries)
+                                }
+                                if (!enabled) {
+                                    repeatWeekParity = AlarmWeekParity.EVERY
+                                }
+                            },
+                            colors =
+                            SwitchDefaults.colors(
+                                checkedThumbColor = IndigoPrimary,
+                                checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
+                                uncheckedThumbColor = Color.Gray,
+                                uncheckedTrackColor = CardBorderGlass
+                            )
+                        )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_DAYS_TAG),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        val dayLabels =
+
+                    if (repeatEnabled) {
+                        HorizontalDivider(color = CardBorderGlass)
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             listOf(
-                                stringResource(com.example.smartalarmer.R.string.day_m),
-                                stringResource(com.example.smartalarmer.R.string.day_t),
-                                stringResource(com.example.smartalarmer.R.string.day_w),
-                                stringResource(com.example.smartalarmer.R.string.day_th),
-                                stringResource(com.example.smartalarmer.R.string.day_f),
-                                stringResource(com.example.smartalarmer.R.string.day_sa),
-                                stringResource(com.example.smartalarmer.R.string.day_su)
-                            )
-                        val dayNames =
-                            listOf(
-                                stringResource(com.example.smartalarmer.R.string.day_mon),
-                                stringResource(com.example.smartalarmer.R.string.day_tue),
-                                stringResource(com.example.smartalarmer.R.string.day_wed),
-                                stringResource(com.example.smartalarmer.R.string.day_thu),
-                                stringResource(com.example.smartalarmer.R.string.day_fri),
-                                stringResource(com.example.smartalarmer.R.string.day_sat),
-                                stringResource(com.example.smartalarmer.R.string.day_sun)
-                            )
-                        AlarmDay.entries.forEachIndexed { index, day ->
-                            val isSelected = selectedDays.contains(day)
-                            Box(
-                                modifier =
-                                Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                                    .clickable {
-                                        if (isSelected) selectedDays.remove(day) else selectedDays.add(day)
-                                    }.semantics {
-                                        contentDescription = dayNames[index]
-                                        selected = isSelected
-                                        role = Role.Checkbox
+                                stringResource(com.example.smartalarmer.R.string.weekdays) to
+                                    AlarmDay.entries.take(5).toSet(),
+                                stringResource(com.example.smartalarmer.R.string.weekends) to
+                                    AlarmDay.entries.takeLast(2).toSet(),
+                                stringResource(com.example.smartalarmer.R.string.every_day) to
+                                    AlarmDay.entries.toSet()
+                            ).forEach { (label, days) ->
+                                FilterChip(
+                                    selected = selectedDays.toSet() == days,
+                                    onClick = {
+                                        selectedDays.clear()
+                                        selectedDays.addAll(days)
                                     },
-                                contentAlignment = Alignment.Center
-                            ) {
+                                    label = { Text(label) },
+                                    colors =
+                                    FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = IndigoPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = KeyButtonBg,
+                                        labelColor = InactiveControlText
+                                    )
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_DAYS_TAG),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            val dayLabels =
+                                listOf(
+                                    stringResource(com.example.smartalarmer.R.string.day_m),
+                                    stringResource(com.example.smartalarmer.R.string.day_t),
+                                    stringResource(com.example.smartalarmer.R.string.day_w),
+                                    stringResource(com.example.smartalarmer.R.string.day_th),
+                                    stringResource(com.example.smartalarmer.R.string.day_f),
+                                    stringResource(com.example.smartalarmer.R.string.day_sa),
+                                    stringResource(com.example.smartalarmer.R.string.day_su)
+                                )
+                            val dayNames =
+                                listOf(
+                                    stringResource(com.example.smartalarmer.R.string.day_mon),
+                                    stringResource(com.example.smartalarmer.R.string.day_tue),
+                                    stringResource(com.example.smartalarmer.R.string.day_wed),
+                                    stringResource(com.example.smartalarmer.R.string.day_thu),
+                                    stringResource(com.example.smartalarmer.R.string.day_fri),
+                                    stringResource(com.example.smartalarmer.R.string.day_sat),
+                                    stringResource(com.example.smartalarmer.R.string.day_sun)
+                                )
+                            AlarmDay.entries.forEachIndexed { index, day ->
+                                val isSelected = selectedDays.contains(day)
                                 Box(
                                     modifier =
                                     Modifier
-                                        .size(40.dp)
-                                        .background(
-                                            if (isSelected) IndigoPrimary else KeyButtonBg,
-                                            CircleShape
-                                        ),
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .clickable {
+                                            if (isSelected) {
+                                                selectedDays.remove(day)
+                                                if (selectedDays.isEmpty()) {
+                                                    repeatEnabled = false
+                                                    repeatWeekParity = AlarmWeekParity.EVERY
+                                                }
+                                            } else {
+                                                selectedDays.add(day)
+                                            }
+                                        }.semantics {
+                                            contentDescription = dayNames[index]
+                                            selected = isSelected
+                                            role = Role.Checkbox
+                                        },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = dayLabels[index],
-                                        color = if (isSelected) Color.White else Color.Gray,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Box(
+                                        modifier =
+                                        Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                if (isSelected) IndigoPrimary else KeyButtonBg,
+                                                CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = dayLabels[index],
+                                            color = if (isSelected) Color.White else InactiveControlText,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                    if (selectedDays.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = stringResource(com.example.smartalarmer.R.string.repeat_week_pattern_label),
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SingleChoiceSegmentedButtonRow(
-                            modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_WEEK_PARITY_TAG)
-                        ) {
-                            AlarmWeekParity.entries.forEachIndexed { index, parity ->
-                                SegmentedButton(
-                                    selected = repeatWeekParity == parity,
-                                    onClick = { repeatWeekParity = parity },
-                                    shape =
-                                    SegmentedButtonDefaults.itemShape(
-                                        index = index,
-                                        count = AlarmWeekParity.entries.size
-                                    ),
-                                    colors =
-                                    SegmentedButtonDefaults.colors(
-                                        activeContainerColor = IndigoPrimary,
-                                        activeContentColor = Color.White,
-                                        activeBorderColor = IndigoPrimary,
-                                        inactiveContainerColor = KeyButtonBg,
-                                        inactiveContentColor = Color.White,
-                                        inactiveBorderColor = CardBorderGlass
-                                    ),
-                                    icon = {}
-                                ) {
-                                    Text(
-                                        stringResource(
-                                            when (parity) {
-                                                AlarmWeekParity.EVERY ->
-                                                    com.example.smartalarmer.R.string.repeat_week_every
-                                                AlarmWeekParity.ODD ->
-                                                    com.example.smartalarmer.R.string.repeat_week_odd
-                                                AlarmWeekParity.EVEN ->
-                                                    com.example.smartalarmer.R.string.repeat_week_even
-                                            }
+                        if (selectedDays.isNotEmpty()) {
+                            Text(
+                                text = stringResource(com.example.smartalarmer.R.string.repeat_week_pattern_label),
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            SingleChoiceSegmentedButtonRow(
+                                modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_WEEK_PARITY_TAG)
+                            ) {
+                                AlarmWeekParity.entries.forEachIndexed { index, parity ->
+                                    SegmentedButton(
+                                        selected = repeatWeekParity == parity,
+                                        onClick = { repeatWeekParity = parity },
+                                        shape =
+                                        SegmentedButtonDefaults.itemShape(
+                                            index = index,
+                                            count = AlarmWeekParity.entries.size
+                                        ),
+                                        colors =
+                                        SegmentedButtonDefaults.colors(
+                                            activeContainerColor = IndigoPrimary,
+                                            activeContentColor = Color.White,
+                                            activeBorderColor = IndigoPrimary,
+                                            inactiveContainerColor = KeyButtonBg,
+                                            inactiveContentColor = Color.White,
+                                            inactiveBorderColor = CardBorderGlass
+                                        ),
+                                        icon = {}
+                                    ) {
+                                        Text(
+                                            stringResource(
+                                                when (parity) {
+                                                    AlarmWeekParity.EVERY ->
+                                                        com.example.smartalarmer.R.string.repeat_week_every
+                                                    AlarmWeekParity.ODD ->
+                                                        com.example.smartalarmer.R.string.repeat_week_odd
+                                                    AlarmWeekParity.EVEN ->
+                                                        com.example.smartalarmer.R.string.repeat_week_even
+                                                }
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -459,7 +536,7 @@ fun AlarmEditSheet(
                     Text(
                         androidx.compose.ui.res
                             .stringResource(com.example.smartalarmer.R.string.dismiss_puzzles_label),
-                        color = Color.LightGray,
+                        color = SecondaryText,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -497,7 +574,7 @@ fun AlarmEditSheet(
                                     selectedContainerColor = IndigoPrimary,
                                     selectedLabelColor = Color.White,
                                     containerColor = KeyButtonBg,
-                                    labelColor = Color.Gray
+                                    labelColor = InactiveControlText
                                 )
                             )
                         }
@@ -515,7 +592,7 @@ fun AlarmEditSheet(
                     Text(
                         androidx.compose.ui.res
                             .stringResource(com.example.smartalarmer.R.string.puzzles_required),
-                        color = Color.LightGray,
+                        color = SecondaryText,
                         fontSize = 16.sp,
                         modifier = Modifier.weight(1f).padding(end = 12.dp)
                     )
@@ -575,7 +652,7 @@ fun AlarmEditSheet(
                                 )
                                 Text(
                                     text = stringResource(com.example.smartalarmer.R.string.wake_up_checks_description),
-                                    color = Color.LightGray,
+                                    color = SecondaryText,
                                     fontSize = 12.sp
                                 )
                             }
@@ -601,7 +678,7 @@ fun AlarmEditSheet(
                             ) {
                                 Text(
                                     text = stringResource(com.example.smartalarmer.R.string.wake_up_check_count_label),
-                                    color = Color.LightGray,
+                                    color = SecondaryText,
                                     modifier = Modifier.weight(1f)
                                 )
                                 Row(
@@ -644,7 +721,7 @@ fun AlarmEditSheet(
 
                             Text(
                                 text = stringResource(com.example.smartalarmer.R.string.wake_up_check_interval_label),
-                                color = Color.LightGray
+                                color = SecondaryText
                             )
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -667,14 +744,14 @@ fun AlarmEditSheet(
                                             selectedContainerColor = IndigoPrimary,
                                             selectedLabelColor = Color.White,
                                             containerColor = KeyButtonBg,
-                                            labelColor = Color.Gray
+                                            labelColor = InactiveControlText
                                         )
                                     )
                                 }
                             }
                             Text(
                                 text = stringResource(com.example.smartalarmer.R.string.wake_up_check_easy_task_description),
-                                color = Color.LightGray,
+                                color = SecondaryText,
                                 fontSize = 12.sp
                             )
                         }
@@ -689,7 +766,7 @@ fun AlarmEditSheet(
                         )
                         Text(
                             text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration_desc),
-                            color = Color.LightGray,
+                            color = SecondaryText,
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -722,7 +799,7 @@ fun AlarmEditSheet(
                                         selectedContainerColor = IndigoPrimary,
                                         selectedLabelColor = Color.White,
                                         containerColor = KeyButtonBg,
-                                        labelColor = Color.Gray
+                                        labelColor = InactiveControlText
                                     )
                                 )
                             }
@@ -770,6 +847,7 @@ fun AlarmEditSheet(
 internal const val ALARM_EDITOR_CONTENT_TAG = "alarm_editor_content"
 internal const val ALARM_EDITOR_TIME_ROW_TAG = "alarm_editor_time_row"
 internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
+internal const val ALARM_EDITOR_REPEAT_TAG = "alarm_editor_repeat"
 internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
 internal const val ALARM_EDITOR_WEEK_PARITY_TAG = "alarm_editor_week_parity"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"

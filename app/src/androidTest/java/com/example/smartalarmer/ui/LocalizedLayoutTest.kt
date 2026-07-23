@@ -13,10 +13,14 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -28,6 +32,7 @@ import com.example.smartalarmer.ui.main.ALARM_CARD_SUMMARY_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_DAYS_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_PUZZLE_COUNT_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_ROW_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
@@ -131,6 +136,10 @@ class LocalizedLayoutTest {
             visiblePuzzleCountRow.bottom <= wakeUpChecks.top
         )
 
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
+            .performScrollTo()
+            .performClick()
         val monday = localizedContext.getString(R.string.day_mon)
         composeTestRule.onNodeWithContentDescription(monday).performScrollTo()
         val days = composeTestRule.onNodeWithTag(ALARM_EDITOR_DAYS_TAG).fetchSemanticsNode().boundsInRoot

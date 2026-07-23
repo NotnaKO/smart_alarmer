@@ -138,7 +138,7 @@ fun AlarmDismissScreen(
             if (isWakeUpCheck) {
                 Text(
                     text = stringResource(R.string.wake_up_check_title),
-                    color = IndigoPrimary,
+                    color = IndigoContent,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -149,7 +149,7 @@ fun AlarmDismissScreen(
                         wakeUpCheckNumber,
                         wakeUpCheckTotal
                     ),
-                    color = Color.LightGray,
+                    color = SecondaryText,
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))

@@ -34,7 +34,7 @@ fun TypingPuzzleView(
     var input by rememberSaveable { mutableStateOf("") }
     var showError by rememberSaveable { mutableStateOf(false) }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        Text(text = stringResource(R.string.type_sentence_label), color = Color.Gray, fontSize = 14.sp)
+        Text(text = stringResource(R.string.type_sentence_label), color = SecondaryText, fontSize = 14.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = targetQuote, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(24.dp))
@@ -74,14 +74,18 @@ fun TypingPuzzleView(
                     onFailure()
                 }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Purple600)
+            colors =
+            ButtonDefaults.buttonColors(
+                containerColor = IndigoPrimary,
+                contentColor = Color.White
+            )
         ) {
             Text(stringResource(R.string.submit_btn))
         }
         if (showError) {
             Text(
                 text = stringResource(R.string.incorrect_answer),
-                color = RedError,
+                color = RedErrorContent,
                 modifier =
                 Modifier.semantics {
                     liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Assertive

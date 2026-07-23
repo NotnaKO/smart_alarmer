@@ -57,7 +57,7 @@ fun MathPuzzleView(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = puzzle.equation, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = stringResource(R.string.your_answer_format, input), color = Color.LightGray, fontSize = 20.sp)
+        Text(text = stringResource(R.string.your_answer_format, input), color = SecondaryText, fontSize = 20.sp)
         Spacer(modifier = Modifier.height(24.dp))
         // Numeric Keyboard
         Column {
@@ -132,7 +132,7 @@ fun MathPuzzleView(
         if (showError) {
             Text(
                 text = stringResource(R.string.incorrect_answer),
-                color = RedError,
+                color = RedErrorContent,
                 modifier =
                 Modifier.semantics {
                     liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Assertive

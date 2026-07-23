@@ -29,6 +29,7 @@
     <string name="edit_alarm">Изменить будильник</string>
     <string name="time_label">Время</string>
     <string name="repeat_days_label">Дни повтора</string>
+    <string name="repeat_alarm_description">Выберите дни, по которым будильник будет повторяться.</string>
     <string name="repeat_week_pattern_label">Недели</string>
     <string name="repeat_week_every">Все</string>
     <string name="repeat_week_odd">Нечётные</string>

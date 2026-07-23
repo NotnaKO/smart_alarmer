@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
@@ -344,6 +345,10 @@ class AlarmListScreenTest {
         }
 
         composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.day_mon))
             .assertHasClickAction()
             .assertHeightIsAtLeast(48.dp)
@@ -375,6 +380,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
             .performScrollTo()
@@ -413,6 +422,10 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.repeat_week_pattern_label))
             .assertDoesNotExist()
         composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
             .performScrollTo()
             .performClick()
@@ -423,6 +436,48 @@ class AlarmListScreenTest {
         composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
 
         assertEquals("ODD", savedWeekParity)
+    }
+
+    @Test
+    fun alarmEditSheet_disablingRepeatFoldsOptionsAndSavesCanonicalOneTimeSchedule() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var savedDays: String? = null
+        var savedWeekParity: String? = null
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = testAlarm(daysOfWeek = "1,3,5", weekParity = "ODD"),
+                    onDismiss = {},
+                    onSave = { draft ->
+                        savedDays = draft.repeatDays.encoded
+                        savedWeekParity = draft.repeatWeekParity.name
+                    },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
+            .assertExists()
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
+
+        assertEquals("", savedDays)
+        assertEquals("EVERY", savedWeekParity)
     }
 
     @Test

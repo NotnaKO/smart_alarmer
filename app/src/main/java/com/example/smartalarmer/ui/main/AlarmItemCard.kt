@@ -134,7 +134,7 @@ fun AlarmItemCard(
                         text = AlarmTimeFormatter.formatTime(context, alarm.hour, alarm.minute),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.LightGray
+                        color = SecondaryText
                     )
                 } else {
                     Text(
@@ -154,7 +154,7 @@ fun AlarmItemCard(
                 Text(
                     text = "$repeatSummary • $puzzlesText ($puzzleCountText) • $soundName",
                     fontSize = 13.sp,
-                    color = Color.LightGray,
+                    color = SecondaryText,
                     modifier = Modifier.testTag(ALARM_CARD_SUMMARY_TAG)
                 )
                 if (alarm.wakeUpChecksEnabled) {
@@ -166,7 +166,7 @@ fun AlarmItemCard(
                             alarm.wakeUpCheckIntervalMinutes
                         ),
                         fontSize = 12.sp,
-                        color = IndigoPrimary
+                        color = IndigoContent
                     )
                 }
                 wakeUpCheckSession?.let { session ->
@@ -180,7 +180,7 @@ fun AlarmItemCard(
                             AlarmTimeFormatter.formatNextTrigger(context, session.nextTriggerAtMillis)
                         ),
                         fontSize = 12.sp,
-                        color = GreenSuccess,
+                        color = GreenSuccessContent,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -204,7 +204,7 @@ fun AlarmItemCard(
                                         AlarmTimeFormatter.formatNextTrigger(context, triggerAtMillis)
                                     ),
                                     fontSize = 12.sp,
-                                    color = GreenSuccess
+                                    color = GreenSuccessContent
                                 )
                             }
                         }
@@ -242,8 +242,8 @@ fun AlarmItemCard(
                 OutlinedButton(
                     onClick = onTest,
                     modifier = Modifier,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenSuccess),
-                    border = BorderStroke(1.dp, GreenSuccess.copy(alpha = 0.5f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenSuccessContent),
+                    border = BorderStroke(1.dp, GreenSuccessContent.copy(alpha = 0.65f)),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                 ) {
@@ -277,7 +277,7 @@ fun AlarmItemCard(
 
                 IconButton(
                     onClick = onDelete,
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = RedError)
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = RedErrorContent)
                 ) {
                     Icon(
                         Icons.Filled.Delete,
@@ -298,7 +298,7 @@ internal const val ALARM_CARD_ACTIONS_TAG = "alarm_card_actions"
 @Composable
 private fun ScheduleHealthText(
     textResource: Int,
-    color: Color = RedError
+    color: Color = RedErrorContent
 ) {
     Text(
         text = stringResource(textResource),

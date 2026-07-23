@@ -29,6 +29,7 @@
     <string name="edit_alarm">Edit Alarm</string>
     <string name="time_label">Time</string>
     <string name="repeat_days_label">Repeat Days</string>
+    <string name="repeat_alarm_description">Choose which days this alarm repeats.</string>
     <string name="repeat_week_pattern_label">Weeks</string>
     <string name="repeat_week_every">Every</string>
     <string name="repeat_week_odd">Odd</string>
