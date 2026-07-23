@@ -94,13 +94,24 @@ class AlarmReceiver : BroadcastReceiver() {
         ) {
             if (payload.launchType != AlarmLaunchType.MAIN) return
             val store = DirectBootAlarmStore(context)
-            val alarm =
+            val snapshot =
                 store
                     .snapshots()
-                    .firstOrNull { it.alarm.id == payload.alarmId }
-                    ?.alarm
+                    .firstOrNull {
+                        it.alarm.id == payload.alarmId &&
+                            (
+                                payload.occurrenceTriggerAtMillis == AlarmLaunchPayload.NO_OCCURRENCE ||
+                                    it.triggerAtMillis == payload.occurrenceTriggerAtMillis
+                                )
+                    }
                     ?: return
-            startAlarmService(context, AlarmLaunchPayload.fromAlarm(alarm))
+            startAlarmService(
+                context,
+                AlarmLaunchPayload.fromAlarm(
+                    snapshot.alarm,
+                    occurrenceTriggerAtMillis = snapshot.triggerAtMillis
+                )
+            )
         }
         internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
 
@@ -108,7 +119,15 @@ class AlarmReceiver : BroadcastReceiver() {
             alarm: Alarm,
             scheduledPayload: AlarmLaunchPayload
         ) = when (scheduledPayload.launchType) {
-            AlarmLaunchType.MAIN -> AlarmLaunchPayload.fromAlarm(alarm)
+            AlarmLaunchType.MAIN ->
+                AlarmLaunchPayload.fromAlarm(
+                    alarm,
+                    occurrenceTriggerAtMillis =
+                    scheduledPayload.occurrenceTriggerAtMillis
+                        .takeUnless { it == AlarmLaunchPayload.NO_OCCURRENCE }
+                        ?: alarm.scheduledTriggerAtMillis
+                        ?: AlarmLaunchPayload.NO_OCCURRENCE
+                )
             AlarmLaunchType.WAKE_UP_CHECK -> scheduledPayload
         }
     }

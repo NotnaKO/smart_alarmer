@@ -34,7 +34,10 @@ class BootReceiver : BroadcastReceiver() {
         val isUserUnlocked = context.getSystemService(UserManager::class.java).isUserUnlocked
         if (intent.action == Intent.ACTION_LOCKED_BOOT_COMPLETED || !isUserUnlocked) {
             if (shouldReschedule(intent.action, canScheduleExactAlarms = true)) {
-                restoreBeforeUnlock(context)
+                restoreBeforeUnlock(
+                    context = context,
+                    recalculateFromWallClock = shouldRecalculateLockedTrigger(intent.action)
+                )
             }
             return
         }
@@ -114,7 +117,10 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun restoreBeforeUnlock(context: Context) {
+    private fun restoreBeforeUnlock(
+        context: Context,
+        recalculateFromWallClock: Boolean
+    ) {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -122,14 +128,20 @@ class BootReceiver : BroadcastReceiver() {
                 resumeInterruptedSession(context)
                 val now = System.currentTimeMillis()
                 store.snapshots().forEach { snapshot ->
-                    val triggerAtMillis = maxOf(snapshot.triggerAtMillis, now + 1_000L)
                     when (
                         val result =
-                            AlarmScheduler.scheduleAt(
-                                context = context,
-                                alarm = snapshot.alarm,
-                                triggerAtMillis = triggerAtMillis
-                            )
+                            if (recalculateFromWallClock) {
+                                AlarmScheduler.schedule(
+                                    context = context,
+                                    alarm = snapshot.alarm
+                                )
+                            } else {
+                                AlarmScheduler.scheduleAt(
+                                    context = context,
+                                    alarm = snapshot.alarm,
+                                    triggerAtMillis = maxOf(snapshot.triggerAtMillis, now + 1_000L)
+                                )
+                            }
                     ) {
                         is AlarmScheduleResult.Scheduled ->
                             store.upsert(snapshot.alarm, result.triggerAtMillis)
@@ -153,14 +165,16 @@ class BootReceiver : BroadcastReceiver() {
 
     private fun resumeInterruptedSession(context: Context) {
         val sessionStore = AlarmSessionStore(context)
-        val session = sessionStore.current() ?: return
+        val session = sessionStore.current()
         val queue = PendingAlarmQueueStore(context)
         val payload =
-            if (session.dismissRequested) {
-                sessionStore.clear()
-                queue.dequeue()
-            } else {
-                session.payload
+            when {
+                session == null -> queue.peek()
+                session.dismissRequested -> {
+                    sessionStore.clear()
+                    queue.peek()
+                }
+                else -> session.payload
             } ?: return
         runCatching {
             ContextCompat.startForegroundService(
@@ -171,7 +185,6 @@ class BootReceiver : BroadcastReceiver() {
                 )
             )
         }.onFailure {
-            if (session.dismissRequested) queue.enqueue(payload)
             Log.e(TAG, "Unable to resume interrupted alarm session", it)
         }
     }
@@ -193,5 +206,8 @@ class BootReceiver : BroadcastReceiver() {
                 canScheduleExactAlarms
             else -> false
         }
+
+        internal fun shouldRecalculateLockedTrigger(action: String?): Boolean = action == Intent.ACTION_TIME_CHANGED ||
+            action == Intent.ACTION_TIMEZONE_CHANGED
     }
 }

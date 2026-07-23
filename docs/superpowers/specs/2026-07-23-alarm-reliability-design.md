@@ -13,6 +13,8 @@ to device-protected preferences with their trigger time and complete delivery
 configuration. `LOCKED_BOOT_COMPLETED` restores those exact registrations before
 Room can be opened. If the stored trigger passed while the device was off, it is
 delivered immediately after boot rather than silently moved to the next day.
+Clock and time-zone changes received before unlock instead recalculate each
+trigger from the mirrored local-time configuration.
 
 The receiver, alarm service, and dismiss activity are direct-boot-aware. Custom
 sounds that are unavailable before unlock fall through to system sounds and the
@@ -40,10 +42,12 @@ wake-up checks do not escalate.
 The first active alarm retains its puzzle sequence and verified progress.
 Distinct main alarms or wake-up checks that fire meanwhile are stored in an
 ordered, device-protected queue. Re-delivery of the same logical alarm session
-is ignored rather than duplicated.
+is ignored rather than duplicated. Main-alarm identity includes its scheduled
+trigger, so later occurrences of the same recurring alarm remain distinct.
 
 After successful dismissal, the activity closes and the service starts the next
-payload. Queue removal is rolled back if foreground-service startup fails.
+payload. The queue head is retained until the next service session initializes,
+so a failed foreground-service request cannot reorder or lose pending alarms.
 Each queued main alarm records its normal one-time-disable or recurring
 reschedule follow-up when its original delivery arrives.
 

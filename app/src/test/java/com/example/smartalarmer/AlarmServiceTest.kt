@@ -54,10 +54,21 @@ class AlarmServiceTest {
 
     @Test
     fun overlapPolicyRecognizesRedeliveryButQueuesLaterWakeUpCheck() {
-        val main = AlarmLaunchPayload(alarmId = 42)
+        val main =
+            AlarmLaunchPayload(
+                alarmId = 42,
+                occurrenceTriggerAtMillis = 100L
+            )
         assertEquals(
             AlarmOverlapDecision.REDELIVERY,
             AlarmService.overlapDecision(main, main)
+        )
+        assertEquals(
+            AlarmOverlapDecision.QUEUE,
+            AlarmService.overlapDecision(
+                main,
+                main.copy(occurrenceTriggerAtMillis = 200L)
+            )
         )
         assertEquals(
             AlarmOverlapDecision.QUEUE,

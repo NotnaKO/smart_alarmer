@@ -21,6 +21,7 @@ internal object AlarmPayloadJson {
         .put("wakeUpCheckIntervalMinutes", payload.wakeUpCheckIntervalMinutes)
         .put("backupAlarmTimeoutMinutes", payload.backupAlarmTimeoutMinutes)
         .put("backupAlarmRepeatCount", payload.backupAlarmRepeatCount)
+        .put("occurrenceTriggerAtMillis", payload.occurrenceTriggerAtMillis)
 
     fun decode(json: JSONObject): AlarmLaunchPayload = AlarmLaunchPayload(
         alarmId = json.optInt("alarmId", AlarmLaunchPayload.NO_ALARM_ID),
@@ -50,7 +51,11 @@ internal object AlarmPayloadJson {
         backupAlarmRepeatCount =
         json
             .optInt("backupAlarmRepeatCount", BackupAlarmConfig.DEFAULT_REPEAT_COUNT)
-            .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE)
+            .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE),
+        occurrenceTriggerAtMillis =
+        json
+            .optLong("occurrenceTriggerAtMillis", AlarmLaunchPayload.NO_OCCURRENCE)
+            .coerceAtLeast(AlarmLaunchPayload.NO_OCCURRENCE)
     )
 
     private fun JSONObject.optNullableString(key: String): String? = if (!has(key) || isNull(key)) null else optString(key)

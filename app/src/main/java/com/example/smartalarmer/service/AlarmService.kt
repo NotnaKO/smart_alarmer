@@ -17,6 +17,10 @@ import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEventType
 import com.example.smartalarmer.alarm.AlarmSoundResolver
+import com.example.smartalarmer.alarm.sessionIdentity
+import com.example.smartalarmer.domain.repeatDays
+import com.example.smartalarmer.scheduler.AlarmScheduleResult
+import com.example.smartalarmer.scheduler.AlarmScheduler
 import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -121,21 +125,23 @@ class AlarmService : Service() {
             } else {
                 null
             }
-        if (
-            recoveredPayload != null &&
-            recoveredPayload.sessionIdentity != incomingPayload.sessionIdentity
-        ) {
-            if (
-                !incomingPayload.isPreview &&
-                pendingAlarmQueue.enqueue(incomingPayload)
-            ) {
-                recordMainAlarmDelivery(incomingPayload)
+        val queuedHead =
+            if (activePayload == null && recoveredPayload == null) {
+                pendingAlarmQueue.peek()
+            } else {
+                null
             }
-            val foregroundNotification = startAlarm(recoveredPayload)
-            AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
-            return START_REDELIVER_INTENT
+        val payload =
+            recoveredPayload ?: queuedHead ?: incomingPayload
+        val deliveryAlreadyRecorded =
+            queuedHead?.sessionIdentity == payload.sessionIdentity
+        if (
+            payload.sessionIdentity != incomingPayload.sessionIdentity &&
+            !incomingPayload.isPreview &&
+            pendingAlarmQueue.enqueue(incomingPayload)
+        ) {
+            recordMainAlarmDelivery(incomingPayload)
         }
-        val payload = recoveredPayload ?: incomingPayload
         if (payload.isPreview && activePayload != null) {
             return START_REDELIVER_INTENT
         }
@@ -154,7 +160,12 @@ class AlarmService : Service() {
             }
         }
 
-        val foregroundNotification = startAlarm(payload)
+        val foregroundNotification =
+            startAlarm(
+                payload = payload,
+                deliveryAlreadyRecorded = deliveryAlreadyRecorded
+            )
+        pendingAlarmQueue.removeHead(payload)
         if (payload.isPreview) {
             stopSelf(startId)
             return START_NOT_STICKY
@@ -164,7 +175,10 @@ class AlarmService : Service() {
         return START_REDELIVER_INTENT
     }
 
-    private fun startAlarm(payload: AlarmLaunchPayload): AlarmForegroundNotification {
+    private fun startAlarm(
+        payload: AlarmLaunchPayload,
+        deliveryAlreadyRecorded: Boolean = false
+    ): AlarmForegroundNotification {
         val isRecoveredSession =
             sessionStore
                 .current()
@@ -238,7 +252,7 @@ class AlarmService : Service() {
                     applyAlarmVolume(maxVolume)
                     vibrationController.reinforce()
                 }.also { it.start() }
-            if (!isRecoveredSession) {
+            if (!isRecoveredSession && !deliveryAlreadyRecorded) {
                 recordMainAlarmDelivery(payload)
             }
         }
@@ -269,7 +283,7 @@ class AlarmService : Service() {
         runCatching { unregisterReceiver(progressReceiver) }
         super.onDestroy()
         if (shouldAdvanceQueue) {
-            pendingAlarmQueue.dequeue()?.let { payload ->
+            pendingAlarmQueue.peek()?.let { payload ->
                 runCatching {
                     ContextCompat.startForegroundService(
                         applicationContext,
@@ -278,8 +292,6 @@ class AlarmService : Service() {
                             payload
                         )
                     )
-                }.onFailure {
-                    pendingAlarmQueue.enqueue(payload)
                 }
             }
         }
@@ -287,11 +299,42 @@ class AlarmService : Service() {
 
     private fun recordMainAlarmDelivery(payload: AlarmLaunchPayload) {
         if (payload.launchType != AlarmLaunchType.MAIN) return
-        runCatching { directBootStore.remove(payload.alarmId) }
         if (getSystemService(UserManager::class.java).isUserUnlocked) {
+            runCatching { directBootStore.remove(payload.alarmId) }
             deliveryFollowUp?.start(payload.alarmId)
         } else {
+            rollForwardDirectBootSchedule(payload)
             runCatching { directBootStore.markDeliveryForUnlock(payload.alarmId) }
+        }
+    }
+
+    private fun rollForwardDirectBootSchedule(payload: AlarmLaunchPayload) {
+        val snapshot =
+            directBootStore
+                .snapshots()
+                .firstOrNull {
+                    it.alarm.id == payload.alarmId &&
+                        (
+                            payload.occurrenceTriggerAtMillis == AlarmLaunchPayload.NO_OCCURRENCE ||
+                                it.triggerAtMillis == payload.occurrenceTriggerAtMillis
+                            )
+                } ?: return
+        if (snapshot.alarm.repeatDays.isOneTime) {
+            runCatching { directBootStore.remove(payload.alarmId) }
+            return
+        }
+        when (val result = AlarmScheduler.schedule(this, snapshot.alarm)) {
+            is AlarmScheduleResult.Scheduled ->
+                runCatching {
+                    directBootStore.upsert(snapshot.alarm, result.triggerAtMillis)
+                }.onFailure { error ->
+                    AlarmScheduler.cancel(this, snapshot.alarm)
+                    android.util.Log.e(TAG, "Unable to mirror the next locked alarm occurrence", error)
+                }
+            AlarmScheduleResult.PermissionRequired ->
+                android.util.Log.w(TAG, "Exact alarm access unavailable before unlock")
+            is AlarmScheduleResult.Failure ->
+                android.util.Log.e(TAG, "Unable to schedule the next locked alarm occurrence", result.exception)
         }
     }
 
@@ -329,6 +372,7 @@ class AlarmService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private const val TAG = "AlarmService"
         internal const val WAKE_LOCK_RENEWAL_INTERVAL_MILLIS = AlarmWakeLockController.RENEWAL_INTERVAL_MILLIS
         internal const val WAKE_LOCK_TIMEOUT_MILLIS = AlarmWakeLockController.TIMEOUT_MILLIS
 
@@ -364,6 +408,3 @@ internal enum class AlarmOverlapDecision {
     REDELIVERY,
     QUEUE
 }
-
-private val AlarmLaunchPayload.sessionIdentity: String
-    get() = "$alarmId:${launchType.name}:$wakeUpCheckNumber:$wakeUpCheckToken"

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmPayloadJson
+import com.example.smartalarmer.alarm.sessionIdentity
 import org.json.JSONArray
 
 internal class PendingAlarmQueueStore(
@@ -14,27 +15,37 @@ internal class PendingAlarmQueueStore(
             .createDeviceProtectedStorageContext()
             .getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
-    @Synchronized
-    fun enqueue(payload: AlarmLaunchPayload): Boolean {
+    fun enqueue(payload: AlarmLaunchPayload): Boolean = synchronized(LOCK) {
         val current = items()
-        if (current.any { it.sessionKey == payload.sessionKey }) return false
-        write(current + payload)
-        return true
+        if (current.any { it.sessionIdentity == payload.sessionIdentity }) {
+            false
+        } else {
+            write(current + payload)
+            true
+        }
     }
 
-    @Synchronized
-    fun dequeue(): AlarmLaunchPayload? {
-        val current = items()
-        val first = current.firstOrNull() ?: return null
-        write(current.drop(1))
-        return first
+    fun peek(): AlarmLaunchPayload? = synchronized(LOCK) {
+        items().firstOrNull()
     }
 
-    @Synchronized
-    fun hasPending(): Boolean = items().isNotEmpty()
+    fun removeHead(payload: AlarmLaunchPayload): Boolean = synchronized(LOCK) {
+        val current = items()
+        if (current.firstOrNull()?.sessionIdentity != payload.sessionIdentity) {
+            false
+        } else {
+            write(current.drop(1))
+            true
+        }
+    }
 
-    @Synchronized
-    fun clear() = write(emptyList())
+    fun hasPending(): Boolean = synchronized(LOCK) {
+        items().isNotEmpty()
+    }
+
+    fun clear() = synchronized(LOCK) {
+        write(emptyList())
+    }
 
     private fun items(): List<AlarmLaunchPayload> {
         val encoded = preferences.getString(KEY_QUEUE, null) ?: return emptyList()
@@ -57,11 +68,9 @@ internal class PendingAlarmQueueStore(
         }
     }
 
-    private val AlarmLaunchPayload.sessionKey: String
-        get() = "$alarmId:${launchType.name}:$wakeUpCheckNumber:$wakeUpCheckToken"
-
     companion object {
         internal const val PREFERENCES_NAME = "pending_alarm_queue"
         private const val KEY_QUEUE = "queue"
+        private val LOCK = Any()
     }
 }

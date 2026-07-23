@@ -26,14 +26,17 @@ data class AlarmLaunchPayload(
     val wakeUpChecksEnabled: Boolean = false,
     val wakeUpCheckIntervalMinutes: Int = 5,
     val backupAlarmTimeoutMinutes: Int = BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
-    val backupAlarmRepeatCount: Int = BackupAlarmConfig.DEFAULT_REPEAT_COUNT
+    val backupAlarmRepeatCount: Int = BackupAlarmConfig.DEFAULT_REPEAT_COUNT,
+    val occurrenceTriggerAtMillis: Long = NO_OCCURRENCE
 ) {
     companion object {
         const val NO_ALARM_ID = -1
+        const val NO_OCCURRENCE = 0L
 
         fun fromAlarm(
             alarm: Alarm,
-            isPreview: Boolean = false
+            isPreview: Boolean = false,
+            occurrenceTriggerAtMillis: Long = NO_OCCURRENCE
         ): AlarmLaunchPayload {
             val puzzles = PuzzleSelection.parse(alarm.puzzlesList)
             return AlarmLaunchPayload(
@@ -47,7 +50,8 @@ data class AlarmLaunchPayload(
                 wakeUpChecksEnabled = alarm.wakeUpChecksEnabled,
                 wakeUpCheckIntervalMinutes = alarm.wakeUpCheckIntervalMinutes,
                 backupAlarmTimeoutMinutes = alarm.backupAlarmTimeoutMinutes,
-                backupAlarmRepeatCount = alarm.backupAlarmRepeatCount
+                backupAlarmRepeatCount = alarm.backupAlarmRepeatCount,
+                occurrenceTriggerAtMillis = occurrenceTriggerAtMillis.coerceAtLeast(NO_OCCURRENCE)
             )
         }
     }
@@ -69,6 +73,7 @@ object AlarmIntentContract {
     const val EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES = "WAKE_UP_CHECK_INTERVAL_MINUTES"
     const val EXTRA_BACKUP_ALARM_TIMEOUT_MINUTES = "BACKUP_ALARM_TIMEOUT_MINUTES"
     const val EXTRA_BACKUP_ALARM_REPEAT_COUNT = "BACKUP_ALARM_REPEAT_COUNT"
+    const val EXTRA_OCCURRENCE_TRIGGER_AT_MILLIS = "OCCURRENCE_TRIGGER_AT_MILLIS"
 
     fun write(
         intent: Intent,
@@ -89,6 +94,7 @@ object AlarmIntentContract {
         putExtra(EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES, payload.wakeUpCheckIntervalMinutes)
         putExtra(EXTRA_BACKUP_ALARM_TIMEOUT_MINUTES, payload.backupAlarmTimeoutMinutes)
         putExtra(EXTRA_BACKUP_ALARM_REPEAT_COUNT, payload.backupAlarmRepeatCount)
+        putExtra(EXTRA_OCCURRENCE_TRIGGER_AT_MILLIS, payload.occurrenceTriggerAtMillis)
     }
 
     fun read(intent: Intent): AlarmLaunchPayload {
@@ -125,7 +131,16 @@ object AlarmIntentContract {
             backupAlarmRepeatCount =
             intent
                 .getIntExtra(EXTRA_BACKUP_ALARM_REPEAT_COUNT, BackupAlarmConfig.DEFAULT_REPEAT_COUNT)
-                .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE)
+                .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE),
+            occurrenceTriggerAtMillis =
+            intent
+                .getLongExtra(EXTRA_OCCURRENCE_TRIGGER_AT_MILLIS, AlarmLaunchPayload.NO_OCCURRENCE)
+                .coerceAtLeast(AlarmLaunchPayload.NO_OCCURRENCE)
         )
     }
 }
+
+internal val AlarmLaunchPayload.sessionIdentity: String
+    get() =
+        "$alarmId:${launchType.name}:$occurrenceTriggerAtMillis:" +
+            "$wakeUpCheckNumber:$wakeUpCheckToken"

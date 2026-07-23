@@ -81,7 +81,8 @@ class AlarmProgressContractTest {
             AlarmLaunchPayload(
                 alarmId = 8,
                 backupAlarmTimeoutMinutes = 15,
-                backupAlarmRepeatCount = 2
+                backupAlarmRepeatCount = 2,
+                occurrenceTriggerAtMillis = 123_456L
             )
 
         val restored = AlarmIntentContract.read(AlarmIntentContract.write(Intent(), payload))

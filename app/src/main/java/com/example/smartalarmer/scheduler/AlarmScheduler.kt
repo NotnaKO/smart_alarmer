@@ -66,7 +66,10 @@ object AlarmScheduler {
             val intent =
                 AlarmIntentContract.write(
                     Intent(context, AlarmReceiver::class.java),
-                    AlarmLaunchPayload.fromAlarm(alarm)
+                    AlarmLaunchPayload.fromAlarm(
+                        alarm,
+                        occurrenceTriggerAtMillis = triggerAtMillis
+                    )
                 )
             val pendingIntent =
                 PendingIntent.getBroadcast(

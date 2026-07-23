@@ -71,7 +71,11 @@ internal class AlarmSessionStore(
                 preferences.getInt(
                     KEY_BACKUP_ALARM_REPEAT_COUNT,
                     BackupAlarmConfig.DEFAULT_REPEAT_COUNT
-                )
+                ),
+                occurrenceTriggerAtMillis =
+                preferences
+                    .getLong(KEY_OCCURRENCE_TRIGGER_AT_MILLIS, AlarmLaunchPayload.NO_OCCURRENCE)
+                    .coerceAtLeast(AlarmLaunchPayload.NO_OCCURRENCE)
             ),
             originalVolume = originalVolume,
             activeTaskIndex = preferences.getInt(KEY_ACTIVE_TASK_INDEX, 0).coerceAtLeast(0),
@@ -121,6 +125,7 @@ internal class AlarmSessionStore(
         .putInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, session.payload.wakeUpCheckIntervalMinutes)
         .putInt(KEY_BACKUP_ALARM_TIMEOUT_MINUTES, session.payload.backupAlarmTimeoutMinutes)
         .putInt(KEY_BACKUP_ALARM_REPEAT_COUNT, session.payload.backupAlarmRepeatCount)
+        .putLong(KEY_OCCURRENCE_TRIGGER_AT_MILLIS, session.payload.occurrenceTriggerAtMillis)
         .commit()
 
     companion object {
@@ -142,6 +147,7 @@ internal class AlarmSessionStore(
         private const val KEY_WAKE_UP_CHECK_INTERVAL_MINUTES = "wake_up_check_interval_minutes"
         private const val KEY_BACKUP_ALARM_TIMEOUT_MINUTES = "backup_alarm_timeout_minutes"
         private const val KEY_BACKUP_ALARM_REPEAT_COUNT = "backup_alarm_repeat_count"
+        private const val KEY_OCCURRENCE_TRIGGER_AT_MILLIS = "occurrence_trigger_at_millis"
         private const val NO_VOLUME = -1
     }
 }
