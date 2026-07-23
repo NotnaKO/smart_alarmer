@@ -45,11 +45,6 @@
     <string name="wake_up_check_minutes_format">%1$d min</string>
     <string name="wake_up_check_easy_task_description">Cada comprobación requiere una tarea fácil. El siguiente intervalo comienza al completarla.</string>
     <string name="wake_up_check_card_summary">Comprobaciones: %1$d × cada %2$d min</string>
-    <string name="backup_alarm_label">Escalado de respaldo</string>
-    <string name="backup_alarm_description">Sin progreso en las tareas, usa un sonido integrado al máximo volumen y vibración.</string>
-    <string name="backup_alarm_timeout_label">Escalar después de</string>
-    <string name="backup_alarm_repeat_count_label">Intentos de vibración</string>
-    <string name="backup_alarm_card_summary">Respaldo tras %1$d min · %2$d intentos de vibración</string>
     <string name="wake_up_check_title">Comprobación de despertar</string>
     <string name="wake_up_check_progress">Comprobación %1$d de %2$d</string>
     <plurals name="wake_up_check_active_summary">

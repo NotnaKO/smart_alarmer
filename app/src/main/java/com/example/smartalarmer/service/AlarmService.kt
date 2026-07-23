@@ -210,7 +210,10 @@ class AlarmService : Service() {
 
         val userUri = payload.soundUri?.let(Uri::parse)
         val fallbackUris = AlarmSoundResolver.playbackCandidates(this, userUri)
-        audioPlayback.start(fallbackUris)
+        audioPlayback.start(
+            uris = fallbackUris,
+            preferRingtoneApi = true
+        )
 
         // Lock volume while allowing verified puzzle progress to reduce it.
         val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 7
@@ -241,8 +244,8 @@ class AlarmService : Service() {
             backupEscalator =
                 BackupAlarmEscalator(
                     scope = serviceScope,
-                    timeoutMillis = payload.backupAlarmTimeoutMinutes * 60_000L,
-                    repeatCount = payload.backupAlarmRepeatCount
+                    timeoutMillis = BackupAlarmEscalator.DEFAULT_TIMEOUT_MINUTES * 60_000L,
+                    repeatCount = BackupAlarmEscalator.DEFAULT_REPEAT_COUNT
                 ) { attempt ->
                     backupEscalated = true
                     if (attempt == 1) {

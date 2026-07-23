@@ -41,6 +41,8 @@ internal class BackupAlarmEscalator(
     }
 
     companion object {
+        const val DEFAULT_TIMEOUT_MINUTES = 10
+        const val DEFAULT_REPEAT_COUNT = 3
         const val REINFORCEMENT_INTERVAL_MILLIS = 60_000L
     }
 }

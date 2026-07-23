@@ -130,8 +130,6 @@ internal class DirectBootAlarmStore(
         .put("wakeUpChecksEnabled", alarm.wakeUpChecksEnabled)
         .put("wakeUpCheckCount", alarm.wakeUpCheckCount)
         .put("wakeUpCheckIntervalMinutes", alarm.wakeUpCheckIntervalMinutes)
-        .put("backupAlarmTimeoutMinutes", alarm.backupAlarmTimeoutMinutes)
-        .put("backupAlarmRepeatCount", alarm.backupAlarmRepeatCount)
         .put("scheduleStatus", alarm.scheduleStatus)
         .put("scheduledTriggerAtMillis", alarm.scheduledTriggerAtMillis ?: JSONObject.NULL)
 
@@ -150,8 +148,6 @@ internal class DirectBootAlarmStore(
         wakeUpChecksEnabled = json.optBoolean("wakeUpChecksEnabled", false),
         wakeUpCheckCount = json.optInt("wakeUpCheckCount", 3),
         wakeUpCheckIntervalMinutes = json.optInt("wakeUpCheckIntervalMinutes", 5),
-        backupAlarmTimeoutMinutes = json.optInt("backupAlarmTimeoutMinutes", 10),
-        backupAlarmRepeatCount = json.optInt("backupAlarmRepeatCount", 3),
         scheduleStatus = json.optString("scheduleStatus", AlarmScheduleStatus.UNKNOWN.name),
         scheduledTriggerAtMillis =
         if (json.isNull("scheduledTriggerAtMillis")) {
