@@ -71,7 +71,8 @@ class MainViewModelTest {
             puzzleCount = 1,
             label = "Morning",
             soundUri = null,
-            volumeRampSeconds = 120
+            volumeRampSeconds = 120,
+            weekParity = "ODD"
         )
         advanceUntilIdle()
 
@@ -81,6 +82,7 @@ class MainViewModelTest {
         assertEquals(AlarmScheduleStatus.SCHEDULED.name, saved.scheduleStatus)
         assertEquals(12_345L, saved.scheduledTriggerAtMillis)
         assertEquals(120, saved.volumeRampSeconds)
+        assertEquals("ODD", saved.weekParity)
         assertEquals(saved.id, scheduler.scheduled.single().id)
         assertEquals(MainUiEvent.AlarmScheduled(12_345L), event.await())
         assertFalse(viewModel.isBottomSheetVisible.value)

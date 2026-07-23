@@ -9,7 +9,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 ### Key Features
 
 - **Four puzzle types**: Math equations, typing challenges, memory pattern games, and physical shake challenges with a sensor-safe fallback.
-- **Customizable Alarm Configuration**: A slide-up editor offers repeat presets, puzzle selection, visible wake-up and volume controls, sticky save actions, and ringtone preview/stop/reset.
+- **Customizable Alarm Configuration**: A slide-up editor offers day and alternating ISO-week repeat controls, puzzle selection, visible wake-up and volume controls, sticky save actions, and ringtone preview/stop/reset.
 - **Modern Glassmorphic Dark Theme**: Premium styling featuring semi-transparent overlays, glowing accents, and smooth feedback animations.
 - **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
@@ -132,10 +132,10 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 
 | File | Purpose |
 |------|---------|
-| `data/Alarm.kt` | Room entities for alarm configuration and durable active wake-up-check sessions. Alarm settings include check enablement, count, and interval. |
+| `data/Alarm.kt` | Room entities for alarm configuration and durable active wake-up-check sessions. Alarm settings include alternating-week parity plus check enablement, count, and interval. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 7. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 8. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag; version 8 adds alternating-week schedules. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android
@@ -171,9 +171,12 @@ Alarm days are stored as a comma-separated string of ISO-8601 integers:
 | 7 | Sunday |
 
 Example: `"1,2,3,4,5"` = weekdays only. An empty string means a one-time alarm.
+Recurring alarms also store `weekParity` as `EVERY`, `ODD`, or `EVEN`, based
+on the ISO-8601 week number. The parity setting is ignored for one-time alarms.
 
 The persisted CSV columns remain compatible with database versions 1–3, but
-application code consumes them through `AlarmDays` and `PuzzleSelection`.
+application code consumes them through `AlarmDays`, `AlarmWeekParity`, and
+`PuzzleSelection`.
 Those domain values discard unknown legacy values, remove duplicates, produce
 canonical ordering, and guarantee a Math fallback for an invalid puzzle list.
 

@@ -39,11 +39,13 @@ import com.example.smartalarmer.domain.AlarmDay
 import com.example.smartalarmer.domain.AlarmDays
 import com.example.smartalarmer.domain.AlarmDraft
 import com.example.smartalarmer.domain.AlarmVolumeRamp
+import com.example.smartalarmer.domain.AlarmWeekParity
 import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.domain.PuzzleType
 import com.example.smartalarmer.domain.WakeUpCheckConfig
 import com.example.smartalarmer.domain.puzzleSelection
 import com.example.smartalarmer.domain.repeatDays
+import com.example.smartalarmer.domain.repeatWeekParity
 import com.example.smartalarmer.puzzle.AndroidShakeSensorProvider
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.utils.AlarmTimeFormatter
@@ -80,6 +82,9 @@ fun AlarmEditSheet(
                 restore = { names -> mutableStateListOf<AlarmDay>().apply { addAll(names.map(AlarmDay::valueOf)) } }
             )
         ) { mutableStateListOf<AlarmDay>().apply { addAll(initialDays) } }
+    var repeatWeekParity by rememberSaveable(alarm?.id) {
+        mutableStateOf(alarm?.repeatWeekParity ?: AlarmWeekParity.EVERY)
+    }
 
     val puzzleTypes =
         remember(shakeSensorAvailable) {
@@ -136,6 +141,7 @@ fun AlarmEditSheet(
                 hour = hour,
                 minute = minute,
                 repeatDays = AlarmDays.of(selectedDays),
+                repeatWeekParity = repeatWeekParity,
                 puzzleSelection = puzzleSelection,
                 puzzleCount = puzzleCount.coerceIn(1, puzzleSelection.values.size),
                 label = label,
@@ -393,6 +399,54 @@ fun AlarmEditSheet(
                                         text = dayLabels[index],
                                         color = if (isSelected) Color.White else Color.Gray,
                                         fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (selectedDays.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = stringResource(com.example.smartalarmer.R.string.repeat_week_pattern_label),
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_WEEK_PARITY_TAG)
+                        ) {
+                            AlarmWeekParity.entries.forEachIndexed { index, parity ->
+                                SegmentedButton(
+                                    selected = repeatWeekParity == parity,
+                                    onClick = { repeatWeekParity = parity },
+                                    shape =
+                                    SegmentedButtonDefaults.itemShape(
+                                        index = index,
+                                        count = AlarmWeekParity.entries.size
+                                    ),
+                                    colors =
+                                    SegmentedButtonDefaults.colors(
+                                        activeContainerColor = IndigoPrimary,
+                                        activeContentColor = Color.White,
+                                        activeBorderColor = IndigoPrimary,
+                                        inactiveContainerColor = KeyButtonBg,
+                                        inactiveContentColor = Color.White,
+                                        inactiveBorderColor = CardBorderGlass
+                                    ),
+                                    icon = {}
+                                ) {
+                                    Text(
+                                        stringResource(
+                                            when (parity) {
+                                                AlarmWeekParity.EVERY ->
+                                                    com.example.smartalarmer.R.string.repeat_week_every
+                                                AlarmWeekParity.ODD ->
+                                                    com.example.smartalarmer.R.string.repeat_week_odd
+                                                AlarmWeekParity.EVEN ->
+                                                    com.example.smartalarmer.R.string.repeat_week_even
+                                            }
+                                        )
                                     )
                                 }
                             }
@@ -717,6 +771,7 @@ internal const val ALARM_EDITOR_CONTENT_TAG = "alarm_editor_content"
 internal const val ALARM_EDITOR_TIME_ROW_TAG = "alarm_editor_time_row"
 internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
 internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
+internal const val ALARM_EDITOR_WEEK_PARITY_TAG = "alarm_editor_week_parity"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"
 internal const val ALARM_EDITOR_WAKE_UP_CHECKS_TAG = "alarm_editor_wake_up_checks"
 internal const val ALARM_EDITOR_SAVE_TAG = "alarm_editor_save"

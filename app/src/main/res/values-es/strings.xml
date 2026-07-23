@@ -29,6 +29,12 @@
     <string name="edit_alarm">Editar alarma</string>
     <string name="time_label">Hora</string>
     <string name="repeat_days_label">Repetir días</string>
+    <string name="repeat_week_pattern_label">Semanas</string>
+    <string name="repeat_week_every">Todas</string>
+    <string name="repeat_week_odd">Impares</string>
+    <string name="repeat_week_even">Pares</string>
+    <string name="repeat_week_odd_summary">Semanas impares</string>
+    <string name="repeat_week_even_summary">Semanas pares</string>
     <string name="dismiss_puzzles_label">Puzzles para apagar</string>
     <string name="puzzles_required">Puzzles requeridos</string>
     <string name="wake_up_checks_label">Comprobaciones de despertar</string>

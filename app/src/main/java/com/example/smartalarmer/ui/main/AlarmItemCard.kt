@@ -27,9 +27,11 @@ import com.example.smartalarmer.data.AlarmScheduleStatus
 import com.example.smartalarmer.data.WakeUpCheckSession
 import com.example.smartalarmer.data.scheduleHealth
 import com.example.smartalarmer.domain.AlarmDay
+import com.example.smartalarmer.domain.AlarmWeekParity
 import com.example.smartalarmer.domain.PuzzleType
 import com.example.smartalarmer.domain.puzzleSelection
 import com.example.smartalarmer.domain.repeatDays
+import com.example.smartalarmer.domain.repeatWeekParity
 import com.example.smartalarmer.scheduler.AlarmTimeCalculator
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.utils.AlarmTimeFormatter
@@ -74,6 +76,14 @@ fun AlarmItemCard(
                     )
                 daysList.joinToString(", ") { names[it.isoValue - 1] }
             }
+        }
+    val repeatSummary =
+        when {
+            daysList.isEmpty() || alarm.repeatWeekParity == AlarmWeekParity.EVERY -> daysSummary
+            alarm.repeatWeekParity == AlarmWeekParity.ODD ->
+                "$daysSummary · ${stringResource(com.example.smartalarmer.R.string.repeat_week_odd_summary)}"
+            else ->
+                "$daysSummary · ${stringResource(com.example.smartalarmer.R.string.repeat_week_even_summary)}"
         }
 
     val puzzlesText =
@@ -142,7 +152,7 @@ fun AlarmItemCard(
                         }.getOrNull()
                     } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
                 Text(
-                    text = "$daysSummary • $puzzlesText ($puzzleCountText) • $soundName",
+                    text = "$repeatSummary • $puzzlesText ($puzzleCountText) • $soundName",
                     fontSize = 13.sp,
                     color = Color.LightGray,
                     modifier = Modifier.testTag(ALARM_CARD_SUMMARY_TAG)

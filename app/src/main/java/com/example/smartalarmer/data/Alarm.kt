@@ -9,6 +9,7 @@ data class Alarm(
     val hour: Int,
     val minute: Int,
     val daysOfWeek: String, // CSV e.g., "1,2,3,4,5"
+    val weekParity: String = "EVERY",
     val isEnabled: Boolean = true,
     val puzzlesList: String, // CSV e.g., "MATH,TYPING,MEMORY"
     val puzzleCount: Int = 2,

@@ -64,6 +64,14 @@ Alarm repeat days are stored as **comma-separated ISO-8601 integers** (1=Monday,
 **When modifying alarm queries or filters**, use `Alarm.repeatDays`; parse or
 encode CSV only at persistence and Intent boundaries.
 
+Recurring alarms store ISO-week filtering in `Alarm.weekParity`:
+- `"EVERY"` = every matching week
+- `"ODD"` = odd-numbered ISO weeks
+- `"EVEN"` = even-numbered ISO weeks
+
+Use `Alarm.repeatWeekParity` / `AlarmWeekParity.parse()` so malformed or legacy
+values safely fall back to every week. One-time alarms always persist `"EVERY"`.
+
 ### Puzzle Type Encoding
 Puzzle types in config are stored as **comma-separated string values**:
 - `"MATH,TYPING,MEMORY,SHAKE"` = all four types
@@ -172,6 +180,15 @@ Puzzle behavior is provided through small injectable interfaces:
 - Keep user-entered editor and puzzle progress in `rememberSaveable` state so configuration changes do not reset or skip tasks
 - Query changes flow through `AlarmDao` → `RoomAlarmRepository` → MainViewModel → UI
 - Test with in-memory Room database; inject via `ApplicationProvider.getApplicationContext()`
+
+### Dark Theme Control Contrast
+- Do not rely on Material defaults for segmented buttons and similar selectable
+  controls on glass backgrounds; default inactive content can be too dark to read
+- Set active/inactive container, content, and border colors explicitly from the
+  app theme, then reinstall and visually inspect the real editor on an emulator
+- For a style-only follow-up after behavioral coverage is already green, rerun
+  compile/lint checks and perform visual verification; a second full instrumented
+  suite is unnecessary unless semantics, interaction, or layout behavior changed
 
 ---
 

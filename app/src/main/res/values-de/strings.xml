@@ -29,6 +29,12 @@
     <string name="edit_alarm">Alarm bearbeiten</string>
     <string name="time_label">Uhrzeit</string>
     <string name="repeat_days_label">Wiederholungstage</string>
+    <string name="repeat_week_pattern_label">Wochen</string>
+    <string name="repeat_week_every">Alle</string>
+    <string name="repeat_week_odd">Ungerade</string>
+    <string name="repeat_week_even">Gerade</string>
+    <string name="repeat_week_odd_summary">Ungerade Wochen</string>
+    <string name="repeat_week_even_summary">Gerade Wochen</string>
     <string name="dismiss_puzzles_label">Rätsel zum Ausschalten</string>
     <string name="puzzles_required">Erforderliche Rätsel</string>
     <string name="wake_up_checks_label">Aufwachkontrollen</string>

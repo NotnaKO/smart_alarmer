@@ -61,6 +61,36 @@ class AlarmTimeCalculatorTest {
     }
 
     @Test
+    fun oddWeekAlarmSkipsMatchingDayInEvenIsoWeek() {
+        val result =
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(hour = 9, minute = 30, days = "1", weekParity = "ODD")
+            )
+
+        assertEquals(Instant.parse("2026-06-29T09:30:00Z"), result)
+    }
+
+    @Test
+    fun evenWeekAlarmCanScheduleFourteenDaysAheadAfterTodaysTimePasses() {
+        val result =
+            calculator("2026-06-22T10:00:00Z").nextTrigger(
+                alarm(hour = 9, minute = 30, days = "1", weekParity = "EVEN")
+            )
+
+        assertEquals(Instant.parse("2026-07-06T09:30:00Z"), result)
+    }
+
+    @Test
+    fun oddWeekAlarmUsesIsoWeekNumberAcrossWeekBasedYearBoundary() {
+        val result =
+            calculator("2020-12-28T10:00:00Z").nextTrigger(
+                alarm(hour = 9, minute = 30, days = "1", weekParity = "ODD")
+            )
+
+        assertEquals(Instant.parse("2021-01-04T09:30:00Z"), result)
+    }
+
+    @Test
     fun malformedRepeatDaysFallBackToOneTimeScheduling() {
         val result =
             calculator("2026-06-18T10:00:00Z").nextTrigger(
@@ -147,11 +177,13 @@ class AlarmTimeCalculatorTest {
     private fun alarm(
         hour: Int,
         minute: Int,
-        days: String = ""
+        days: String = "",
+        weekParity: String = "EVERY"
     ) = Alarm(
         hour = hour,
         minute = minute,
         daysOfWeek = days,
+        weekParity = weekParity,
         puzzlesList = "MATH"
     )
 }

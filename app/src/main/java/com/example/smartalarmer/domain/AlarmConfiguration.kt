@@ -20,6 +20,23 @@ enum class AlarmDay(
     }
 }
 
+enum class AlarmWeekParity {
+    EVERY,
+    ODD,
+    EVEN
+    ;
+
+    fun includes(isoWeekNumber: Int): Boolean = when (this) {
+        EVERY -> true
+        ODD -> isoWeekNumber % 2 != 0
+        EVEN -> isoWeekNumber % 2 == 0
+    }
+
+    companion object {
+        fun parse(value: String?): AlarmWeekParity = entries.firstOrNull { it.name == value?.trim()?.uppercase(Locale.ROOT) } ?: EVERY
+    }
+}
+
 class AlarmDays private constructor(
     val values: Set<AlarmDay>
 ) {
@@ -98,6 +115,9 @@ class PuzzleSelection private constructor(
 
 val Alarm.repeatDays: AlarmDays
     get() = AlarmDays.parse(daysOfWeek)
+
+val Alarm.repeatWeekParity: AlarmWeekParity
+    get() = AlarmWeekParity.parse(weekParity)
 
 val Alarm.puzzleSelection: PuzzleSelection
     get() = PuzzleSelection.parse(puzzlesList)
