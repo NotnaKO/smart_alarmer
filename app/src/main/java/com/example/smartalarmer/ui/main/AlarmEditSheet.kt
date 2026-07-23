@@ -269,67 +269,69 @@ fun AlarmEditSheet(
                 }
 
                 // Sound Button
-                Row(
-                    modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onPickSound() }
-                        .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                        .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(com.example.smartalarmer.R.string.sound_label),
-                        color = SecondaryText,
-                        fontSize = 16.sp,
-                        modifier = Modifier.weight(1f).padding(end = 12.dp)
-                    )
-                    Text(
-                        text = selectedSoundName,
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.End,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TextButton(
-                        onClick = onPreviewSound,
-                        colors =
-                        ButtonDefaults.textButtonColors(
-                            contentColor = IndigoContent,
-                            disabledContentColor = DisabledControlText
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onPickSound() }
+                            .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                            .testTag(ALARM_EDITOR_SOUND_ROW_TAG),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            stringResource(
-                                if (isSoundPreviewPlaying) {
-                                    com.example.smartalarmer.R.string.stop_sound_preview
-                                } else {
-                                    com.example.smartalarmer.R.string.preview_sound
-                                }
-                            )
+                            text = stringResource(com.example.smartalarmer.R.string.sound_label),
+                            color = SecondaryText,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(1f).padding(end = 12.dp)
+                        )
+                        Text(
+                            text = selectedSoundName,
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.End,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    TextButton(
-                        onClick = onResetSound,
-                        enabled = pickedSoundUri != null,
-                        colors =
-                        ButtonDefaults.textButtonColors(
-                            contentColor = IndigoContent,
-                            disabledContentColor = DisabledControlText
-                        )
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(stringResource(com.example.smartalarmer.R.string.use_default_sound))
+                        TextButton(
+                            onClick = onPreviewSound,
+                            colors =
+                            ButtonDefaults.textButtonColors(
+                                contentColor = IndigoContent,
+                                disabledContentColor = DisabledControlText
+                            )
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (isSoundPreviewPlaying) {
+                                        com.example.smartalarmer.R.string.stop_sound_preview
+                                    } else {
+                                        com.example.smartalarmer.R.string.preview_sound
+                                    }
+                                )
+                            )
+                        }
+                        TextButton(
+                            onClick = onResetSound,
+                            enabled = pickedSoundUri != null,
+                            colors =
+                            ButtonDefaults.textButtonColors(
+                                contentColor = IndigoContent,
+                                disabledContentColor = DisabledControlText
+                            )
+                        ) {
+                            Text(stringResource(com.example.smartalarmer.R.string.use_default_sound))
+                        }
                     }
                 }
 
@@ -413,7 +415,6 @@ fun AlarmEditSheet(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_DAYS_TAG),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -482,14 +483,12 @@ fun AlarmEditSheet(
                             }
                         }
                         if (selectedDays.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = stringResource(com.example.smartalarmer.R.string.repeat_week_pattern_label),
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
                             SingleChoiceSegmentedButtonRow(
                                 modifier = Modifier.fillMaxWidth().testTag(ALARM_EDITOR_WEEK_PARITY_TAG)
                             ) {
