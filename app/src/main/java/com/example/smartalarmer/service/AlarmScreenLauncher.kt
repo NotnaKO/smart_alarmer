@@ -1,5 +1,6 @@
 package com.example.smartalarmer.service
 
+import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.KeyguardManager
 import android.app.PendingIntent
@@ -48,6 +49,7 @@ internal object AlarmScreenLauncher {
         isKeyguardLocked: Boolean
     ): Boolean = isInteractive && !isKeyguardLocked
 
+    @SuppressLint("InlinedApi")
     internal fun senderBackgroundStartMode(sdkInt: Int): Int? = when {
         sdkInt >= 36 -> ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS
         sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->

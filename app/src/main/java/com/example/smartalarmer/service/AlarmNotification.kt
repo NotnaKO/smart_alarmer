@@ -1,5 +1,6 @@
 package com.example.smartalarmer.service
 
+import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,7 +18,6 @@ object AlarmNotification {
     const val CHANNEL_ID = "AlarmChannel"
 
     fun ensureChannel(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(
@@ -68,6 +68,7 @@ object AlarmNotification {
         )
     }
 
+    @SuppressLint("InlinedApi")
     internal fun creatorBackgroundStartMode(sdkInt: Int): Int? = when {
         sdkInt >= 36 -> ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_ALWAYS
         sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->

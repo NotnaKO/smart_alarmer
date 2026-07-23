@@ -9,13 +9,14 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 ### Key Features
 
 - **Four puzzle types**: Math equations, typing challenges, memory pattern games, and physical shake challenges with a sensor-safe fallback.
-- **Customizable Alarm Configuration**: A slide-up `ModalBottomSheet` lets you configure specific repeat weekdays, choose which puzzle types to show, and set the puzzle count.
+- **Customizable Alarm Configuration**: A slide-up editor offers repeat presets, puzzle selection, visible wake-up and volume controls, sticky save actions, and ringtone preview/stop/reset.
 - **Modern Glassmorphic Dark Theme**: Premium styling featuring semi-transparent overlays, glowing accents, and smooth feedback animations.
 - **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
 - **Wake-up checks**: Optional chained follow-up alarms require one easy task after the main alarm, with configurable count and 5, 10, or 15 minute intervals measured from each completion.
 - **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
+- **Challenge-preserving fallback**: After three failed submissions or 30 seconds, a blocked task can be exchanged for a different available puzzle without bypassing the alarm.
 - **Full-screen overlay**: The puzzle screen appears over the lock screen with back-button disabled for real alarms.
 - **Room database**: Persistent alarm storage with reactive Flow-based UI updates.
 
@@ -134,7 +135,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `data/Alarm.kt` | Room entities for alarm configuration and durable active wake-up-check sessions. Alarm settings include check enablement, count, and interval. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 6. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 7. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android

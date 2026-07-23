@@ -44,7 +44,6 @@ data class AlarmDraft(
         isEnabled = isEnabled,
         puzzlesList = puzzleSelection.encoded,
         puzzleCount = puzzleCount,
-        isGradualVolume = true,
         volumeRampSeconds = volumeRampSeconds,
         label = label.trim(),
         soundUri = soundUri,

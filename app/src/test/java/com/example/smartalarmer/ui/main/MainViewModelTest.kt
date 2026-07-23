@@ -129,7 +129,7 @@ class MainViewModelTest {
 
     @Test
     fun saveEditedAlarm_success_updatesSameRowAndEnablesAlarm() = runTest(mainDispatcherRule.dispatcher) {
-        val existing = alarm(id = 8, isEnabled = false).copy(isGradualVolume = false)
+        val existing = alarm(id = 8, isEnabled = false)
         repository.seed(existing)
         val viewModel = createViewModel()
         viewModel.openEditSheet(existing)
@@ -153,7 +153,6 @@ class MainViewModelTest {
         assertEquals("1,7", saved.daysOfWeek)
         assertEquals("TYPING,MEMORY", saved.puzzlesList)
         assertEquals(2, saved.puzzleCount)
-        assertTrue(saved.isGradualVolume)
         assertEquals("Updated", saved.label)
         assertEquals("content://alarm/sound", saved.soundUri)
         assertTrue(saved.isEnabled)

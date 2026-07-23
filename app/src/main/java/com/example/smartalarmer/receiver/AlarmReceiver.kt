@@ -3,7 +3,6 @@ package com.example.smartalarmer.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
@@ -79,11 +78,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     Intent(context, AlarmService::class.java),
                     payload
                 )
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
+            context.startForegroundService(serviceIntent)
         }
         internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
 

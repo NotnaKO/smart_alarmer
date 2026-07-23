@@ -25,7 +25,7 @@ fun ShakePuzzleView(
     easyMode: Boolean = false
 ) {
     val targetShakes = if (easyMode) 8 else 30
-    var shakeCount by rememberSaveable(targetShakes) { mutableStateOf(targetShakes) }
+    var shakeCount by rememberSaveable(targetShakes) { mutableIntStateOf(targetShakes) }
 
     DisposableEffect(key1 = shakeProvider) {
         var lastUpdate = System.currentTimeMillis()

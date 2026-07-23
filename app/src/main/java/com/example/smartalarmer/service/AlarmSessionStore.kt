@@ -82,12 +82,12 @@ internal class AlarmSessionStore(
         }
     }
 
-    @SuppressLint("ApplySharedPref")
+    @SuppressLint("ApplySharedPref", "UseKtx")
     fun clear() {
         check(preferences.edit().clear().commit()) { "Unable to clear the active alarm session" }
     }
 
-    @SuppressLint("ApplySharedPref")
+    @SuppressLint("ApplySharedPref", "UseKtx")
     private fun write(session: AlarmAudioSession): Boolean = preferences
         .edit()
         .putInt(KEY_ALARM_ID, session.payload.alarmId)

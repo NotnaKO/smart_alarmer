@@ -47,11 +47,11 @@ require(releaseSigningValues.all { it.isNullOrBlank() } || hasReleaseSigning) {
 
 android {
     namespace = "com.example.smartalarmer"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.notnako.smartalarmer"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = appVersionCode
         versionName = releaseVersionName
     }

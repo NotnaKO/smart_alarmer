@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Alarm::class, WakeUpCheckSession::class], version = 6, exportSchema = true)
+@Database(entities = [Alarm::class, WakeUpCheckSession::class], version = 7, exportSchema = true)
 abstract class AlarmDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun wakeUpCheckDao(): WakeUpCheckDao
@@ -70,6 +70,51 @@ abstract class AlarmDatabase : RoomDatabase() {
                 }
             }
 
+        val MIGRATION_6_7 =
+            object : Migration(6, 7) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        """
+                        CREATE TABLE alarms_new (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                            hour INTEGER NOT NULL,
+                            minute INTEGER NOT NULL,
+                            daysOfWeek TEXT NOT NULL,
+                            isEnabled INTEGER NOT NULL,
+                            puzzlesList TEXT NOT NULL,
+                            puzzleCount INTEGER NOT NULL,
+                            volumeRampSeconds INTEGER NOT NULL,
+                            label TEXT NOT NULL,
+                            soundUri TEXT,
+                            wakeUpChecksEnabled INTEGER NOT NULL,
+                            wakeUpCheckCount INTEGER NOT NULL,
+                            wakeUpCheckIntervalMinutes INTEGER NOT NULL,
+                            scheduleStatus TEXT NOT NULL,
+                            scheduledTriggerAtMillis INTEGER
+                        )
+                        """.trimIndent()
+                    )
+                    db.execSQL(
+                        """
+                        INSERT INTO alarms_new (
+                            id, hour, minute, daysOfWeek, isEnabled, puzzlesList, puzzleCount,
+                            volumeRampSeconds, label, soundUri, wakeUpChecksEnabled,
+                            wakeUpCheckCount, wakeUpCheckIntervalMinutes, scheduleStatus,
+                            scheduledTriggerAtMillis
+                        )
+                        SELECT
+                            id, hour, minute, daysOfWeek, isEnabled, puzzlesList, puzzleCount,
+                            volumeRampSeconds, label, soundUri, wakeUpChecksEnabled,
+                            wakeUpCheckCount, wakeUpCheckIntervalMinutes, scheduleStatus,
+                            scheduledTriggerAtMillis
+                        FROM alarms
+                        """.trimIndent()
+                    )
+                    db.execSQL("DROP TABLE alarms")
+                    db.execSQL("ALTER TABLE alarms_new RENAME TO alarms")
+                }
+            }
+
         fun getDatabase(context: Context): AlarmDatabase = INSTANCE ?: synchronized(this) {
             val instance =
                 Room
@@ -82,7 +127,8 @@ abstract class AlarmDatabase : RoomDatabase() {
                         MIGRATION_2_3,
                         MIGRATION_3_4,
                         MIGRATION_4_5,
-                        MIGRATION_5_6
+                        MIGRATION_5_6,
+                        MIGRATION_6_7
                     )
                     .build()
             INSTANCE = instance

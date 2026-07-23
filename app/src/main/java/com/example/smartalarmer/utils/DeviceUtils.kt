@@ -2,9 +2,9 @@ package com.example.smartalarmer.utils
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.core.net.toUri
 
 object DeviceUtils {
     fun isXiaomi(): Boolean {
@@ -36,6 +36,6 @@ object DeviceUtils {
     }
 
     fun getStandardAppInfoIntent(context: Context): Intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = Uri.parse("package:${context.packageName}")
+        data = "package:${context.packageName}".toUri()
     }
 }

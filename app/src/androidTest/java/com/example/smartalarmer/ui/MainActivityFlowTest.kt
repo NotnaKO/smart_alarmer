@@ -1,10 +1,11 @@
 package com.example.smartalarmer.ui
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.MainActivity
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -72,15 +73,19 @@ class MainActivityFlowTest {
         composeTestRule.onNodeWithContentDescription(addBtnDesc).performClick()
 
         val labelPlaceholder = context.getString(com.example.smartalarmer.R.string.label_placeholder)
-        composeTestRule.onNodeWithText(labelPlaceholder).performTextReplacement("Plan Test Alarm")
+        val labelField = composeTestRule.onNodeWithText(labelPlaceholder)
+        labelField.performTextReplacement("Plan Test Alarm")
+        labelField.performImeAction()
 
         // Select Monday
         val dayMon = context.getString(com.example.smartalarmer.R.string.day_m)
-        composeTestRule.onNodeWithText(dayMon).performClick()
+        composeTestRule.onNodeWithText(dayMon).performScrollTo().performClick()
 
-        // Click Save
-        val saveBtn = context.getString(com.example.smartalarmer.R.string.save)
-        composeTestRule.onNodeWithText(saveBtn).performClick()
+        // Click the fixed editor action directly rather than depending on localized child text.
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(ALARM_EDITOR_SAVE_TAG).fetchSemanticsNodes().size == 1
+        }
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).assertIsDisplayed().performClick()
 
         // Wait and verify
         composeTestRule.waitUntil(timeoutMillis = 5000) {

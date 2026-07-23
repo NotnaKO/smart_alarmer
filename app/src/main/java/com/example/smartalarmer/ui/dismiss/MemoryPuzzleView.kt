@@ -26,6 +26,7 @@ import com.example.smartalarmer.ui.theme.*
 fun MemoryPuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
+    onFailure: () -> Unit = {},
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
     easyMode: Boolean = false
 ) {
@@ -50,7 +51,7 @@ fun MemoryPuzzleView(
         ) { mutableStateListOf<Int>() }
     var hasStarted by rememberSaveable { mutableStateOf(false) }
     var isShowingSequence by rememberSaveable { mutableStateOf(false) }
-    var activeFlashIndex by rememberSaveable { mutableStateOf(-1) }
+    var activeFlashIndex by rememberSaveable { mutableIntStateOf(-1) }
     var showError by rememberSaveable { mutableStateOf(false) }
     val memoryCellDescriptions = (1..9).map { stringResource(R.string.memory_cell_desc, it) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -110,6 +111,7 @@ fun MemoryPuzzleView(
                                         userInputs.clear()
                                         showError = true
                                         isShowingSequence = true
+                                        onFailure()
                                     } else {
                                         onProgress(userInputs.size.toFloat() / sequence.size.toFloat())
                                         if (userInputs.size == sequence.size) {
