@@ -29,6 +29,7 @@
     <string name="edit_alarm">Editar alarma</string>
     <string name="time_label">Hora</string>
     <string name="repeat_days_label">Repetir días</string>
+    <string name="repeat_alarm_description">Elige los días en que se repetirá la alarma.</string>
     <string name="repeat_week_pattern_label">Semanas</string>
     <string name="repeat_week_every">Todas</string>
     <string name="repeat_week_odd">Impares</string>

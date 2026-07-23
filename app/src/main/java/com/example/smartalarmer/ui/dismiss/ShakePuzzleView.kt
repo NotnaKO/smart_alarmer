@@ -76,14 +76,14 @@ fun ShakePuzzleView(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.shakes_remaining, shakeCount),
-            color = Color.LightGray,
+            color = SecondaryText,
             fontSize = 18.sp
         )
         Spacer(modifier = Modifier.height(24.dp))
         LinearProgressIndicator(
             progress = { (targetShakes - shakeCount).toFloat() / targetShakes },
             modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp)),
-            color = GreenSuccess,
+            color = GreenSuccessContent,
             trackColor = KeyButtonBgActive
         )
     }

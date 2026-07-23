@@ -29,6 +29,7 @@ import com.example.smartalarmer.ui.theme.OrangeWarning
 import com.example.smartalarmer.ui.theme.OrangeWarningSemi
 import com.example.smartalarmer.ui.theme.RedError
 import com.example.smartalarmer.ui.theme.RedErrorSemi
+import com.example.smartalarmer.ui.theme.SecondaryText
 import com.example.smartalarmer.utils.AlarmCapabilityState
 
 @Composable
@@ -127,7 +128,7 @@ private fun SetupWarningCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(title, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(description, color = Color.LightGray, fontSize = 13.sp)
+            Text(description, color = SecondaryText, fontSize = 13.sp)
             Spacer(modifier = Modifier.height(12.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

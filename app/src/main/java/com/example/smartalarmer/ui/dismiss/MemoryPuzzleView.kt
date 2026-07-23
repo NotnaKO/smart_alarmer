@@ -153,7 +153,7 @@ fun MemoryPuzzleView(
         if (showError) {
             Text(
                 text = stringResource(R.string.incorrect_pattern),
-                color = RedError,
+                color = RedErrorContent,
                 modifier =
                 Modifier.semantics {
                     liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Assertive

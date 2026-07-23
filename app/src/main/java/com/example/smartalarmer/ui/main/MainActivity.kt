@@ -275,7 +275,7 @@ class MainActivity : ComponentActivity() {
                                         androidx.compose.ui.res.stringResource(
                                             com.example.smartalarmer.R.string.no_alarms_scheduled
                                         ),
-                                        color = Color.Gray,
+                                        color = SecondaryText,
                                         fontSize = 16.sp,
                                         textAlign = TextAlign.Center
                                     )
@@ -407,7 +407,7 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Text(
                                             stringResource(com.example.smartalarmer.R.string.delete),
-                                            color = RedError
+                                            color = RedErrorContent
                                         )
                                     }
                                 },

@@ -29,6 +29,7 @@
     <string name="edit_alarm">Alarm bearbeiten</string>
     <string name="time_label">Uhrzeit</string>
     <string name="repeat_days_label">Wiederholungstage</string>
+    <string name="repeat_alarm_description">Wähle die Tage aus, an denen der Alarm wiederholt wird.</string>
     <string name="repeat_week_pattern_label">Wochen</string>
     <string name="repeat_week_every">Alle</string>
     <string name="repeat_week_odd">Ungerade</string>
