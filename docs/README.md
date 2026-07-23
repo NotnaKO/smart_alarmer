@@ -241,6 +241,30 @@ full-suite cooldown.
 After building, the APK file can be retrieved at:
 `app/build/outputs/apk/debug/app-debug.apk`
 
+### Commit messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for every
+repository commit:
+
+```text
+<type>(<optional scope>): <short imperative summary>
+```
+
+Use `feat` for user-visible functionality, `fix` for bug fixes, `refactor` for
+behavior-preserving code changes, `test` for test-only changes, `docs` for
+documentation, `build`/`ci` for tooling and automation, and `chore` for other
+maintenance. Add `!` before the colon and a `BREAKING CHANGE:` footer when a
+change is incompatible.
+
+Examples:
+
+```text
+feat(editor): add alternating-week schedules
+fix(alarm): play the selected ringtone during real delivery
+refactor(data): remove an unpublished Room schema
+docs: document the commit convention
+```
+
 ### Release builds
 
 Production builds use the application ID `com.notnako.smartalarmer` and R8
