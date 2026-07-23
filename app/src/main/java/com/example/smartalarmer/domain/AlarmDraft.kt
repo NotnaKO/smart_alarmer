@@ -15,8 +15,6 @@ data class AlarmDraft(
     val wakeUpChecksEnabled: Boolean = false,
     val wakeUpCheckCount: Int = WakeUpCheckConfig.DEFAULT_COUNT,
     val wakeUpCheckIntervalMinutes: Int = WakeUpCheckConfig.DEFAULT_INTERVAL_MINUTES,
-    val backupAlarmTimeoutMinutes: Int = BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
-    val backupAlarmRepeatCount: Int = BackupAlarmConfig.DEFAULT_REPEAT_COUNT,
     val volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS
 ) {
     init {
@@ -33,12 +31,6 @@ data class AlarmDraft(
         }
         require(wakeUpCheckIntervalMinutes in WakeUpCheckConfig.INTERVAL_OPTIONS_MINUTES) {
             "Wake-up check interval must be a supported preset"
-        }
-        require(backupAlarmTimeoutMinutes in BackupAlarmConfig.TIMEOUT_OPTIONS_MINUTES) {
-            "Backup alarm timeout must be a supported preset"
-        }
-        require(backupAlarmRepeatCount in BackupAlarmConfig.REPEAT_COUNT_RANGE) {
-            "Backup alarm repeat count must be supported"
         }
     }
 
@@ -60,8 +52,8 @@ data class AlarmDraft(
         wakeUpChecksEnabled = wakeUpChecksEnabled,
         wakeUpCheckCount = wakeUpCheckCount,
         wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
-        backupAlarmTimeoutMinutes = backupAlarmTimeoutMinutes,
-        backupAlarmRepeatCount = backupAlarmRepeatCount,
+        backupAlarmTimeoutMinutes = BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
+        backupAlarmRepeatCount = BackupAlarmConfig.DEFAULT_REPEAT_COUNT,
         scheduleStatus = if (isEnabled) AlarmScheduleStatus.UNKNOWN.name else AlarmScheduleStatus.DISABLED.name,
         scheduledTriggerAtMillis = null
     )

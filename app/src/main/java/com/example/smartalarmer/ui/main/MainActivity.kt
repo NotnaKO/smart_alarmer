@@ -103,9 +103,11 @@ class MainActivity : ComponentActivity() {
                 var pickedSoundUri by rememberSaveable { mutableStateOf<String?>(null) }
                 var labelInput by rememberSaveable { mutableStateOf("") }
                 var previewRingtone by remember { mutableStateOf<android.media.Ringtone?>(null) }
+                var isSoundPreviewPlaying by remember { mutableStateOf(false) }
                 val stopSoundPreview = {
-                    previewRingtone?.stop()
+                    runCatching { previewRingtone?.stop() }
                     previewRingtone = null
+                    isSoundPreviewPlaying = false
                 }
 
                 val ringtonePickerLauncher =
@@ -340,11 +342,11 @@ class MainActivity : ComponentActivity() {
                                     ringtonePickerLauncher.launch(intent)
                                 },
                                 onPreviewSound = {
-                                    if (previewRingtone?.isPlaying == true) {
+                                    if (isSoundPreviewPlaying) {
                                         stopSoundPreview()
                                     } else {
                                         stopSoundPreview()
-                                        previewRingtone =
+                                        val ringtone =
                                             runCatching {
                                                 val previewUri =
                                                     AlarmSoundResolver
@@ -354,9 +356,11 @@ class MainActivity : ComponentActivity() {
                                                         ).first()
                                                 RingtoneManager.getRingtone(context, previewUri)?.also { it.play() }
                                             }.getOrNull()
+                                        previewRingtone = ringtone
+                                        isSoundPreviewPlaying = ringtone != null
                                     }
                                 },
-                                isSoundPreviewPlaying = previewRingtone?.isPlaying == true,
+                                isSoundPreviewPlaying = isSoundPreviewPlaying,
                                 onResetSound = {
                                     stopSoundPreview()
                                     pickedSoundUri = null

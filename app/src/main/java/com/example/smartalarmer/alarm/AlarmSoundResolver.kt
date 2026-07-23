@@ -37,8 +37,6 @@ internal object AlarmSoundResolver {
             selectedCandidate,
             defaults.actualUri(RingtoneManager.TYPE_ALARM),
             defaults.symbolicUri(RingtoneManager.TYPE_ALARM),
-            defaults.actualUri(RingtoneManager.TYPE_NOTIFICATION),
-            defaults.symbolicUri(RingtoneManager.TYPE_NOTIFICATION),
             defaults.actualUri(RingtoneManager.TYPE_RINGTONE),
             defaults.symbolicUri(RingtoneManager.TYPE_RINGTONE)
         ).distinct()

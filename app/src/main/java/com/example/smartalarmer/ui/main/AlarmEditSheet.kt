@@ -40,7 +40,6 @@ import com.example.smartalarmer.domain.AlarmDays
 import com.example.smartalarmer.domain.AlarmDraft
 import com.example.smartalarmer.domain.AlarmVolumeRamp
 import com.example.smartalarmer.domain.AlarmWeekParity
-import com.example.smartalarmer.domain.BackupAlarmConfig
 import com.example.smartalarmer.domain.PuzzleSelection
 import com.example.smartalarmer.domain.PuzzleType
 import com.example.smartalarmer.domain.WakeUpCheckConfig
@@ -137,20 +136,6 @@ fun AlarmEditSheet(
                 ?: WakeUpCheckConfig.DEFAULT_INTERVAL_MINUTES
         )
     }
-    var backupAlarmTimeoutMinutes by rememberSaveable(alarm?.id) {
-        mutableIntStateOf(
-            alarm
-                ?.backupAlarmTimeoutMinutes
-                ?.takeIf { it in BackupAlarmConfig.TIMEOUT_OPTIONS_MINUTES }
-                ?: BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES
-        )
-    }
-    var backupAlarmRepeatCount by rememberSaveable(alarm?.id) {
-        mutableIntStateOf(
-            (alarm?.backupAlarmRepeatCount ?: BackupAlarmConfig.DEFAULT_REPEAT_COUNT)
-                .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE)
-        )
-    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val saveDraft = {
         val puzzleSelection = PuzzleSelection.of(selectedPuzzles)
@@ -167,8 +152,6 @@ fun AlarmEditSheet(
                 wakeUpChecksEnabled = wakeUpChecksEnabled,
                 wakeUpCheckCount = wakeUpCheckCount,
                 wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
-                backupAlarmTimeoutMinutes = backupAlarmTimeoutMinutes,
-                backupAlarmRepeatCount = backupAlarmRepeatCount,
                 volumeRampSeconds = volumeRampSeconds
             )
         )
@@ -178,7 +161,8 @@ fun AlarmEditSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = BottomSheetBg,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = BottomSheetDrag) }
+        dragHandle = null,
+        sheetGesturesEnabled = false
     ) {
         Column(
             modifier =
@@ -186,7 +170,6 @@ fun AlarmEditSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.92f)
                 .navigationBarsPadding()
-                .imePadding()
                 .testTag(ALARM_EDITOR_CONTENT_TAG)
         ) {
             Column(
@@ -195,6 +178,7 @@ fun AlarmEditSheet(
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
+                    .testTag(ALARM_EDITOR_SCROLL_TAG)
                     .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -774,125 +758,6 @@ fun AlarmEditSheet(
                         }
                     }
 
-                    Column(
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, CardBorderGlass, RoundedCornerShape(16.dp))
-                            .padding(16.dp)
-                            .testTag(ALARM_EDITOR_BACKUP_ALARM_TAG),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = stringResource(com.example.smartalarmer.R.string.backup_alarm_label),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text =
-                            stringResource(
-                                com.example.smartalarmer.R.string.backup_alarm_description
-                            ),
-                            color = Color.LightGray,
-                            fontSize = 12.sp
-                        )
-                        HorizontalDivider(color = CardBorderGlass)
-                        Text(
-                            text =
-                            stringResource(
-                                com.example.smartalarmer.R.string.backup_alarm_timeout_label
-                            ),
-                            color = Color.LightGray
-                        )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            BackupAlarmConfig.TIMEOUT_OPTIONS_MINUTES.forEach { minutes ->
-                                FilterChip(
-                                    selected = backupAlarmTimeoutMinutes == minutes,
-                                    onClick = { backupAlarmTimeoutMinutes = minutes },
-                                    label = {
-                                        Text(
-                                            stringResource(
-                                                com.example.smartalarmer.R.string.wake_up_check_minutes_format,
-                                                minutes
-                                            )
-                                        )
-                                    },
-                                    colors =
-                                    FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = OrangeWarning,
-                                        selectedLabelColor = Color.Black,
-                                        containerColor = KeyButtonBg,
-                                        labelColor = Color.Gray
-                                    )
-                                )
-                            }
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text =
-                                stringResource(
-                                    com.example.smartalarmer.R.string.backup_alarm_repeat_count_label
-                                ),
-                                color = Color.LightGray,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                FilledTonalIconButton(
-                                    onClick = {
-                                        if (backupAlarmRepeatCount >
-                                            BackupAlarmConfig.REPEAT_COUNT_RANGE.first
-                                        ) {
-                                            backupAlarmRepeatCount--
-                                        }
-                                    },
-                                    modifier =
-                                    Modifier
-                                        .size(48.dp)
-                                        .testTag(ALARM_EDITOR_BACKUP_DECREASE_TAG),
-                                    colors =
-                                    IconButtonDefaults.filledTonalIconButtonColors(
-                                        containerColor = KeyButtonBg,
-                                        contentColor = Color.White
-                                    )
-                                ) { Text("−") }
-                                Text(
-                                    backupAlarmRepeatCount.toString(),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                FilledTonalIconButton(
-                                    onClick = {
-                                        if (backupAlarmRepeatCount <
-                                            BackupAlarmConfig.REPEAT_COUNT_RANGE.last
-                                        ) {
-                                            backupAlarmRepeatCount++
-                                        }
-                                    },
-                                    modifier =
-                                    Modifier
-                                        .size(48.dp)
-                                        .testTag(ALARM_EDITOR_BACKUP_INCREASE_TAG),
-                                    colors =
-                                    IconButtonDefaults.filledTonalIconButtonColors(
-                                        containerColor = KeyButtonBg,
-                                        contentColor = Color.White
-                                    )
-                                ) { Text("+") }
-                            }
-                        }
-                    }
-
                     Column {
                         Text(
                             text = stringResource(com.example.smartalarmer.R.string.volume_ramp_duration),
@@ -944,7 +809,7 @@ fun AlarmEditSheet(
                 }
             }
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().imePadding(),
                 color = BottomSheetBg,
                 tonalElevation = 6.dp
             ) {
@@ -981,6 +846,7 @@ fun AlarmEditSheet(
 }
 
 internal const val ALARM_EDITOR_CONTENT_TAG = "alarm_editor_content"
+internal const val ALARM_EDITOR_SCROLL_TAG = "alarm_editor_scroll"
 internal const val ALARM_EDITOR_TIME_ROW_TAG = "alarm_editor_time_row"
 internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
 internal const val ALARM_EDITOR_REPEAT_TAG = "alarm_editor_repeat"
@@ -988,8 +854,5 @@ internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
 internal const val ALARM_EDITOR_WEEK_PARITY_TAG = "alarm_editor_week_parity"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"
 internal const val ALARM_EDITOR_WAKE_UP_CHECKS_TAG = "alarm_editor_wake_up_checks"
-internal const val ALARM_EDITOR_BACKUP_ALARM_TAG = "alarm_editor_backup_alarm"
-internal const val ALARM_EDITOR_BACKUP_DECREASE_TAG = "alarm_editor_backup_decrease"
-internal const val ALARM_EDITOR_BACKUP_INCREASE_TAG = "alarm_editor_backup_increase"
 internal const val ALARM_EDITOR_SAVE_TAG = "alarm_editor_save"
 internal const val ALARM_LABEL_MAX_LENGTH = 60

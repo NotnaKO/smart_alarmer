@@ -6,9 +6,10 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_BACKUP_INCREASE_TAG
+import com.example.smartalarmer.domain.BackupAlarmConfig
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_SCROLL_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
@@ -614,26 +615,17 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun alarmEditSheet_alwaysSavesConfiguredBackupEscalation() {
+    fun alarmEditSheet_fastScrollKeepsEditorStableAndActionsVisible() {
         val context =
             androidx.test.platform.app.InstrumentationRegistry
                 .getInstrumentation()
                 .targetContext
-        var savedTimeout = 0
-        var savedRepeats = 0
         composeTestRule.setContent {
             SmartAlarmerTheme {
                 AlarmEditSheet(
-                    alarm =
-                    testAlarm().copy(
-                        backupAlarmTimeoutMinutes = 10,
-                        backupAlarmRepeatCount = 1
-                    ),
+                    alarm = null,
                     onDismiss = {},
-                    onSave = { draft ->
-                        savedTimeout = draft.backupAlarmTimeoutMinutes
-                        savedRepeats = draft.backupAlarmRepeatCount
-                    },
+                    onSave = {},
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
                     initialLabel = "",
@@ -644,18 +636,49 @@ class AlarmListScreenTest {
         }
 
         composeTestRule
-            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_minutes_format, 15))
-            .performScrollTo()
-            .performClick()
-        composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_BACKUP_INCREASE_TAG)
-            .performScrollTo()
-            .performClick()
-        composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_SAVE_TAG)
-            .performClick()
+            .onNodeWithTag(ALARM_EDITOR_SCROLL_TAG)
+            .performTouchInput {
+                repeat(8) {
+                    swipeUp(durationMillis = 50)
+                }
+            }
 
-        assertEquals(15, savedTimeout)
-        assertEquals(2, savedRepeats)
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_duration))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmEditSheet_resetsLegacyBackupSettingsToInternalDefaults() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var savedAlarm: Alarm? = null
+        val existing =
+            testAlarm().copy(
+                backupAlarmTimeoutMinutes = 15,
+                backupAlarmRepeatCount = 1
+            )
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = existing,
+                    onDismiss = {},
+                    onSave = { savedAlarm = it.toAlarm(existing = existing, isEnabled = true) },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
+
+        assertEquals(BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES, savedAlarm?.backupAlarmTimeoutMinutes)
+        assertEquals(BackupAlarmConfig.DEFAULT_REPEAT_COUNT, savedAlarm?.backupAlarmRepeatCount)
     }
 }

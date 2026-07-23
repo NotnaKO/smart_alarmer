@@ -45,11 +45,6 @@
     <string name="wake_up_check_minutes_format">%1$d мин</string>
     <string name="wake_up_check_easy_task_description">Для каждой проверки нужно выполнить одно простое задание. Новый интервал начинается после его выполнения.</string>
     <string name="wake_up_check_card_summary">Проверки пробуждения: %1$d × каждые %2$d мин</string>
-    <string name="backup_alarm_label">Резервное усиление</string>
-    <string name="backup_alarm_description">Если нет прогресса в заданиях, включаются встроенный сигнал на максимальной громкости и вибрация.</string>
-    <string name="backup_alarm_timeout_label">Усилить через</string>
-    <string name="backup_alarm_repeat_count_label">Попытки вибрации</string>
-    <string name="backup_alarm_card_summary">Усиление через %1$d мин · попыток вибрации: %2$d</string>
     <string name="wake_up_check_title">Проверка пробуждения</string>
     <string name="wake_up_check_progress">Проверка %1$d из %2$d</string>
     <plurals name="wake_up_check_active_summary">

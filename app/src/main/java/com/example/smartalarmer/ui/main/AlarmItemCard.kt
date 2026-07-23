@@ -169,16 +169,6 @@ fun AlarmItemCard(
                         color = IndigoContent
                     )
                 }
-                Text(
-                    text =
-                    stringResource(
-                        com.example.smartalarmer.R.string.backup_alarm_card_summary,
-                        alarm.backupAlarmTimeoutMinutes,
-                        alarm.backupAlarmRepeatCount
-                    ),
-                    fontSize = 12.sp,
-                    color = OrangeWarning
-                )
                 wakeUpCheckSession?.let { session ->
                     val remainingChecks = session.totalChecks - session.nextCheckNumber + 1
                     Text(

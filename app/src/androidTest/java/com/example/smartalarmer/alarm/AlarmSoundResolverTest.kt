@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class AlarmSoundResolverTest {
     @Test
-    fun playbackCandidates_resolvesStoredDefaultToAlarmAndKeepsCallFallbackLast() {
+    fun playbackCandidates_resolvesStoredDefaultToAlarmAndNeverUsesNotificationSound() {
         val defaults = FakeDefaultRingtoneUriProvider()
 
         val candidates =
@@ -26,8 +26,6 @@ class AlarmSoundResolverTest {
             listOf(
                 defaults.actualAlarm,
                 defaults.symbolicAlarm,
-                defaults.actualNotification,
-                defaults.symbolicNotification,
                 defaults.actualCall,
                 defaults.symbolicCall
             ),

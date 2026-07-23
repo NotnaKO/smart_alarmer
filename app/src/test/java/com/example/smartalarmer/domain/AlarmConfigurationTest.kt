@@ -76,7 +76,7 @@ class AlarmConfigurationTest {
     }
 
     @Test
-    fun alarmDraftPersistsAlwaysOnBackupEscalationConfiguration() {
+    fun alarmDraftUsesInternalBackupEscalationConfiguration() {
         val alarm =
             AlarmDraft(
                 hour = 7,
@@ -85,13 +85,11 @@ class AlarmConfigurationTest {
                 puzzleSelection = PuzzleSelection.DEFAULT,
                 puzzleCount = 1,
                 label = "Morning",
-                soundUri = null,
-                backupAlarmTimeoutMinutes = 15,
-                backupAlarmRepeatCount = 2
+                soundUri = null
             ).toAlarm(isEnabled = true)
 
-        assertEquals(15, alarm.backupAlarmTimeoutMinutes)
-        assertEquals(2, alarm.backupAlarmRepeatCount)
+        assertEquals(BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES, alarm.backupAlarmTimeoutMinutes)
+        assertEquals(BackupAlarmConfig.DEFAULT_REPEAT_COUNT, alarm.backupAlarmRepeatCount)
     }
 
     @Test

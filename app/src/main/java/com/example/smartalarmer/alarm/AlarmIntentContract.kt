@@ -49,8 +49,8 @@ data class AlarmLaunchPayload(
                 isPreview = isPreview,
                 wakeUpChecksEnabled = alarm.wakeUpChecksEnabled,
                 wakeUpCheckIntervalMinutes = alarm.wakeUpCheckIntervalMinutes,
-                backupAlarmTimeoutMinutes = alarm.backupAlarmTimeoutMinutes,
-                backupAlarmRepeatCount = alarm.backupAlarmRepeatCount,
+                backupAlarmTimeoutMinutes = BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
+                backupAlarmRepeatCount = BackupAlarmConfig.DEFAULT_REPEAT_COUNT,
                 occurrenceTriggerAtMillis = occurrenceTriggerAtMillis.coerceAtLeast(NO_OCCURRENCE)
             )
         }
