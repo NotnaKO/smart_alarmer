@@ -181,6 +181,15 @@ Puzzle behavior is provided through small injectable interfaces:
 - Query changes flow through `AlarmDao` → `RoomAlarmRepository` → MainViewModel → UI
 - Test with in-memory Room database; inject via `ApplicationProvider.getApplicationContext()`
 
+### Dark Theme Control Contrast
+- Do not rely on Material defaults for segmented buttons and similar selectable
+  controls on glass backgrounds; default inactive content can be too dark to read
+- Set active/inactive container, content, and border colors explicitly from the
+  app theme, then reinstall and visually inspect the real editor on an emulator
+- For a style-only follow-up after behavioral coverage is already green, rerun
+  compile/lint checks and perform visual verification; a second full instrumented
+  suite is unnecessary unless semantics, interaction, or layout behavior changed
+
 ---
 
 ## 📚 Documentation & References
