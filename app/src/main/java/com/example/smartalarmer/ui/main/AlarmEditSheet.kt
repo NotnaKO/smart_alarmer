@@ -408,8 +408,9 @@ fun AlarmEditSheet(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = stringResource(com.example.smartalarmer.R.string.repeat_week_pattern_label),
-                            color = Color.LightGray,
-                            fontSize = 14.sp
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         SingleChoiceSegmentedButtonRow(
@@ -423,6 +424,15 @@ fun AlarmEditSheet(
                                     SegmentedButtonDefaults.itemShape(
                                         index = index,
                                         count = AlarmWeekParity.entries.size
+                                    ),
+                                    colors =
+                                    SegmentedButtonDefaults.colors(
+                                        activeContainerColor = IndigoPrimary,
+                                        activeContentColor = Color.White,
+                                        activeBorderColor = IndigoPrimary,
+                                        inactiveContainerColor = KeyButtonBg,
+                                        inactiveContentColor = Color.White,
+                                        inactiveBorderColor = CardBorderGlass
                                     ),
                                     icon = {}
                                 ) {
