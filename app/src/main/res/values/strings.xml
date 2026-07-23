@@ -45,6 +45,11 @@
     <string name="wake_up_check_minutes_format">%1$d min</string>
     <string name="wake_up_check_easy_task_description">Each check requires one easy task. The next interval starts after you complete it.</string>
     <string name="wake_up_check_card_summary">Wake-up checks: %1$d × every %2$d min</string>
+    <string name="backup_alarm_label">Backup escalation</string>
+    <string name="backup_alarm_description">Without puzzle progress, use a built-in sound at maximum volume and vibrate.</string>
+    <string name="backup_alarm_timeout_label">Escalate after</string>
+    <string name="backup_alarm_repeat_count_label">Vibration attempts</string>
+    <string name="backup_alarm_card_summary">Backup after %1$d min · %2$d vibration attempts</string>
     <string name="wake_up_check_title">Wake-up check</string>
     <string name="wake_up_check_progress">Check %1$d of %2$d</string>
     <plurals name="wake_up_check_active_summary">

@@ -3,4 +3,7 @@
     <!-- Alarm rows are operational state: restoring them cannot restore AlarmManager entries. -->
     <exclude domain="database" path="." />
     <exclude domain="sharedpref" path="active_alarm_session.xml" />
+    <exclude domain="device_sharedpref" path="active_alarm_session.xml" />
+    <exclude domain="device_sharedpref" path="direct_boot_alarms.xml" />
+    <exclude domain="device_sharedpref" path="pending_alarm_queue.xml" />
 </full-backup-content>

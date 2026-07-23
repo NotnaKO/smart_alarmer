@@ -40,11 +40,16 @@ class AlarmReceiverDecisionTest {
         val delivered =
             AlarmReceiver.payloadForDelivery(
                 currentAlarm,
-                AlarmLaunchPayload(alarmId = currentAlarm.id, puzzleCount = 1)
+                AlarmLaunchPayload(
+                    alarmId = currentAlarm.id,
+                    puzzleCount = 1,
+                    occurrenceTriggerAtMillis = 123_456L
+                )
             )
 
         assertEquals(AlarmLaunchType.MAIN, delivered.launchType)
         assertEquals(2, delivered.puzzleCount)
+        assertEquals(123_456L, delivered.occurrenceTriggerAtMillis)
     }
 
     private fun alarm(

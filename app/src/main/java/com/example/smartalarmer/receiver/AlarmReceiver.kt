@@ -3,6 +3,7 @@ package com.example.smartalarmer.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.UserManager
 import android.util.Log
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
@@ -10,6 +11,7 @@ import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.AlarmScheduleStatus
+import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import com.example.smartalarmer.service.AlarmService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +25,11 @@ class AlarmReceiver : BroadcastReceiver() {
         val payload = AlarmIntentContract.read(intent)
         if (payload.alarmId == AlarmLaunchPayload.NO_ALARM_ID) {
             startAlarmService(context, payload)
+            return
+        }
+        val userManager = context.getSystemService(UserManager::class.java)
+        if (!userManager.isUserUnlocked) {
+            deliverBeforeUnlock(context, payload)
             return
         }
 
@@ -80,13 +87,47 @@ class AlarmReceiver : BroadcastReceiver() {
                 )
             context.startForegroundService(serviceIntent)
         }
+
+        private fun deliverBeforeUnlock(
+            context: Context,
+            payload: AlarmLaunchPayload
+        ) {
+            if (payload.launchType != AlarmLaunchType.MAIN) return
+            val store = DirectBootAlarmStore(context)
+            val snapshot =
+                store
+                    .snapshots()
+                    .firstOrNull {
+                        it.alarm.id == payload.alarmId &&
+                            (
+                                payload.occurrenceTriggerAtMillis == AlarmLaunchPayload.NO_OCCURRENCE ||
+                                    it.triggerAtMillis == payload.occurrenceTriggerAtMillis
+                                )
+                    }
+                    ?: return
+            startAlarmService(
+                context,
+                AlarmLaunchPayload.fromAlarm(
+                    snapshot.alarm,
+                    occurrenceTriggerAtMillis = snapshot.triggerAtMillis
+                )
+            )
+        }
         internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
 
         internal fun payloadForDelivery(
             alarm: Alarm,
             scheduledPayload: AlarmLaunchPayload
         ) = when (scheduledPayload.launchType) {
-            AlarmLaunchType.MAIN -> AlarmLaunchPayload.fromAlarm(alarm)
+            AlarmLaunchType.MAIN ->
+                AlarmLaunchPayload.fromAlarm(
+                    alarm,
+                    occurrenceTriggerAtMillis =
+                    scheduledPayload.occurrenceTriggerAtMillis
+                        .takeUnless { it == AlarmLaunchPayload.NO_OCCURRENCE }
+                        ?: alarm.scheduledTriggerAtMillis
+                        ?: AlarmLaunchPayload.NO_OCCURRENCE
+                )
             AlarmLaunchType.WAKE_UP_CHECK -> scheduledPayload
         }
     }

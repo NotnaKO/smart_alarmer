@@ -3,6 +3,7 @@ package com.example.smartalarmer.ui.dismiss
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.UserManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
@@ -36,8 +37,10 @@ import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEvent
 import com.example.smartalarmer.alarm.AlarmProgressEventType
 import com.example.smartalarmer.receiver.WakeUpCheckCommandReceiver
+import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import com.example.smartalarmer.service.ActiveAlarmRecovery
 import com.example.smartalarmer.service.AlarmService
+import com.example.smartalarmer.service.PendingAlarmQueueStore
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 
 class AlarmDismissActivity : ComponentActivity() {
@@ -115,22 +118,35 @@ class AlarmDismissActivity : ComponentActivity() {
                                 },
                                 onDismissComplete = {
                                     if (!dismissConfig.isPreview) {
-                                        val commandIntent =
-                                            if (dismissConfig.launchType == AlarmLaunchType.WAKE_UP_CHECK) {
-                                                WakeUpCheckCommandReceiver.completeIntent(
-                                                    this,
-                                                    dismissConfig.alarmId,
-                                                    dismissConfig.wakeUpCheckToken,
-                                                    dismissConfig.wakeUpCheckNumber
-                                                )
-                                            } else {
-                                                WakeUpCheckCommandReceiver.startIntent(this, dismissConfig.alarmId)
-                                            }
-                                        sendBroadcast(commandIntent)
+                                        if (getSystemService(UserManager::class.java).isUserUnlocked) {
+                                            val commandIntent =
+                                                if (dismissConfig.launchType == AlarmLaunchType.WAKE_UP_CHECK) {
+                                                    WakeUpCheckCommandReceiver.completeIntent(
+                                                        this,
+                                                        dismissConfig.alarmId,
+                                                        dismissConfig.wakeUpCheckToken,
+                                                        dismissConfig.wakeUpCheckNumber
+                                                    )
+                                                } else {
+                                                    WakeUpCheckCommandReceiver.startIntent(
+                                                        this,
+                                                        dismissConfig.alarmId
+                                                    )
+                                                }
+                                            sendBroadcast(commandIntent)
+                                        } else if (dismissConfig.launchType == AlarmLaunchType.MAIN) {
+                                            DirectBootAlarmStore(this)
+                                                .markDismissalForUnlock(dismissConfig.alarmId)
+                                        }
                                         runCatching {
                                             ActiveAlarmRecovery.markDismissRequested(this, dismissConfig.alarmId)
                                         }
+                                        val hasPendingAlarm = PendingAlarmQueueStore(this).hasPending()
                                         stopService(Intent(this, AlarmService::class.java))
+                                        if (hasPendingAlarm) {
+                                            finish()
+                                            return@AlarmDismissScreen
+                                        }
                                     }
                                     if (dismissConfig.isPreview) {
                                         finish()

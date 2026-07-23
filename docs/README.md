@@ -16,8 +16,11 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
 - **Wake-up checks**: Optional chained follow-up alarms require one easy task after the main alarm, with configurable count and 5, 10, or 15 minute intervals measured from each completion.
 - **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
+- **Always-on backup escalation**: After 5, 10, or 15 minutes without verified puzzle progress, playback switches to a dependable built-in alarm at maximum volume and reinforces it with one to three vibration attempts.
 - **Challenge-preserving fallback**: After three failed submissions or 30 seconds, a blocked task can be exchanged for a different available puzzle without bypassing the alarm.
 - **Full-screen overlay**: The puzzle screen appears over the lock screen with back-button disabled for real alarms.
+- **Direct Boot recovery**: A device-protected alarm mirror restores alarms before the first unlock after reboot and defers Room-backed delivery updates until credential storage is available.
+- **Ordered overlap handling**: An alarm already being solved keeps its progress; alarms that fire meanwhile are persisted and presented in arrival order.
 - **Room database**: Persistent alarm storage with reactive Flow-based UI updates.
 
 ---
@@ -70,6 +73,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 │  │  (skipped during Preview Mode)                            │
 │  → keeps CPU awake until the alarm session is dismissed      │
 │  → after initialization: reschedules/updates schedule health │
+│  → escalates ignored alarms and queues overlapping deliveries │
 └────────────────────────┬────────────────────────────────────┘
                          │
               full-screen/content PendingIntent
@@ -94,7 +98,8 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 
 ┌─────────────────────────────────────────────────────────────┐
 │                     BootReceiver                              │
-│  Boot/time/time-zone/app update → query enabled alarms       │
+│  Locked boot → restore device-protected alarm snapshots      │
+│  Unlock/time/time-zone/app update → reconcile Room state     │
 │  → reschedules each via AlarmScheduler.schedule()            │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -110,12 +115,14 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `AlarmScheduler.kt` | Calculates the next trigger time and registers user-visible exact alarms via `AlarmManager.setAlarmClock()`. Scheduling returns a typed result for success, missing permission, or system failure. |
 | `AlarmTimeCalculator.kt` | Pure `java.time` wall-clock calculation with injected `Clock` and `ZoneId`, including deterministic DST gap/overlap behavior. |
 | `AlarmReceiver.kt` | `BroadcastReceiver` triggered by `AlarmManager`. Validates that the persisted alarm is still enabled and requests the foreground `AlarmService`; failed start requests are recorded without disabling the alarm. |
-| `AlarmService.kt` | Owns one active alarm session, posts foreground state first, persists launcher recovery data, delegates playback/audio focus/wake-lock handling, and only then confirms delivery so recurring rescheduling or one-time disablement cannot happen before initialization. While the device is unlocked and interactive, it also opens the puzzle directly because Android may reduce a full-screen intent to a temporary heads-up notification in that state. |
+| `AlarmService.kt` | Owns one active alarm session, posts foreground state first, persists launcher recovery data, delegates playback/audio focus/wake-lock handling, runs ignored-alarm escalation, and queues overlapping deliveries without resetting progress. Only then does it confirm delivery so recurring rescheduling or one-time disablement cannot happen before initialization. |
 | `AlarmDismissActivity.kt` | Full-screen activity that appears over the lock screen. Hosts the Compose puzzle UI, accepts replacement alarm intents, and handles normal alarm security locks or safe `IS_PREVIEW` executions. |
 | `AlarmDismissScreen.kt` | Saveable puzzle-sequence orchestration (Task 1 of N → Task N of N), including rotation-safe progress. |
 | `MathPuzzleView.kt`, `TypingPuzzleView.kt`, `MemoryPuzzleView.kt`, `ShakePuzzleView.kt` | Focused, accessible puzzle controls with injectable providers. |
 | `VirtualKeyboard.kt` | Localized 48 dp virtual keyboard with labeled shift, backspace, and space controls. |
-| `BootReceiver.kt` | Reschedules enabled alarms after boot and after exact-alarm access is granted. Uses `goAsync()` for safe coroutine work in a receiver. |
+| `BootReceiver.kt` | Restores device-protected alarm snapshots at locked boot, resumes interrupted sessions, and reconciles Room-backed alarm state after unlock, time changes, app replacement, or exact-alarm access changes. |
+| `DirectBootAlarmStore.kt` | Stores the minimum enabled-alarm snapshot and deferred delivery markers in device-protected preferences. |
+| `PendingAlarmQueueStore.kt` | Persists overlapping alarm payloads in arrival order so process death or reboot does not silently drop them. |
 
 ### UI & Architecture Layer
 
@@ -195,6 +202,7 @@ Declared in `AndroidManifest.xml`:
 | `USE_EXACT_ALARM` | Automatically granted exact-alarm access for this dedicated alarm app on Android 13+ |
 | `WAKE_LOCK` | Keep CPU alive during alarm processing |
 | `MODIFY_AUDIO_SETTINGS` | Apply progress-aware alarm volume and restore the previous level after dismissal |
+| `VIBRATE` | Reinforce the always-on backup escalation for an ignored alarm |
 | `POST_NOTIFICATIONS` | Show foreground service notification |
 | `RECEIVE_BOOT_COMPLETED` | Trigger `BootReceiver` after device restart |
 

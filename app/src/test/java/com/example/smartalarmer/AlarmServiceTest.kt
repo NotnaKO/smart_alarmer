@@ -1,8 +1,10 @@
 package com.example.smartalarmer
 
+import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.alarm.AlarmLaunchType
+import com.example.smartalarmer.service.AlarmOverlapDecision
 import com.example.smartalarmer.service.AlarmService
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,27 +34,54 @@ class AlarmServiceTest {
     }
 
     @Test
-    fun repeatedAlarmStart_onlyReplacesDifferentOrInvalidAlarm() {
-        assertFalse(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = 42))
-        assertTrue(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = 43))
-        assertTrue(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = null, incomingAlarmId = 42))
-        assertTrue(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = -1))
-    }
-
-    @Test
-    fun concurrentDistinctAlarms_replaceTheActiveSession() {
-        val alarmIds = listOf(41, 42, 43)
-
-        assertTrue(
-            alarmIds.zipWithNext().all { (active, incoming) ->
-                AlarmService.shouldReplaceActiveAlarm(active, incoming)
-            }
+    fun overlapPolicyStartsWithoutAnActiveAlarm() {
+        assertEquals(
+            AlarmOverlapDecision.START,
+            AlarmService.overlapDecision(null, AlarmLaunchPayload(alarmId = 42))
         )
     }
 
     @Test
-    fun redeliveredAlarm_doesNotRestartTheSameSession() {
-        assertFalse(AlarmService.shouldReplaceActiveAlarm(activeAlarmId = 42, incomingAlarmId = 42))
+    fun overlapPolicyQueuesDistinctAlarmsWithoutReplacingProgress() {
+        assertEquals(
+            AlarmOverlapDecision.QUEUE,
+            AlarmService.overlapDecision(
+                AlarmLaunchPayload(alarmId = 41),
+                AlarmLaunchPayload(alarmId = 42)
+            )
+        )
+    }
+
+    @Test
+    fun overlapPolicyRecognizesRedeliveryButQueuesLaterWakeUpCheck() {
+        val main =
+            AlarmLaunchPayload(
+                alarmId = 42,
+                occurrenceTriggerAtMillis = 100L
+            )
+        assertEquals(
+            AlarmOverlapDecision.REDELIVERY,
+            AlarmService.overlapDecision(main, main)
+        )
+        assertEquals(
+            AlarmOverlapDecision.QUEUE,
+            AlarmService.overlapDecision(
+                main,
+                main.copy(occurrenceTriggerAtMillis = 200L)
+            )
+        )
+        assertEquals(
+            AlarmOverlapDecision.QUEUE,
+            AlarmService.overlapDecision(
+                main,
+                AlarmLaunchPayload(
+                    alarmId = 42,
+                    launchType = AlarmLaunchType.WAKE_UP_CHECK,
+                    wakeUpCheckNumber = 1,
+                    wakeUpCheckToken = "token"
+                )
+            )
+        )
     }
 
     @Test

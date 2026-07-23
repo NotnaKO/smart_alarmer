@@ -36,7 +36,9 @@ class AlarmSessionStoreTest {
                 puzzlesList = "MATH,TYPING",
                 puzzleCount = 2,
                 alarmLabel = "Morning",
-                volumeRampSeconds = 120
+                volumeRampSeconds = 120,
+                backupAlarmTimeoutMinutes = 15,
+                backupAlarmRepeatCount = 2
             )
 
         store.begin(payload, currentVolume = 4)
@@ -53,7 +55,13 @@ class AlarmSessionStoreTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val store = AlarmSessionStore(context)
         store.clear()
-        val payload = AlarmLaunchPayload(alarmId = 17, puzzlesList = "MEMORY", alarmLabel = "Wake")
+        val payload =
+            AlarmLaunchPayload(
+                alarmId = 17,
+                puzzlesList = "MEMORY",
+                alarmLabel = "Wake",
+                occurrenceTriggerAtMillis = 123_456L
+            )
         store.begin(payload, currentVolume = 3)
 
         val recovered = requireNotNull(ActiveAlarmRecovery.createIntent(context))

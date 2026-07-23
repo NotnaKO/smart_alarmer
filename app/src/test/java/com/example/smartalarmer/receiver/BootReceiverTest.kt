@@ -12,6 +12,7 @@ class BootReceiverTest {
         val actions =
             listOf(
                 Intent.ACTION_BOOT_COMPLETED,
+                Intent.ACTION_LOCKED_BOOT_COMPLETED,
                 Intent.ACTION_MY_PACKAGE_REPLACED,
                 Intent.ACTION_TIME_CHANGED,
                 Intent.ACTION_TIMEZONE_CHANGED
@@ -34,5 +35,13 @@ class BootReceiverTest {
     fun unrelatedBroadcastIsIgnored() {
         assertFalse(BootReceiver.shouldReschedule("example.UNRELATED", canScheduleExactAlarms = true))
         assertFalse(BootReceiver.shouldReschedule(null, canScheduleExactAlarms = true))
+    }
+
+    @Test
+    fun lockedClockChangesRecalculateButBootRecoveryPreservesMissedTrigger() {
+        assertTrue(BootReceiver.shouldRecalculateLockedTrigger(Intent.ACTION_TIME_CHANGED))
+        assertTrue(BootReceiver.shouldRecalculateLockedTrigger(Intent.ACTION_TIMEZONE_CHANGED))
+        assertFalse(BootReceiver.shouldRecalculateLockedTrigger(Intent.ACTION_LOCKED_BOOT_COMPLETED))
+        assertFalse(BootReceiver.shouldRecalculateLockedTrigger(Intent.ACTION_MY_PACKAGE_REPLACED))
     }
 }

@@ -40,9 +40,23 @@ object AlarmScheduler {
         alarm: Alarm,
         clock: Clock = Clock.systemUTC(),
         zoneId: ZoneId = ZoneId.systemDefault()
+    ): AlarmScheduleResult {
+        val nextTriggerMillis =
+            try {
+                AlarmTimeCalculator(clock, zoneId).nextTrigger(alarm).toEpochMilli()
+            } catch (e: Exception) {
+                return AlarmScheduleResult.Failure(e)
+            }
+        return scheduleAt(context, alarm, nextTriggerMillis)
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    fun scheduleAt(
+        context: Context,
+        alarm: Alarm,
+        triggerAtMillis: Long
     ): AlarmScheduleResult = try {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val nextTriggerMillis = AlarmTimeCalculator(clock, zoneId).nextTrigger(alarm).toEpochMilli()
         val canScheduleExactAlarm =
             android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S ||
                 alarmManager.canScheduleExactAlarms()
@@ -52,7 +66,10 @@ object AlarmScheduler {
             val intent =
                 AlarmIntentContract.write(
                     Intent(context, AlarmReceiver::class.java),
-                    AlarmLaunchPayload.fromAlarm(alarm)
+                    AlarmLaunchPayload.fromAlarm(
+                        alarm,
+                        occurrenceTriggerAtMillis = triggerAtMillis
+                    )
                 )
             val pendingIntent =
                 PendingIntent.getBroadcast(
@@ -70,11 +87,11 @@ object AlarmScheduler {
                 )
 
             scheduleExact(
-                triggerAtMillis = nextTriggerMillis,
+                triggerAtMillis = triggerAtMillis,
                 canScheduleExactAlarm = true
             ) {
                 alarmManager.setAlarmClock(
-                    AlarmManager.AlarmClockInfo(nextTriggerMillis, showIntent),
+                    AlarmManager.AlarmClockInfo(triggerAtMillis, showIntent),
                     pendingIntent
                 )
             }

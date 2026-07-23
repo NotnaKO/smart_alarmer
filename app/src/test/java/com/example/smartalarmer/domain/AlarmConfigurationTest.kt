@@ -76,6 +76,25 @@ class AlarmConfigurationTest {
     }
 
     @Test
+    fun alarmDraftPersistsAlwaysOnBackupEscalationConfiguration() {
+        val alarm =
+            AlarmDraft(
+                hour = 7,
+                minute = 30,
+                repeatDays = AlarmDays.ONE_TIME,
+                puzzleSelection = PuzzleSelection.DEFAULT,
+                puzzleCount = 1,
+                label = "Morning",
+                soundUri = null,
+                backupAlarmTimeoutMinutes = 15,
+                backupAlarmRepeatCount = 2
+            ).toAlarm(isEnabled = true)
+
+        assertEquals(15, alarm.backupAlarmTimeoutMinutes)
+        assertEquals(2, alarm.backupAlarmRepeatCount)
+    }
+
+    @Test
     fun alarmDraftPersistsWeekParityOnlyForRecurringAlarms() {
         val recurring =
             AlarmDraft(
