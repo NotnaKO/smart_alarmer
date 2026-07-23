@@ -5,8 +5,11 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.media.ToneGenerator
 import android.net.Uri
+import android.os.Build
 import java.util.ArrayDeque
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -20,10 +23,13 @@ internal class AlarmAudioPlayback(
     private val scope: CoroutineScope
 ) {
     private var mediaPlayer: MediaPlayer? = null
+    private var ringtone: Ringtone? = null
+    private var ringtoneReplayJob: Job? = null
     private var toneGenerator: ToneGenerator? = null
     private var toneJob: Job? = null
     private var audioFocusRequest: AudioFocusRequest? = null
     private var hasAudioFocusRequest = false
+    private var focusLost = false
     private var generation = 0
     private val attributes =
         AudioAttributes
@@ -34,16 +40,24 @@ internal class AlarmAudioPlayback(
     private val focusChangeListener =
         AudioManager.OnAudioFocusChangeListener { focusChange ->
             when (focusChange) {
-                AudioManager.AUDIOFOCUS_GAIN ->
+                AudioManager.AUDIOFOCUS_GAIN -> {
+                    focusLost = false
+                    runCatching { ringtone?.play() }
                     runCatching { mediaPlayer?.takeUnless { it.isPlaying }?.start() }
+                }
                 AudioManager.AUDIOFOCUS_LOSS,
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
-                -> runCatching { mediaPlayer?.takeIf { it.isPlaying }?.pause() }
+                -> {
+                    focusLost = true
+                    runCatching { ringtone?.stop() }
+                    runCatching { mediaPlayer?.takeIf { it.isPlaying }?.pause() }
+                }
             }
         }
 
     fun requestAudioFocus() {
         abandonAudioFocus()
+        focusLost = false
         val request =
             AudioFocusRequest
                 .Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
@@ -57,9 +71,52 @@ internal class AlarmAudioPlayback(
         }
     }
 
-    fun start(uris: List<Uri>) {
+    fun start(
+        uris: List<Uri>,
+        preferRingtoneApi: Boolean = false
+    ) {
         generation++
+        if (preferRingtoneApi) {
+            uris.firstOrNull()?.let { uri ->
+                if (startRingtone(generation, uri)) return
+            }
+        }
         startNext(generation, ArrayDeque(uris))
+    }
+
+    private fun startRingtone(
+        expectedGeneration: Int,
+        uri: Uri
+    ): Boolean {
+        val candidate =
+            runCatching { RingtoneManager.getRingtone(context, uri) }
+                .getOrNull()
+                ?: return false
+        return runCatching {
+            candidate.audioAttributes = attributes
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                candidate.isLooping = true
+            }
+            candidate.play()
+            ringtone = candidate
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                ringtoneReplayJob =
+                    scope.launch {
+                        while (isActive && expectedGeneration == generation) {
+                            delay(1_000)
+                            if (!focusLost && runCatching { !candidate.isPlaying }.getOrDefault(false)) {
+                                runCatching { candidate.play() }
+                            }
+                        }
+                    }
+            }
+            android.util.Log.d(TAG, "Successfully playing selected alarm URI through Ringtone: $uri")
+            true
+        }.getOrElse { error ->
+            runCatching { candidate.stop() }
+            android.util.Log.e(TAG, "Unable to play selected alarm URI through Ringtone: $uri", error)
+            false
+        }
     }
 
     private fun startNext(
@@ -126,6 +183,11 @@ internal class AlarmAudioPlayback(
 
     fun release() {
         generation++
+        ringtoneReplayJob?.cancel()
+        ringtoneReplayJob = null
+        runCatching { ringtone?.stop() }
+        ringtone = null
+        focusLost = false
         toneJob?.cancel()
         toneJob = null
         mediaPlayer
