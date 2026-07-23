@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_ADVANCED_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
@@ -387,6 +388,35 @@ class AlarmListScreenTest {
             .performClick()
 
         assertEquals("1,2,3,4,5", savedDays)
+    }
+
+    @Test
+    fun alarmEditSheet_preservesLegacyLabelLongerThanCurrentLimit() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val legacyLabel = "L".repeat(80)
+        var savedLabel: String? = null
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = testAlarm(label = legacyLabel),
+                    onDismiss = {},
+                    onSave = { savedLabel = it.label },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = legacyLabel,
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(legacyLabel).assertExists()
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
+
+        assertEquals(legacyLabel, savedLabel)
     }
 
     @Test

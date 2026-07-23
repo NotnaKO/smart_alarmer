@@ -102,6 +102,10 @@ class MainActivity : ComponentActivity() {
                 var pickedSoundUri by rememberSaveable { mutableStateOf<String?>(null) }
                 var labelInput by rememberSaveable { mutableStateOf("") }
                 var previewRingtone by remember { mutableStateOf<android.media.Ringtone?>(null) }
+                val stopSoundPreview = {
+                    previewRingtone?.stop()
+                    previewRingtone = null
+                }
 
                 val ringtonePickerLauncher =
                     rememberLauncherForActivityResult(
@@ -122,11 +126,12 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                LaunchedEffect(editingAlarm) {
-                    previewRingtone?.stop()
-                    previewRingtone = null
-                    pickedSoundUri = editingAlarm?.soundUri
-                    labelInput = editingAlarm?.label ?: ""
+                LaunchedEffect(isSheetVisible, editingAlarm?.id) {
+                    stopSoundPreview()
+                    if (isSheetVisible) {
+                        pickedSoundUri = editingAlarm?.soundUri
+                        labelInput = editingAlarm?.label ?: ""
+                    }
                 }
 
                 DisposableEffect(Unit) {
@@ -324,11 +329,16 @@ class MainActivity : ComponentActivity() {
 
                             AlarmEditSheet(
                                 alarm = editingAlarm,
-                                onDismiss = { viewModel.closeEditSheet() },
-                                onSave = viewModel::saveAlarm,
+                                onDismiss = {
+                                    stopSoundPreview()
+                                    viewModel.closeEditSheet()
+                                },
+                                onSave = { draft ->
+                                    stopSoundPreview()
+                                    viewModel.saveAlarm(draft)
+                                },
                                 onPickSound = {
-                                    previewRingtone?.stop()
-                                    previewRingtone = null
+                                    stopSoundPreview()
                                     val intent =
                                         Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
                                             putExtra(
@@ -345,7 +355,7 @@ class MainActivity : ComponentActivity() {
                                     ringtonePickerLauncher.launch(intent)
                                 },
                                 onPreviewSound = {
-                                    previewRingtone?.stop()
+                                    stopSoundPreview()
                                     previewRingtone =
                                         runCatching {
                                             val previewUri =
@@ -356,8 +366,7 @@ class MainActivity : ComponentActivity() {
                                         }.getOrNull()
                                 },
                                 onResetSound = {
-                                    previewRingtone?.stop()
-                                    previewRingtone = null
+                                    stopSoundPreview()
                                     pickedSoundUri = null
                                 },
                                 selectedSoundName = resolvedSoundName,

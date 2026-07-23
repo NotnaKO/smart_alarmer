@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -26,6 +29,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,9 +63,11 @@ fun AlarmEditSheet(
     shakeSensorAvailable: Boolean = AndroidShakeSensorProvider(LocalContext.current).isAvailable
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     var hour by rememberSaveable(alarm?.id) { mutableIntStateOf(alarm?.hour ?: 8) }
     var minute by rememberSaveable(alarm?.id) { mutableIntStateOf(alarm?.minute ?: 0) }
-    var label by rememberSaveable(alarm?.id) { mutableStateOf(initialLabel.take(ALARM_LABEL_MAX_LENGTH)) }
+    val labelLimit = maxOf(ALARM_LABEL_MAX_LENGTH, initialLabel.length)
+    var label by rememberSaveable(alarm?.id) { mutableStateOf(initialLabel) }
 
     val initialDays = alarm?.repeatDays?.values.orEmpty()
     val selectedDays =
@@ -157,6 +163,7 @@ fun AlarmEditSheet(
                 .fillMaxWidth()
                 .fillMaxHeight(0.92f)
                 .navigationBarsPadding()
+                .imePadding()
                 .testTag(ALARM_EDITOR_CONTENT_TAG)
         ) {
             Column(
@@ -187,7 +194,7 @@ fun AlarmEditSheet(
                 OutlinedTextField(
                     value = label,
                     onValueChange = { updated ->
-                        label = updated.take(ALARM_LABEL_MAX_LENGTH)
+                        label = updated.take(labelLimit)
                     },
                     label = { Text(stringResource(com.example.smartalarmer.R.string.label_placeholder)) },
                     supportingText = {
@@ -195,10 +202,12 @@ fun AlarmEditSheet(
                             stringResource(
                                 com.example.smartalarmer.R.string.label_character_count,
                                 label.length,
-                                ALARM_LABEL_MAX_LENGTH
+                                labelLimit
                             )
                         )
                     },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     maxLines = 2,
                     modifier = Modifier.fillMaxWidth(),
                     colors =
@@ -700,7 +709,7 @@ fun AlarmEditSheet(
                     }
                     Button(
                         onClick = saveDraft,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).testTag(ALARM_EDITOR_SAVE_TAG),
                         colors = ButtonDefaults.buttonColors(containerColor = IndigoPrimary)
                     ) {
                         Text(
@@ -722,4 +731,5 @@ internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"
 internal const val ALARM_EDITOR_WAKE_UP_CHECKS_TAG = "alarm_editor_wake_up_checks"
 internal const val ALARM_EDITOR_ADVANCED_TAG = "alarm_editor_advanced"
+internal const val ALARM_EDITOR_SAVE_TAG = "alarm_editor_save"
 internal const val ALARM_LABEL_MAX_LENGTH = 60
