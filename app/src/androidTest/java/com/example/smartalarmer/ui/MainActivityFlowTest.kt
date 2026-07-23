@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.MainActivity
 import kotlinx.coroutines.runBlocking
@@ -77,9 +78,11 @@ class MainActivityFlowTest {
         labelField.performTextReplacement("Plan Test Alarm")
         labelField.performImeAction()
 
-        // Select Monday
-        val dayMon = context.getString(com.example.smartalarmer.R.string.day_m)
-        composeTestRule.onNodeWithText(dayMon).performScrollTo().performClick()
+        // Enable the recurring schedule before saving.
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
+            .performScrollTo()
+            .performClick()
 
         // Click the fixed editor action directly rather than depending on localized child text.
         composeTestRule.waitUntil(timeoutMillis = 5000) {
