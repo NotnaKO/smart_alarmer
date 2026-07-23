@@ -56,6 +56,7 @@ fun AlarmEditSheet(
     onSave: (AlarmDraft) -> Unit,
     onPickSound: () -> Unit,
     onPreviewSound: () -> Unit = {},
+    isSoundPreviewPlaying: Boolean = false,
     onResetSound: () -> Unit = {},
     selectedSoundName: String,
     initialLabel: String,
@@ -288,7 +289,15 @@ fun AlarmEditSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     TextButton(onClick = onPreviewSound) {
-                        Text(stringResource(com.example.smartalarmer.R.string.preview_sound))
+                        Text(
+                            stringResource(
+                                if (isSoundPreviewPlaying) {
+                                    com.example.smartalarmer.R.string.stop_sound_preview
+                                } else {
+                                    com.example.smartalarmer.R.string.preview_sound
+                                }
+                            )
+                        )
                     }
                     TextButton(
                         onClick = onResetSound,

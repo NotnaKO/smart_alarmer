@@ -415,6 +415,42 @@ class AlarmListScreenTest {
     }
 
     @Test
+    fun alarmEditSheet_soundPreviewButtonTogglesStopState() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val isPreviewPlaying = androidx.compose.runtime.mutableStateOf(false)
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = null,
+                    onDismiss = {},
+                    onSave = {},
+                    onPickSound = {},
+                    onPreviewSound = { isPreviewPlaying.value = !isPreviewPlaying.value },
+                    isSoundPreviewPlaying = isPreviewPlaying.value,
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.stop_sound_preview))
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun alarmEditSheet_enablesAndSavesWakeUpChecks() {
         val context =
             androidx.test.platform.app.InstrumentationRegistry

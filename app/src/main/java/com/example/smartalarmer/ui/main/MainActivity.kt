@@ -355,16 +355,21 @@ class MainActivity : ComponentActivity() {
                                     ringtonePickerLauncher.launch(intent)
                                 },
                                 onPreviewSound = {
-                                    stopSoundPreview()
-                                    previewRingtone =
-                                        runCatching {
-                                            val previewUri =
-                                                pickedSoundUri
-                                                    ?.let(Uri::parse)
-                                                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                                            RingtoneManager.getRingtone(context, previewUri)?.also { it.play() }
-                                        }.getOrNull()
+                                    if (previewRingtone?.isPlaying == true) {
+                                        stopSoundPreview()
+                                    } else {
+                                        stopSoundPreview()
+                                        previewRingtone =
+                                            runCatching {
+                                                val previewUri =
+                                                    pickedSoundUri
+                                                        ?.let(Uri::parse)
+                                                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                                                RingtoneManager.getRingtone(context, previewUri)?.also { it.play() }
+                                            }.getOrNull()
+                                    }
                                 },
+                                isSoundPreviewPlaying = previewRingtone?.isPlaying == true,
                                 onResetSound = {
                                     stopSoundPreview()
                                     pickedSoundUri = null

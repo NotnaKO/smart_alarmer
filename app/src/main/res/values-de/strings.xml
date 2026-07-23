@@ -68,6 +68,7 @@
     <string name="label_character_count">%1$d/%2$d</string>
     <string name="select_alarm_sound">Alarmton auswählen</string>
     <string name="preview_sound">Anhören</string>
+    <string name="stop_sound_preview">Stopp</string>
     <string name="use_default_sound">Standard verwenden</string>
     <string name="decrease_puzzle_count">Anzahl der Rätsel verringern</string>
     <string name="increase_puzzle_count">Anzahl der Rätsel erhöhen</string>
