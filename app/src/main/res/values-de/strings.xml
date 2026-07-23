@@ -45,6 +45,11 @@
     <string name="wake_up_check_minutes_format">%1$d Min.</string>
     <string name="wake_up_check_easy_task_description">Jede Kontrolle erfordert eine leichte Aufgabe. Das nächste Intervall beginnt danach.</string>
     <string name="wake_up_check_card_summary">Aufwachkontrollen: %1$d × alle %2$d Min.</string>
+    <string name="backup_alarm_label">Backup-Verstärkung</string>
+    <string name="backup_alarm_description">Ohne Aufgabenfortschritt ertönt ein integrierter Ton mit maximaler Lautstärke und Vibration.</string>
+    <string name="backup_alarm_timeout_label">Verstärken nach</string>
+    <string name="backup_alarm_repeat_count_label">Vibrationsversuche</string>
+    <string name="backup_alarm_card_summary">Backup nach %1$d Min. · %2$d Vibrationsversuche</string>
     <string name="wake_up_check_title">Aufwachkontrolle</string>
     <string name="wake_up_check_progress">Kontrolle %1$d von %2$d</string>
     <plurals name="wake_up_check_active_summary">

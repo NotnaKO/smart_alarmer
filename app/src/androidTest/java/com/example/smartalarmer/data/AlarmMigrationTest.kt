@@ -31,7 +31,7 @@ class AlarmMigrationTest {
     }
 
     @Test
-    fun migratesAlarmFromVersion1ThroughVersion8WithoutLosingData() = runBlocking {
+    fun migratesAlarmFromVersion1ThroughVersion9WithoutLosingData() = runBlocking {
         createVersion1Database()
         migrateAndValidateVersion2()
 
@@ -44,7 +44,8 @@ class AlarmMigrationTest {
                     AlarmDatabase.MIGRATION_4_5,
                     AlarmDatabase.MIGRATION_5_6,
                     AlarmDatabase.MIGRATION_6_7,
-                    AlarmDatabase.MIGRATION_7_8
+                    AlarmDatabase.MIGRATION_7_8,
+                    AlarmDatabase.MIGRATION_8_9
                 )
                 .build()
         try {
@@ -62,6 +63,8 @@ class AlarmMigrationTest {
             assertEquals(false, alarm.wakeUpChecksEnabled)
             assertEquals(3, alarm.wakeUpCheckCount)
             assertEquals(5, alarm.wakeUpCheckIntervalMinutes)
+            assertEquals(10, alarm.backupAlarmTimeoutMinutes)
+            assertEquals(3, alarm.backupAlarmRepeatCount)
             assertEquals(emptyList<WakeUpCheckSession>(), database.wakeUpCheckDao().getAllSessions())
             database.openHelper.readableDatabase
                 .query("PRAGMA table_info(alarms)")

@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_BACKUP_INCREASE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
@@ -603,5 +604,51 @@ class AlarmListScreenTest {
         assertTrue(savedEnabled)
         assertEquals(3, savedCount)
         assertEquals(10, savedInterval)
+    }
+
+    @Test
+    fun alarmEditSheet_alwaysSavesConfiguredBackupEscalation() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var savedTimeout = 0
+        var savedRepeats = 0
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm =
+                    testAlarm().copy(
+                        backupAlarmTimeoutMinutes = 10,
+                        backupAlarmRepeatCount = 1
+                    ),
+                    onDismiss = {},
+                    onSave = { draft ->
+                        savedTimeout = draft.backupAlarmTimeoutMinutes
+                        savedRepeats = draft.backupAlarmRepeatCount
+                    },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    initialLabel = "",
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_minutes_format, 15))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_BACKUP_INCREASE_TAG)
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_SAVE_TAG)
+            .performClick()
+
+        assertEquals(15, savedTimeout)
+        assertEquals(2, savedRepeats)
     }
 }

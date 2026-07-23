@@ -3,6 +3,7 @@ package com.example.smartalarmer.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.UserManager
 import android.util.Log
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
@@ -10,6 +11,7 @@ import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.AlarmScheduleStatus
+import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import com.example.smartalarmer.service.AlarmService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +25,11 @@ class AlarmReceiver : BroadcastReceiver() {
         val payload = AlarmIntentContract.read(intent)
         if (payload.alarmId == AlarmLaunchPayload.NO_ALARM_ID) {
             startAlarmService(context, payload)
+            return
+        }
+        val userManager = context.getSystemService(UserManager::class.java)
+        if (!userManager.isUserUnlocked) {
+            deliverBeforeUnlock(context, payload)
             return
         }
 
@@ -79,6 +86,21 @@ class AlarmReceiver : BroadcastReceiver() {
                     payload
                 )
             context.startForegroundService(serviceIntent)
+        }
+
+        private fun deliverBeforeUnlock(
+            context: Context,
+            payload: AlarmLaunchPayload
+        ) {
+            if (payload.launchType != AlarmLaunchType.MAIN) return
+            val store = DirectBootAlarmStore(context)
+            val alarm =
+                store
+                    .snapshots()
+                    .firstOrNull { it.alarm.id == payload.alarmId }
+                    ?.alarm
+                    ?: return
+            startAlarmService(context, AlarmLaunchPayload.fromAlarm(alarm))
         }
         internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
 

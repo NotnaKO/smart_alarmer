@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -33,7 +34,11 @@
         </activity>
 
         <!-- AlarmReceiver -->
-        <receiver android:name=".receiver.AlarmReceiver" android:enabled="true" android:exported="false" />
+        <receiver
+            android:name=".receiver.AlarmReceiver"
+            android:directBootAware="true"
+            android:enabled="true"
+            android:exported="false" />
         <receiver
             android:name=".receiver.WakeUpCheckCommandReceiver"
             android:enabled="true"
@@ -42,9 +47,11 @@
         <!-- BootReceiver -->
         <receiver
             android:name=".receiver.BootReceiver"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.TIME_SET" />
@@ -56,6 +63,7 @@
         <!-- AlarmService -->
         <service 
             android:name=".service.AlarmService" 
+            android:directBootAware="true"
             android:foregroundServiceType="mediaPlayback"
             android:enabled="true"
             android:exported="false" />
@@ -63,6 +71,7 @@
         <!-- AlarmDismissActivity -->
         <activity
             android:name=".ui.dismiss.AlarmDismissActivity"
+            android:directBootAware="true"
             android:launchMode="singleInstance"
             android:excludeFromRecents="true"
             android:exported="false" />

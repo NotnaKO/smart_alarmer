@@ -36,7 +36,9 @@ class AlarmSessionStoreTest {
                 puzzlesList = "MATH,TYPING",
                 puzzleCount = 2,
                 alarmLabel = "Morning",
-                volumeRampSeconds = 120
+                volumeRampSeconds = 120,
+                backupAlarmTimeoutMinutes = 15,
+                backupAlarmRepeatCount = 2
             )
 
         store.begin(payload, currentVolume = 4)

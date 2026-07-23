@@ -9,12 +9,15 @@ import android.content.IntentFilter
 import android.media.AudioManager
 import android.net.Uri
 import android.os.IBinder
+import android.os.UserManager
 import androidx.core.content.ContextCompat
 import com.example.smartalarmer.alarm.AlarmIntentContract
+import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEventType
 import com.example.smartalarmer.alarm.AlarmSoundResolver
+import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,16 +31,23 @@ class AlarmService : Service() {
     private var audioManager: AudioManager? = null
     private var originalAlarmVolume: Int? = null
     private var volumeJob: Job? = null
+    private var backupEscalator: BackupAlarmEscalator? = null
 
     @Volatile
     private var volumeController: AlarmVolumeController? = null
-    private var activeAlarmId: Int? = null
+
+    @Volatile
+    private var backupEscalated = false
+    private var activePayload: AlarmLaunchPayload? = null
     private var activeTaskIndex = 0
     private var activeNotificationId: Int? = null
     private lateinit var sessionStore: AlarmSessionStore
+    private lateinit var pendingAlarmQueue: PendingAlarmQueueStore
+    private lateinit var directBootStore: DirectBootAlarmStore
     private lateinit var wakeLockController: AlarmWakeLockController
-    private lateinit var deliveryFollowUp: AlarmDeliveryFollowUp
+    private var deliveryFollowUp: AlarmDeliveryFollowUp? = null
     private lateinit var audioPlayback: AlarmAudioPlayback
+    private lateinit var vibrationController: AlarmVibrationController
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Default + serviceJob)
     private val progressReceiver =
@@ -47,9 +57,12 @@ class AlarmService : Service() {
                 intent: Intent?
             ) {
                 val event = intent?.let(AlarmProgressContract::read) ?: return
-                if (event.alarmId != activeAlarmId) return
+                if (event.alarmId != activePayload?.alarmId) return
                 if (event.taskIndex != activeTaskIndex) return
                 val controller = volumeController ?: return
+                backupEscalator?.onInteraction()
+                backupEscalated = false
+                vibrationController.cancel()
                 val now = android.os.SystemClock.elapsedRealtime()
                 val targetVolume =
                     when (event.type) {
@@ -58,7 +71,7 @@ class AlarmService : Service() {
                         AlarmProgressEventType.INTERMEDIATE_TASK_COMPLETED ->
                             controller.onIntermediateTaskCompleted(now).also {
                                 activeTaskIndex++
-                                activeAlarmId?.let { alarmId ->
+                                activePayload?.alarmId?.let { alarmId ->
                                     runCatching { sessionStore.updateActiveTaskIndex(alarmId, activeTaskIndex) }
                                 }
                             }
@@ -72,9 +85,14 @@ class AlarmService : Service() {
         val manager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager = manager
         sessionStore = AlarmSessionStore(this)
+        pendingAlarmQueue = PendingAlarmQueueStore(this)
+        directBootStore = DirectBootAlarmStore(this)
         wakeLockController = AlarmWakeLockController(this, serviceScope)
-        deliveryFollowUp = AlarmDeliveryFollowUp(this)
+        if (getSystemService(UserManager::class.java).isUserUnlocked) {
+            deliveryFollowUp = AlarmDeliveryFollowUp(this)
+        }
         audioPlayback = AlarmAudioPlayback(this, manager, serviceScope)
+        vibrationController = AlarmVibrationController(this)
         ContextCompat.registerReceiver(
             this,
             progressReceiver,
@@ -93,33 +111,81 @@ class AlarmService : Service() {
             return START_NOT_STICKY
         }
 
-        val payload = AlarmIntentContract.read(intent)
-        if (payload.isPreview && activeAlarmId != null) {
+        val incomingPayload = AlarmIntentContract.read(intent)
+        val recoveredPayload =
+            if (activePayload == null) {
+                sessionStore
+                    .current()
+                    ?.takeUnless(AlarmAudioSession::dismissRequested)
+                    ?.payload
+            } else {
+                null
+            }
+        if (
+            recoveredPayload != null &&
+            recoveredPayload.sessionIdentity != incomingPayload.sessionIdentity
+        ) {
+            if (
+                !incomingPayload.isPreview &&
+                pendingAlarmQueue.enqueue(incomingPayload)
+            ) {
+                recordMainAlarmDelivery(incomingPayload)
+            }
+            val foregroundNotification = startAlarm(recoveredPayload)
+            AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
             return START_REDELIVER_INTENT
         }
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val foregroundNotification = AlarmForegroundNotificationFactory(this).create(payload)
-        val notificationId = foregroundNotification.id
-        val previousNotificationId = activeNotificationId
-
-        startForeground(notificationId, foregroundNotification.notification)
-        activeNotificationId = notificationId
-        if (previousNotificationId != null && previousNotificationId != notificationId) {
-            notificationManager.cancel(previousNotificationId)
+        val payload = recoveredPayload ?: incomingPayload
+        if (payload.isPreview && activePayload != null) {
+            return START_REDELIVER_INTENT
         }
 
+        val current = activePayload
+        if (current != null) {
+            return when (overlapDecision(current, payload)) {
+                AlarmOverlapDecision.REDELIVERY -> START_REDELIVER_INTENT
+                AlarmOverlapDecision.QUEUE -> {
+                    if (pendingAlarmQueue.enqueue(payload)) {
+                        recordMainAlarmDelivery(payload)
+                    }
+                    START_REDELIVER_INTENT
+                }
+                AlarmOverlapDecision.START -> error("An active alarm cannot start in place")
+            }
+        }
+
+        val foregroundNotification = startAlarm(payload)
         if (payload.isPreview) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
 
-        if (!shouldReplaceActiveAlarm(activeAlarmId, payload.alarmId)) {
-            return START_REDELIVER_INTENT
+        AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
+        return START_REDELIVER_INTENT
+    }
+
+    private fun startAlarm(payload: AlarmLaunchPayload): AlarmForegroundNotification {
+        val isRecoveredSession =
+            sessionStore
+                .current()
+                ?.takeUnless(AlarmAudioSession::dismissRequested)
+                ?.payload
+                ?.sessionIdentity == payload.sessionIdentity
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val foregroundNotification = AlarmForegroundNotificationFactory(this).create(payload)
+        val previousNotificationId = activeNotificationId
+        startForeground(foregroundNotification.id, foregroundNotification.notification)
+        activeNotificationId = foregroundNotification.id
+        if (previousNotificationId != null && previousNotificationId != foregroundNotification.id) {
+            notificationManager.cancel(previousNotificationId)
         }
+        if (payload.isPreview) return foregroundNotification
 
-        activeAlarmId = payload.alarmId
-
+        activePayload = payload
         audioPlayback.release()
+        backupEscalator?.stop()
+        vibrationController.cancel()
+        backupEscalated = false
         volumeJob?.cancel()
         volumeJob = null
         volumeController = null
@@ -146,23 +212,47 @@ class AlarmService : Service() {
         volumeJob =
             serviceScope.launch {
                 while (isActive) {
-                    val targetVolume = controller.targetVolume(android.os.SystemClock.elapsedRealtime())
+                    val targetVolume =
+                        if (backupEscalated) {
+                            maxVolume
+                        } else {
+                            controller.targetVolume(android.os.SystemClock.elapsedRealtime())
+                        }
                     if (!applyAlarmVolume(targetVolume)) break
                     delay(1000)
                 }
             }
 
         if (payload.launchType == AlarmLaunchType.MAIN) {
-            deliveryFollowUp.start(payload.alarmId)
+            backupEscalator =
+                BackupAlarmEscalator(
+                    scope = serviceScope,
+                    timeoutMillis = payload.backupAlarmTimeoutMinutes * 60_000L,
+                    repeatCount = payload.backupAlarmRepeatCount
+                ) { attempt ->
+                    backupEscalated = true
+                    if (attempt == 1) {
+                        audioPlayback.release()
+                        audioPlayback.start(AlarmSoundResolver.playbackCandidates(this, null))
+                    }
+                    applyAlarmVolume(maxVolume)
+                    vibrationController.reinforce()
+                }.also { it.start() }
+            if (!isRecoveredSession) {
+                recordMainAlarmDelivery(payload)
+            }
         }
-        AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
-
-        return START_REDELIVER_INTENT
+        return foregroundNotification
     }
 
     override fun onDestroy() {
+        val shouldAdvanceQueue = sessionStore.current()?.dismissRequested == true
         volumeJob?.cancel()
         volumeJob = null
+        backupEscalator?.stop()
+        backupEscalator = null
+        backupEscalated = false
+        vibrationController.cancel()
         volumeController = null
         serviceJob.cancel()
         audioPlayback.release()
@@ -174,10 +264,35 @@ class AlarmService : Service() {
             manager.cancel(notificationId)
         }
         activeNotificationId = null
-        activeAlarmId = null
+        activePayload = null
         activeTaskIndex = 0
         runCatching { unregisterReceiver(progressReceiver) }
         super.onDestroy()
+        if (shouldAdvanceQueue) {
+            pendingAlarmQueue.dequeue()?.let { payload ->
+                runCatching {
+                    ContextCompat.startForegroundService(
+                        applicationContext,
+                        AlarmIntentContract.write(
+                            Intent(applicationContext, AlarmService::class.java),
+                            payload
+                        )
+                    )
+                }.onFailure {
+                    pendingAlarmQueue.enqueue(payload)
+                }
+            }
+        }
+    }
+
+    private fun recordMainAlarmDelivery(payload: AlarmLaunchPayload) {
+        if (payload.launchType != AlarmLaunchType.MAIN) return
+        runCatching { directBootStore.remove(payload.alarmId) }
+        if (getSystemService(UserManager::class.java).isUserUnlocked) {
+            deliveryFollowUp?.start(payload.alarmId)
+        } else {
+            runCatching { directBootStore.markDeliveryForUnlock(payload.alarmId) }
+        }
     }
 
     private fun applyAlarmVolume(targetVolume: Int): Boolean = try {
@@ -192,7 +307,7 @@ class AlarmService : Service() {
         false
     }
 
-    private fun captureOriginalAlarmVolume(payload: com.example.smartalarmer.alarm.AlarmLaunchPayload): AlarmAudioSession? {
+    private fun captureOriginalAlarmVolume(payload: AlarmLaunchPayload): AlarmAudioSession? {
         val currentVolume = originalAlarmVolume ?: audioManager?.getStreamVolume(AudioManager.STREAM_ALARM) ?: return null
         val session = sessionStore.begin(payload = payload, currentVolume = currentVolume)
         originalAlarmVolume = session.originalVolume
@@ -217,10 +332,14 @@ class AlarmService : Service() {
         internal const val WAKE_LOCK_RENEWAL_INTERVAL_MILLIS = AlarmWakeLockController.RENEWAL_INTERVAL_MILLIS
         internal const val WAKE_LOCK_TIMEOUT_MILLIS = AlarmWakeLockController.TIMEOUT_MILLIS
 
-        internal fun shouldReplaceActiveAlarm(
-            activeAlarmId: Int?,
-            incomingAlarmId: Int
-        ): Boolean = activeAlarmId == null || incomingAlarmId < 0 || activeAlarmId != incomingAlarmId
+        internal fun overlapDecision(
+            active: AlarmLaunchPayload?,
+            incoming: AlarmLaunchPayload
+        ): AlarmOverlapDecision = when {
+            active == null -> AlarmOverlapDecision.START
+            active.sessionIdentity == incoming.sessionIdentity -> AlarmOverlapDecision.REDELIVERY
+            else -> AlarmOverlapDecision.QUEUE
+        }
 
         internal fun notificationIdForAlarm(
             alarmId: Int,
@@ -239,3 +358,12 @@ class AlarmService : Service() {
         )
     }
 }
+
+internal enum class AlarmOverlapDecision {
+    START,
+    REDELIVERY,
+    QUEUE
+}
+
+private val AlarmLaunchPayload.sessionIdentity: String
+    get() = "$alarmId:${launchType.name}:$wakeUpCheckNumber:$wakeUpCheckToken"

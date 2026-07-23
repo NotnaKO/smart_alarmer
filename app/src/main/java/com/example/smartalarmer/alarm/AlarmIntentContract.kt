@@ -3,6 +3,7 @@ package com.example.smartalarmer.alarm
 import android.content.Intent
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.domain.AlarmVolumeRamp
+import com.example.smartalarmer.domain.BackupAlarmConfig
 import com.example.smartalarmer.domain.PuzzleSelection
 
 enum class AlarmLaunchType {
@@ -23,7 +24,9 @@ data class AlarmLaunchPayload(
     val wakeUpCheckTotal: Int = 0,
     val wakeUpCheckToken: String = "",
     val wakeUpChecksEnabled: Boolean = false,
-    val wakeUpCheckIntervalMinutes: Int = 5
+    val wakeUpCheckIntervalMinutes: Int = 5,
+    val backupAlarmTimeoutMinutes: Int = BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
+    val backupAlarmRepeatCount: Int = BackupAlarmConfig.DEFAULT_REPEAT_COUNT
 ) {
     companion object {
         const val NO_ALARM_ID = -1
@@ -42,7 +45,9 @@ data class AlarmLaunchPayload(
                 volumeRampSeconds = AlarmVolumeRamp.sanitize(alarm.volumeRampSeconds),
                 isPreview = isPreview,
                 wakeUpChecksEnabled = alarm.wakeUpChecksEnabled,
-                wakeUpCheckIntervalMinutes = alarm.wakeUpCheckIntervalMinutes
+                wakeUpCheckIntervalMinutes = alarm.wakeUpCheckIntervalMinutes,
+                backupAlarmTimeoutMinutes = alarm.backupAlarmTimeoutMinutes,
+                backupAlarmRepeatCount = alarm.backupAlarmRepeatCount
             )
         }
     }
@@ -62,6 +67,8 @@ object AlarmIntentContract {
     const val EXTRA_WAKE_UP_CHECK_TOKEN = "WAKE_UP_CHECK_TOKEN"
     const val EXTRA_WAKE_UP_CHECKS_ENABLED = "WAKE_UP_CHECKS_ENABLED"
     const val EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES = "WAKE_UP_CHECK_INTERVAL_MINUTES"
+    const val EXTRA_BACKUP_ALARM_TIMEOUT_MINUTES = "BACKUP_ALARM_TIMEOUT_MINUTES"
+    const val EXTRA_BACKUP_ALARM_REPEAT_COUNT = "BACKUP_ALARM_REPEAT_COUNT"
 
     fun write(
         intent: Intent,
@@ -80,6 +87,8 @@ object AlarmIntentContract {
         putExtra(EXTRA_WAKE_UP_CHECK_TOKEN, payload.wakeUpCheckToken)
         putExtra(EXTRA_WAKE_UP_CHECKS_ENABLED, payload.wakeUpChecksEnabled)
         putExtra(EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES, payload.wakeUpCheckIntervalMinutes)
+        putExtra(EXTRA_BACKUP_ALARM_TIMEOUT_MINUTES, payload.backupAlarmTimeoutMinutes)
+        putExtra(EXTRA_BACKUP_ALARM_REPEAT_COUNT, payload.backupAlarmRepeatCount)
     }
 
     fun read(intent: Intent): AlarmLaunchPayload {
@@ -107,7 +116,16 @@ object AlarmIntentContract {
             wakeUpCheckToken = intent.getStringExtra(EXTRA_WAKE_UP_CHECK_TOKEN).orEmpty(),
             wakeUpChecksEnabled = intent.getBooleanExtra(EXTRA_WAKE_UP_CHECKS_ENABLED, false),
             wakeUpCheckIntervalMinutes =
-            intent.getIntExtra(EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES, 5).coerceAtLeast(1)
+            intent.getIntExtra(EXTRA_WAKE_UP_CHECK_INTERVAL_MINUTES, 5).coerceAtLeast(1),
+            backupAlarmTimeoutMinutes =
+            intent
+                .getIntExtra(EXTRA_BACKUP_ALARM_TIMEOUT_MINUTES, BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES)
+                .takeIf { it in BackupAlarmConfig.TIMEOUT_OPTIONS_MINUTES }
+                ?: BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES,
+            backupAlarmRepeatCount =
+            intent
+                .getIntExtra(EXTRA_BACKUP_ALARM_REPEAT_COUNT, BackupAlarmConfig.DEFAULT_REPEAT_COUNT)
+                .coerceIn(BackupAlarmConfig.REPEAT_COUNT_RANGE)
         )
     }
 }

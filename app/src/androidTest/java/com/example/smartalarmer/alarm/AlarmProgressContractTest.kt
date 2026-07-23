@@ -74,4 +74,18 @@ class AlarmProgressContractTest {
 
         assertEquals(payload, restored)
     }
+
+    @Test
+    fun alarmLaunchContractPreservesBackupEscalationConfiguration() {
+        val payload =
+            AlarmLaunchPayload(
+                alarmId = 8,
+                backupAlarmTimeoutMinutes = 15,
+                backupAlarmRepeatCount = 2
+            )
+
+        val restored = AlarmIntentContract.read(AlarmIntentContract.write(Intent(), payload))
+
+        assertEquals(payload, restored)
+    }
 }

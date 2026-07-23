@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmLaunchType
+import com.example.smartalarmer.domain.BackupAlarmConfig
 
 internal data class AlarmAudioSession(
     val payload: AlarmLaunchPayload,
@@ -18,7 +19,10 @@ internal data class AlarmAudioSession(
 internal class AlarmSessionStore(
     context: Context
 ) {
-    private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private val preferences =
+        context
+            .createDeviceProtectedStorageContext()
+            .getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     fun begin(
         payload: AlarmLaunchPayload,
@@ -57,7 +61,17 @@ internal class AlarmSessionStore(
                 wakeUpCheckTotal = preferences.getInt(KEY_WAKE_UP_CHECK_TOTAL, 0),
                 wakeUpCheckToken = preferences.getString(KEY_WAKE_UP_CHECK_TOKEN, null).orEmpty(),
                 wakeUpChecksEnabled = preferences.getBoolean(KEY_WAKE_UP_CHECKS_ENABLED, false),
-                wakeUpCheckIntervalMinutes = preferences.getInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, 5)
+                wakeUpCheckIntervalMinutes = preferences.getInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, 5),
+                backupAlarmTimeoutMinutes =
+                preferences.getInt(
+                    KEY_BACKUP_ALARM_TIMEOUT_MINUTES,
+                    BackupAlarmConfig.DEFAULT_TIMEOUT_MINUTES
+                ),
+                backupAlarmRepeatCount =
+                preferences.getInt(
+                    KEY_BACKUP_ALARM_REPEAT_COUNT,
+                    BackupAlarmConfig.DEFAULT_REPEAT_COUNT
+                )
             ),
             originalVolume = originalVolume,
             activeTaskIndex = preferences.getInt(KEY_ACTIVE_TASK_INDEX, 0).coerceAtLeast(0),
@@ -105,6 +119,8 @@ internal class AlarmSessionStore(
         .putString(KEY_WAKE_UP_CHECK_TOKEN, session.payload.wakeUpCheckToken)
         .putBoolean(KEY_WAKE_UP_CHECKS_ENABLED, session.payload.wakeUpChecksEnabled)
         .putInt(KEY_WAKE_UP_CHECK_INTERVAL_MINUTES, session.payload.wakeUpCheckIntervalMinutes)
+        .putInt(KEY_BACKUP_ALARM_TIMEOUT_MINUTES, session.payload.backupAlarmTimeoutMinutes)
+        .putInt(KEY_BACKUP_ALARM_REPEAT_COUNT, session.payload.backupAlarmRepeatCount)
         .commit()
 
     companion object {
@@ -124,6 +140,8 @@ internal class AlarmSessionStore(
         private const val KEY_WAKE_UP_CHECK_TOKEN = "wake_up_check_token"
         private const val KEY_WAKE_UP_CHECKS_ENABLED = "wake_up_checks_enabled"
         private const val KEY_WAKE_UP_CHECK_INTERVAL_MINUTES = "wake_up_check_interval_minutes"
+        private const val KEY_BACKUP_ALARM_TIMEOUT_MINUTES = "backup_alarm_timeout_minutes"
+        private const val KEY_BACKUP_ALARM_REPEAT_COUNT = "backup_alarm_repeat_count"
         private const val NO_VOLUME = -1
     }
 }

@@ -27,6 +27,8 @@ class BackupPolicyTest {
         assertTrue(databaseExclusions(R.xml.data_extraction_rules) == 2)
         assertTrue(activeSessionExclusions(R.xml.backup_rules) == 1)
         assertTrue(activeSessionExclusions(R.xml.data_extraction_rules) == 2)
+        assertTrue(deviceProtectedExclusions(R.xml.backup_rules) == 3)
+        assertTrue(deviceProtectedExclusions(R.xml.data_extraction_rules) == 6)
     }
 
     private fun activeSessionExclusions(@XmlRes resourceId: Int): Int = exclusions(resourceId, domain = "sharedpref", path = "active_alarm_session.xml")
@@ -34,6 +36,18 @@ class BackupPolicyTest {
     private fun databaseExclusions(
         @XmlRes resourceId: Int
     ): Int = exclusions(resourceId, domain = "database", path = ".")
+
+    private fun deviceProtectedExclusions(@XmlRes resourceId: Int): Int {
+        val paths =
+            setOf(
+                "active_alarm_session.xml",
+                "direct_boot_alarms.xml",
+                "pending_alarm_queue.xml"
+            )
+        return paths.sumOf { path ->
+            exclusions(resourceId, domain = "device_sharedpref", path = path)
+        }
+    }
 
     private fun exclusions(
         @XmlRes resourceId: Int,
