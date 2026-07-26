@@ -142,7 +142,7 @@ class MainViewModel(
     ) {
         viewModelScope.launch {
             val result = commandCoordinator.setEnabled(alarm, isChecked)
-            publishCommandResult(result, publishSuccess = false)
+            publishCommandResult(result, publishSuccess = isChecked)
             if (result is AlarmCommandResult.Updated || result is AlarmCommandResult.Scheduled) {
                 cancelWakeUpChecksAndPublish(alarm.id)
             }
