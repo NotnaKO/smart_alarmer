@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -445,31 +446,19 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 internal fun MainScreenHeader(onPrivacyPolicyClick: () -> Unit) {
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth().testTag(MAIN_HEADER_TAG)) {
-        val compact = maxWidth < 480.dp
-        if (compact) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                MainScreenTitle()
-                TextButton(
-                    onClick = onPrivacyPolicyClick,
-                    modifier = Modifier.align(Alignment.End).testTag(MAIN_HEADER_PRIVACY_TAG)
-                ) {
-                    Text(stringResource(com.example.smartalarmer.R.string.privacy_policy))
-                }
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                MainScreenTitle(modifier = Modifier.weight(1f))
-                TextButton(
-                    onClick = onPrivacyPolicyClick,
-                    modifier = Modifier.testTag(MAIN_HEADER_PRIVACY_TAG)
-                ) {
-                    Text(stringResource(com.example.smartalarmer.R.string.privacy_policy))
-                }
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth().testTag(MAIN_HEADER_TAG),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MainScreenTitle(modifier = Modifier.weight(1f))
+        IconButton(
+            onClick = onPrivacyPolicyClick,
+            modifier = Modifier.testTag(MAIN_HEADER_PRIVACY_TAG)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Info,
+                contentDescription = stringResource(com.example.smartalarmer.R.string.privacy_policy)
+            )
         }
     }
 }

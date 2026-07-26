@@ -223,10 +223,12 @@ class MainViewModelTest {
     }
 
     @Test
-    fun toggleAlarm_enableSuccess_persistsEnabledAlarmWithoutFailureEvent() = runTest(mainDispatcherRule.dispatcher) {
+    fun toggleAlarm_enableSuccess_persistsEnabledAlarmAndPublishesTrigger() = runTest(mainDispatcherRule.dispatcher) {
         val existing = alarm(id = 10, isEnabled = false)
         repository.seed(existing)
+        scheduler.nextResult = AlarmScheduleResult.Scheduled(54_321L)
         val viewModel = createViewModel()
+        val event = async { viewModel.uiEvents.first() }
 
         viewModel.toggleAlarm(existing, isChecked = true)
         advanceUntilIdle()
@@ -235,6 +237,7 @@ class MainViewModelTest {
         assertTrue(saved.isEnabled)
         assertEquals(saved.id, scheduler.scheduled.single().id)
         assertTrue(scheduler.cancelled.isEmpty())
+        assertEquals(MainUiEvent.AlarmScheduled(54_321L), event.await())
     }
 
     @Test

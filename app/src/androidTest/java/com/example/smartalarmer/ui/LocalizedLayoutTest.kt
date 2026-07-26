@@ -216,7 +216,11 @@ class LocalizedLayoutTest {
                 .boundsInRoot
         assertWithin(header, title, "$languageTag app title")
         assertWithin(header, privacy, "$languageTag privacy action")
-        assertTrue("$languageTag header text overlaps", title.bottom <= privacy.top + PIXEL_TOLERANCE)
+        assertTrue("$languageTag header items overlap", title.right <= privacy.left + PIXEL_TOLERANCE)
+        assertTrue(
+            "$languageTag privacy action is not aligned with the title",
+            privacy.center.y in (title.top - PIXEL_TOLERANCE)..(title.bottom + PIXEL_TOLERANCE)
+        )
 
         val card =
             composeTestRule
