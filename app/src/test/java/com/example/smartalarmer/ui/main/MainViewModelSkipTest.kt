@@ -50,7 +50,7 @@ class MainViewModelSkipTest {
                     scheduler = wakeScheduler
                 ),
                 wakeUpCheckSessionFlow = sessionDao.observeAllSessions(),
-                zoneId = ZoneId.of("UTC")
+                zoneIdProvider = { ZoneId.of("UTC") }
             )
         val event = async { viewModel.uiEvents.first() }
 
@@ -67,6 +67,30 @@ class MainViewModelSkipTest {
         assertNull(sessionDao.current.value)
         assertEquals(listOf(alarm.id), wakeScheduler.cancelled)
         assertEquals(MainUiEvent.AlarmSkipped(replacementTrigger), event.await())
+    }
+
+    @Test
+    fun skipResolvesZoneWhenActionRuns() = runTest(mainDispatcherRule.dispatcher) {
+        val originalTrigger = Instant.parse("2026-07-28T15:30:00Z").toEpochMilli()
+        val replacementTrigger = Instant.parse("2026-07-29T15:30:00Z").toEpochMilli()
+        val alarm = alarm(originalTrigger)
+        val repository = SkipRepository(alarm)
+        var currentZone = ZoneId.of("UTC")
+        val viewModel =
+            MainViewModel(
+                alarmRepository = repository,
+                alarmScheduler = SkipMainScheduler(replacementTrigger),
+                zoneIdProvider = { currentZone }
+            )
+        currentZone = ZoneId.of("Asia/Tokyo")
+
+        viewModel.skipNextOccurrence(alarm)
+        advanceUntilIdle()
+
+        assertEquals(
+            LocalDate.parse("2026-07-29").toEpochDay(),
+            repository.items.value.single().suppressedThroughEpochDay
+        )
     }
 
     @Test
@@ -117,7 +141,7 @@ class MainViewModelSkipTest {
                     scheduler = wakeScheduler
                 ),
                 wakeUpCheckSessionFlow = sessionDao.observeAllSessions(),
-                zoneId = ZoneId.of("UTC")
+                zoneIdProvider = { ZoneId.of("UTC") }
             )
         val event = async { viewModel.uiEvents.first() }
 
@@ -141,7 +165,7 @@ class MainViewModelSkipTest {
             MainViewModel(
                 alarmRepository = repository,
                 alarmScheduler = SkipMainScheduler(replacementTrigger),
-                zoneId = ZoneId.of("UTC")
+                zoneIdProvider = { ZoneId.of("UTC") }
             )
         val event = async { viewModel.uiEvents.first() }
 

@@ -29,6 +29,34 @@ class AlarmReceiverDecisionTest {
     }
 
     @Test
+    fun adjustedDirectBootOccurrenceIsAcceptedDuringUnlockReconciliation() {
+        val alarm = alarm(true, "").copy(scheduledTriggerAtMillis = 123L)
+
+        assertEquals(
+            true,
+            AlarmReceiver.shouldDeliver(
+                alarm = alarm,
+                occurrenceTriggerAtMillis = 456L,
+                directBootTriggerAtMillis = 456L
+            )
+        )
+    }
+
+    @Test
+    fun staleOccurrenceThatMatchesNeitherStoreIsRejected() {
+        val alarm = alarm(true, "").copy(scheduledTriggerAtMillis = 456L)
+
+        assertEquals(
+            false,
+            AlarmReceiver.shouldDeliver(
+                alarm = alarm,
+                occurrenceTriggerAtMillis = 123L,
+                directBootTriggerAtMillis = 789L
+            )
+        )
+    }
+
+    @Test
     fun legacyMainOccurrenceWithoutIdentityRemainsDeliverable() {
         assertEquals(
             true,

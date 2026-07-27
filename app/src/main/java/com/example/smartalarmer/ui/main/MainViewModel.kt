@@ -67,7 +67,7 @@ class MainViewModel(
     activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY,
     private val wakeUpCheckCoordinator: WakeUpCheckCoordinator? = null,
     wakeUpCheckSessionFlow: Flow<List<WakeUpCheckSession>> = flowOf(emptyList()),
-    private val zoneId: ZoneId = ZoneId.systemDefault()
+    private val zoneIdProvider: () -> ZoneId = ZoneId::systemDefault
 ) : ViewModel() {
     private val commandCoordinator = AlarmCommandCoordinator(alarmRepository, alarmScheduler, activationGate)
     private val rescheduleEnabledAlarms = RescheduleEnabledAlarms(alarmRepository, alarmScheduler)
@@ -184,7 +184,7 @@ class MainViewModel(
         val suppressedThroughEpochDay =
             Instant
                 .ofEpochMilli(triggerAtMillis)
-                .atZone(zoneId)
+                .atZone(zoneIdProvider())
                 .toLocalDate()
                 .toEpochDay()
         viewModelScope.launch {
