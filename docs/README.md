@@ -15,7 +15,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
 - **Wake-up checks**: Optional chained follow-up alarms require one easy task after the main alarm, with configurable count and 5, 10, or 15 minute intervals measured from each completion.
-- **Skip next occurrence**: Toggling off a recurring alarm offers a reversible one-occurrence skip or a complete disable; either choice cancels remaining wake-up checks, and cards reorder by their actual next event.
+- **Skip or pause recurring alarms**: Toggling off a recurring alarm offers a one-occurrence skip, a pause through a selected local date, or a complete disable; suppression is reversible, cancels remaining wake-up checks, and reorders cards by their actual next event.
 - **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
 - **Always-on backup escalation**: After 5, 10, or 15 minutes without verified puzzle progress, playback switches to a dependable built-in alarm at maximum volume and reinforces it with one to three vibration attempts.
 - **Challenge-preserving fallback**: After three failed submissions or 30 seconds, a blocked task can be exchanged for a different available puzzle without bypassing the alarm.

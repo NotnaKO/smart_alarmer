@@ -19,6 +19,15 @@ internal fun handleMainUiEvent(
                 ),
                 Toast.LENGTH_LONG
             ).show()
+        is MainUiEvent.AlarmPaused ->
+            Toast.makeText(
+                context,
+                context.getString(
+                    com.example.smartalarmer.R.string.alarm_paused_toast,
+                    AlarmTimeFormatter.formatNextTrigger(context, event.nextTriggerAtMillis)
+                ),
+                Toast.LENGTH_LONG
+            ).show()
         MainUiEvent.ExactAlarmPermissionRequired ->
             Toast.makeText(
                 context,

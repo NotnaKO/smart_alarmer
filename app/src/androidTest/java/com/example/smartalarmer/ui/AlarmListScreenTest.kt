@@ -15,6 +15,7 @@ import com.example.smartalarmer.ui.main.ALARM_EDITOR_SCROLL_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
+import com.example.smartalarmer.ui.main.AlarmPauseDateDialog
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 import com.example.smartalarmer.utils.AlarmTimeFormatter
 import java.time.LocalDate
@@ -365,6 +366,32 @@ class AlarmListScreenTest {
             .onNodeWithText(
                 context.getString(com.example.smartalarmer.R.string.resume_alarm_schedule)
             ).assertDoesNotExist()
+    }
+
+    @Test
+    fun pauseDateDialogConfirmsInitialMinimumDate() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val minimumEpochDay = LocalDate.parse("2026-08-03").toEpochDay()
+        var confirmedEpochDay: Long? = null
+
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmPauseDateDialog(
+                    minimumEpochDay = minimumEpochDay,
+                    onConfirm = { confirmedEpochDay = it },
+                    onDismiss = {}
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.pause_alarm))
+            .performClick()
+
+        assertEquals(minimumEpochDay, confirmedEpochDay)
     }
 
     // ── Multiple alarms list ──────────────────────────────────────────────

@@ -42,6 +42,10 @@ sealed interface MainUiEvent {
         val nextTriggerAtMillis: Long
     ) : MainUiEvent
 
+    data class AlarmPaused(
+        val nextTriggerAtMillis: Long
+    ) : MainUiEvent
+
     data object ExactAlarmPermissionRequired : MainUiEvent
 
     data object NotificationCapabilityRequired : MainUiEvent
@@ -187,6 +191,36 @@ class MainViewModel(
                 .atZone(zoneIdProvider())
                 .toLocalDate()
                 .toEpochDay()
+        suppressThrough(
+            alarm = alarm,
+            suppressedThroughEpochDay = suppressedThroughEpochDay,
+            event = { MainUiEvent.AlarmSkipped(it) }
+        )
+    }
+
+    fun pauseThroughDate(
+        alarm: Alarm,
+        requestedEpochDay: Long
+    ) {
+        val triggerAtMillis = alarm.scheduledTriggerAtMillis ?: return
+        val firstOccurrenceEpochDay =
+            Instant
+                .ofEpochMilli(triggerAtMillis)
+                .atZone(zoneIdProvider())
+                .toLocalDate()
+                .toEpochDay()
+        suppressThrough(
+            alarm = alarm,
+            suppressedThroughEpochDay = maxOf(requestedEpochDay, firstOccurrenceEpochDay),
+            event = { MainUiEvent.AlarmPaused(it) }
+        )
+    }
+
+    private fun suppressThrough(
+        alarm: Alarm,
+        suppressedThroughEpochDay: Long,
+        event: (Long) -> MainUiEvent
+    ) {
         viewModelScope.launch {
             val result = commandCoordinator.suppressThrough(alarm, suppressedThroughEpochDay)
             if (result is AlarmCommandResult.Scheduled) {
@@ -198,7 +232,7 @@ class MainViewModel(
                     publishCommandResult(rollback, publishSuccess = false)
                     return@launch
                 }
-                _uiEvents.send(MainUiEvent.AlarmSkipped(result.triggerAtMillis))
+                _uiEvents.send(event(result.triggerAtMillis))
             } else {
                 publishCommandResult(result, publishSuccess = false)
             }

@@ -54,12 +54,13 @@ Cards with real upcoming events sort by their earliest persisted trigger:
 Since skipping persists the replacement main trigger, the card immediately
 moves to its correct chronological position.
 
-## Future extension
+## Date-pause extension
 
-The same suppression field and calculator behavior support a date picker for
-**Pause through date** without another schema or scheduling redesign. A
-one-occurrence time override remains separate because it replaces rather than
-suppresses an occurrence.
+The same suppression field and calculator behavior now support a date picker
+for **Pause through date** without another schema or scheduling redesign. The
+picker starts at the alarm's next scheduled local date and prevents choosing an
+earlier date. A one-occurrence time override remains separate because it
+replaces rather than suppresses an occurrence.
 
 ## Verification
 
