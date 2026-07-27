@@ -56,6 +56,14 @@
     <string name="stop_wake_up_checks">Остановить проверки</string>
     <string name="stop_wake_up_checks_title">Остановить проверки пробуждения?</string>
     <string name="stop_wake_up_checks_confirmation">Оставшиеся повторные будильники будут отменены.</string>
+    <string name="skip_or_disable_alarm_title">Пропустить или выключить будильник?</string>
+    <string name="disable_alarm_title">Выключить будильник?</string>
+    <string name="skip_this_occurrence">Пропустить это срабатывание</string>
+    <string name="turn_alarm_off">Выключить будильник</string>
+    <string name="skip_disable_cancels_checks">Оставшиеся проверки пробуждения также будут отменены.</string>
+    <string name="alarm_paused_through">Пропущено до %1$s включительно</string>
+    <string name="resume_alarm_schedule">Отменить пропуск</string>
+    <string name="alarm_skipped_toast">Срабатывание пропущено. Следующее: %1$s</string>
     <plurals name="first_wake_up_check_in_minutes">
         <item quantity="one">Вы проснулись. Первая проверка через %1$d минуту.</item>
         <item quantity="few">Вы проснулись. Первая проверка через %1$d минуты.</item>

@@ -1,6 +1,9 @@
 package com.example.smartalarmer.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
@@ -14,6 +17,7 @@ import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 import com.example.smartalarmer.utils.AlarmTimeFormatter
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -58,7 +62,8 @@ class AlarmListScreenTest {
         onToggle: (Boolean) -> Unit = {},
         onDelete: () -> Unit = {},
         onEdit: () -> Unit = {},
-        onTest: () -> Unit = {}
+        onTest: () -> Unit = {},
+        onRestoreSchedule: () -> Unit = {}
     ) {
         composeTestRule.setContent {
             SmartAlarmerTheme {
@@ -67,7 +72,8 @@ class AlarmListScreenTest {
                     onToggle = onToggle,
                     onDelete = onDelete,
                     onEdit = onEdit,
-                    onTest = onTest
+                    onTest = onTest,
+                    onRestoreSchedule = onRestoreSchedule
                 )
             }
         }
@@ -251,6 +257,114 @@ class AlarmListScreenTest {
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.wake_up_check_card_summary, 3, 5))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_suppressedAlarmShowsResumeAction() {
+        var restored = false
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        setAlarmCard(
+            alarm = testAlarm().copy(suppressedThroughEpochDay = 25_000L),
+            onRestoreSchedule = { restored = true }
+        )
+
+        composeTestRule
+            .onNodeWithText(
+                context.getString(com.example.smartalarmer.R.string.resume_alarm_schedule)
+            ).performClick()
+
+        assertTrue(restored)
+    }
+
+    @Test
+    fun alarmCard_consumedSuppressionHidesResumeAction() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        setAlarmCard(
+            alarm = testAlarm().copy(suppressedThroughEpochDay = 0L)
+        )
+
+        composeTestRule
+            .onNodeWithText(
+                context.getString(com.example.smartalarmer.R.string.resume_alarm_schedule)
+            ).assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText(
+                context.getString(
+                    com.example.smartalarmer.R.string.alarm_paused_through,
+                    AlarmTimeFormatter.formatDate(context, 0L)
+                )
+            ).assertDoesNotExist()
+    }
+
+    @Test
+    fun alarmCard_consumedSuppressionFromTodayHidesMarkerAndResumeAction() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val today = LocalDate.now().toEpochDay()
+        setAlarmCard(
+            alarm =
+            testAlarm(hour = 0, minute = 0)
+                .copy(suppressedThroughEpochDay = today)
+        )
+
+        composeTestRule
+            .onNodeWithText(
+                context.getString(com.example.smartalarmer.R.string.resume_alarm_schedule)
+            ).assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText(
+                context.getString(
+                    com.example.smartalarmer.R.string.alarm_paused_through,
+                    AlarmTimeFormatter.formatDate(context, today)
+                )
+            ).assertDoesNotExist()
+    }
+
+    @Test
+    fun alarmCard_liveSkipTransitionShowsResumeAction() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var alarm by mutableStateOf(testAlarm())
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmItemCard(
+                    alarm = alarm,
+                    onToggle = {},
+                    onDelete = {}
+                )
+            }
+        }
+
+        composeTestRule.runOnIdle {
+            alarm =
+                alarm.copy(
+                    suppressedThroughEpochDay = LocalDate.now().plusDays(1).toEpochDay()
+                )
+        }
+
+        composeTestRule
+            .onNodeWithText(
+                context.getString(com.example.smartalarmer.R.string.resume_alarm_schedule)
+            ).assertIsDisplayed()
+
+        composeTestRule.runOnIdle {
+            alarm = alarm.copy(suppressedThroughEpochDay = null)
+        }
+
+        composeTestRule
+            .onNodeWithText(
+                context.getString(com.example.smartalarmer.R.string.resume_alarm_schedule)
+            ).assertDoesNotExist()
     }
 
     // ── Multiple alarms list ──────────────────────────────────────────────

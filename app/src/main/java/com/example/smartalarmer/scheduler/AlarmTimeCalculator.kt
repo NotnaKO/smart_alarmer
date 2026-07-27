@@ -20,26 +20,45 @@ class AlarmTimeCalculator(
         val today = now.atZone(zoneId).toLocalDate()
         val repeatDays = alarm.repeatDays
         val repeatWeekParity = alarm.repeatWeekParity
+        val firstSearchDate =
+            if (repeatDays.isOneTime) {
+                today
+            } else {
+                alarm.suppressedThroughEpochDay
+                    ?.let(LocalDate::ofEpochDay)
+                    ?.plusDays(1)
+                    ?.takeIf { it > today }
+                    ?: today
+            }
         val searchRange = if (repeatDays.isOneTime) 0..1 else 0..14
 
         for (daysAhead in searchRange) {
-            val date = today.plusDays(daysAhead.toLong())
+            val date = firstSearchDate.plusDays(daysAhead.toLong())
             if (!repeatDays.isOneTime) {
                 val matchesDay = repeatDays.values.any { it.isoValue == date.dayOfWeek.value }
                 val isoWeekNumber = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
                 if (!matchesDay || !repeatWeekParity.includes(isoWeekNumber)) continue
             }
 
-            resolveOccurrences(date, alarm, now).firstOrNull()?.let { return it }
+            resolveOccurrences(date, alarm).firstOrNull { it > now }?.let { return it }
         }
 
         error("Unable to calculate a future trigger for alarm ${alarm.id}")
     }
 
+    fun suppressionExpiresAt(alarm: Alarm): Instant? {
+        val suppressedDate =
+            alarm.suppressedThroughEpochDay
+                ?.let(LocalDate::ofEpochDay)
+                ?: return null
+        return resolveOccurrences(suppressedDate, alarm).maxOrNull()
+    }
+
+    fun isSuppressionPending(alarm: Alarm): Boolean = suppressionExpiresAt(alarm)?.isAfter(clock.instant()) == true
+
     private fun resolveOccurrences(
         date: LocalDate,
-        alarm: Alarm,
-        now: Instant
+        alarm: Alarm
     ): List<Instant> {
         val localDateTime = LocalDateTime.of(date.year, date.month, date.dayOfMonth, alarm.hour, alarm.minute)
         val validOffsets = zoneId.rules.getValidOffsets(localDateTime)
@@ -52,6 +71,6 @@ class AlarmTimeCalculator(
                     ZonedDateTime.ofLocal(localDateTime, zoneId, offset).toInstant()
                 }
             }
-        return occurrences.filter { it > now }.sorted()
+        return occurrences.sorted()
     }
 }

@@ -35,6 +35,7 @@ import com.example.smartalarmer.ui.main.ALARM_EDITOR_PUZZLE_COUNT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_ROW_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
+import com.example.smartalarmer.ui.main.AlarmDisableChoiceDialog
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
 import com.example.smartalarmer.ui.main.MAIN_HEADER_PRIVACY_TAG
@@ -66,6 +67,18 @@ class LocalizedLayoutTest {
 
     @Test
     fun dashboard_russianTextFitsCompactWidth() = assertDashboardFits("ru")
+
+    @Test
+    fun skipDialog_englishStringsRender() = assertSkipDialogLocalized("en")
+
+    @Test
+    fun skipDialog_germanStringsRender() = assertSkipDialogLocalized("de")
+
+    @Test
+    fun skipDialog_spanishStringsRender() = assertSkipDialogLocalized("es")
+
+    @Test
+    fun skipDialog_russianStringsRender() = assertSkipDialogLocalized("ru")
 
     @Test
     fun alarmEditor_russianTextAndControlsFitCompactWidth() {
@@ -240,6 +253,38 @@ class LocalizedLayoutTest {
         assertWithin(card, summary, "$languageTag alarm summary")
         assertWithin(card, actions, "$languageTag alarm actions")
         assertTrue("$languageTag alarm summary overlaps actions", summary.bottom <= actions.top + PIXEL_TOLERANCE)
+    }
+
+    private fun assertSkipDialogLocalized(languageTag: String) {
+        setLocalizedContent(languageTag) {
+            AlarmDisableChoiceDialog(
+                alarm =
+                Alarm(
+                    id = 1,
+                    hour = 7,
+                    minute = 30,
+                    daysOfWeek = "1,2,3,4,5",
+                    puzzlesList = "MATH",
+                    scheduledTriggerAtMillis = System.currentTimeMillis() + 86_400_000L
+                ),
+                hasActiveChecks = true,
+                onSkip = {},
+                onDisable = {},
+                onDismiss = {}
+            )
+        }
+
+        listOf(
+            R.string.skip_or_disable_alarm_title,
+            R.string.skip_this_occurrence,
+            R.string.turn_alarm_off,
+            R.string.skip_disable_cancels_checks,
+            R.string.cancel
+        ).forEach { stringResource ->
+            composeTestRule
+                .onNodeWithText(localizedContext.getString(stringResource))
+                .assertExists()
+        }
     }
 
     private fun setLocalizedContent(

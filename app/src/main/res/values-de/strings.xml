@@ -54,6 +54,14 @@
     <string name="stop_wake_up_checks">Kontrollen stoppen</string>
     <string name="stop_wake_up_checks_title">Aufwachkontrollen stoppen?</string>
     <string name="stop_wake_up_checks_confirmation">Die verbleibenden Folgewecker werden abgebrochen.</string>
+    <string name="skip_or_disable_alarm_title">Alarm überspringen oder ausschalten?</string>
+    <string name="disable_alarm_title">Alarm ausschalten?</string>
+    <string name="skip_this_occurrence">Dieses Klingeln überspringen</string>
+    <string name="turn_alarm_off">Alarm ausschalten</string>
+    <string name="skip_disable_cancels_checks">Verbleibende Aufwachkontrollen werden ebenfalls abgebrochen.</string>
+    <string name="alarm_paused_through">Übersprungen bis einschließlich %1$s</string>
+    <string name="resume_alarm_schedule">Zeitplan fortsetzen</string>
+    <string name="alarm_skipped_toast">Alarm übersprungen. Nächster Alarm: %1$s</string>
     <plurals name="first_wake_up_check_in_minutes">
         <item quantity="one">Du bist wach. Erste Kontrolle in %1$d Minute.</item>
         <item quantity="other">Du bist wach. Erste Kontrolle in %1$d Minuten.</item>

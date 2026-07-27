@@ -26,20 +26,21 @@ internal class AlarmDeliveryCoordinator(
             return
         }
 
+        val candidate = alarm.copy(suppressedThroughEpochDay = null)
         val updated =
-            when (val result = scheduler.schedule(alarm)) {
+            when (val result = scheduler.schedule(candidate)) {
                 is AlarmScheduleResult.Scheduled ->
-                    alarm.copy(
+                    candidate.copy(
                         scheduleStatus = AlarmScheduleStatus.SCHEDULED.name,
                         scheduledTriggerAtMillis = result.triggerAtMillis
                     )
                 AlarmScheduleResult.PermissionRequired ->
-                    alarm.copy(
+                    candidate.copy(
                         scheduleStatus = AlarmScheduleStatus.PERMISSION_REQUIRED.name,
                         scheduledTriggerAtMillis = null
                     )
                 is AlarmScheduleResult.Failure ->
-                    alarm.copy(
+                    candidate.copy(
                         scheduleStatus = AlarmScheduleStatus.FAILED.name,
                         scheduledTriggerAtMillis = null
                     )

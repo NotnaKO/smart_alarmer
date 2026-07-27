@@ -19,12 +19,15 @@ import com.example.smartalarmer.scheduler.AlarmCancelResult
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
 import com.example.smartalarmer.scheduler.RescheduleEnabledAlarms
+import java.time.Instant
+import java.time.ZoneId
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -33,6 +36,10 @@ import kotlinx.coroutines.launch
 sealed interface MainUiEvent {
     data class AlarmScheduled(
         val triggerAtMillis: Long
+    ) : MainUiEvent
+
+    data class AlarmSkipped(
+        val nextTriggerAtMillis: Long
     ) : MainUiEvent
 
     data object ExactAlarmPermissionRequired : MainUiEvent
@@ -48,12 +55,19 @@ sealed interface MainUiEvent {
     ) : MainUiEvent
 }
 
+data class AlarmCardState(
+    val alarm: Alarm,
+    val wakeUpCheckSession: WakeUpCheckSession?,
+    val effectiveNextAtMillis: Long?
+)
+
 class MainViewModel(
     private val alarmRepository: AlarmRepository,
     private val alarmScheduler: AlarmSchedulingGateway,
     activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY,
     private val wakeUpCheckCoordinator: WakeUpCheckCoordinator? = null,
-    wakeUpCheckSessionFlow: Flow<List<WakeUpCheckSession>> = flowOf(emptyList())
+    wakeUpCheckSessionFlow: Flow<List<WakeUpCheckSession>> = flowOf(emptyList()),
+    private val zoneIdProvider: () -> ZoneId = ZoneId::systemDefault
 ) : ViewModel() {
     private val commandCoordinator = AlarmCommandCoordinator(alarmRepository, alarmScheduler, activationGate)
     private val rescheduleEnabledAlarms = RescheduleEnabledAlarms(alarmRepository, alarmScheduler)
@@ -72,6 +86,14 @@ class MainViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    val alarmCards: StateFlow<List<AlarmCardState>> =
+        combine(alarmRepository.alarms, wakeUpCheckSessionFlow, ::sortedAlarmCards)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
 
     private val _isBottomSheetVisible = MutableStateFlow(false)
     val isBottomSheetVisible = _isBottomSheetVisible.asStateFlow()
@@ -142,9 +164,54 @@ class MainViewModel(
     ) {
         viewModelScope.launch {
             val result = commandCoordinator.setEnabled(alarm, isChecked)
-            publishCommandResult(result, publishSuccess = isChecked)
             if (result is AlarmCommandResult.Updated || result is AlarmCommandResult.Scheduled) {
-                cancelWakeUpChecksAndPublish(alarm.id)
+                if (!cancelWakeUpChecksAndPublish(alarm.id)) {
+                    if (!isChecked && result is AlarmCommandResult.Updated) {
+                        publishCommandResult(
+                            commandCoordinator.setEnabled(result.alarm, true),
+                            publishSuccess = false
+                        )
+                    }
+                    return@launch
+                }
+            }
+            publishCommandResult(result, publishSuccess = isChecked)
+        }
+    }
+
+    fun skipNextOccurrence(alarm: Alarm) {
+        val triggerAtMillis = alarm.scheduledTriggerAtMillis ?: return
+        val suppressedThroughEpochDay =
+            Instant
+                .ofEpochMilli(triggerAtMillis)
+                .atZone(zoneIdProvider())
+                .toLocalDate()
+                .toEpochDay()
+        viewModelScope.launch {
+            val result = commandCoordinator.suppressThrough(alarm, suppressedThroughEpochDay)
+            if (result is AlarmCommandResult.Scheduled) {
+                if (!cancelWakeUpChecksAndPublish(alarm.id)) {
+                    val rollback =
+                        alarm.suppressedThroughEpochDay?.let {
+                            commandCoordinator.suppressThrough(result.alarm, it)
+                        } ?: commandCoordinator.clearSuppression(result.alarm)
+                    publishCommandResult(rollback, publishSuccess = false)
+                    return@launch
+                }
+                _uiEvents.send(MainUiEvent.AlarmSkipped(result.triggerAtMillis))
+            } else {
+                publishCommandResult(result, publishSuccess = false)
+            }
+        }
+    }
+
+    fun restoreSuppressedOccurrences(alarm: Alarm) {
+        viewModelScope.launch {
+            val result = commandCoordinator.clearSuppression(alarm)
+            if (result is AlarmCommandResult.Scheduled) {
+                _uiEvents.send(MainUiEvent.AlarmScheduled(result.triggerAtMillis))
+            } else {
+                publishCommandResult(result, publishSuccess = false)
             }
         }
     }
@@ -191,14 +258,16 @@ class MainViewModel(
         }
     }
 
-    private suspend fun cancelWakeUpChecksAndPublish(alarmId: Int) {
-        when (val result = wakeUpCheckCoordinator?.cancel(alarmId)) {
-            is AlarmCancelResult.Failure ->
-                _uiEvents.send(MainUiEvent.AlarmOperationFailed(result.exception))
-            AlarmCancelResult.Cancelled,
-            null
-            -> Unit
+    private suspend fun cancelWakeUpChecksAndPublish(alarmId: Int): Boolean = when (
+        val result = wakeUpCheckCoordinator?.cancel(alarmId)
+    ) {
+        is AlarmCancelResult.Failure -> {
+            _uiEvents.send(MainUiEvent.AlarmOperationFailed(result.exception))
+            false
         }
+        AlarmCancelResult.Cancelled,
+        null
+        -> true
     }
 
     private suspend fun publishCommandResult(
@@ -257,4 +326,33 @@ class MainViewModel(
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
+}
+
+internal fun sortedAlarmCards(
+    alarms: List<Alarm>,
+    sessions: List<WakeUpCheckSession>
+): List<AlarmCardState> {
+    val sessionsByAlarmId = sessions.associateBy(WakeUpCheckSession::alarmId)
+    return alarms
+        .map { alarm ->
+            val session = sessionsByAlarmId[alarm.id]
+            val mainTrigger = alarm.scheduledTriggerAtMillis.takeIf { alarm.isEnabled }
+            AlarmCardState(
+                alarm = alarm,
+                wakeUpCheckSession = session,
+                effectiveNextAtMillis =
+                listOfNotNull(mainTrigger, session?.nextTriggerAtMillis).minOrNull()
+            )
+        }.sortedWith(
+            compareBy<AlarmCardState> { card ->
+                when {
+                    card.effectiveNextAtMillis != null -> 0
+                    card.alarm.isEnabled -> 1
+                    else -> 2
+                }
+            }.thenBy { it.effectiveNextAtMillis ?: Long.MAX_VALUE }
+                .thenBy { it.alarm.hour }
+                .thenBy { it.alarm.minute }
+                .thenBy { it.alarm.id }
+        )
 }

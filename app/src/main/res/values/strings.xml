@@ -54,6 +54,14 @@
     <string name="stop_wake_up_checks">Stop checks</string>
     <string name="stop_wake_up_checks_title">Stop wake-up checks?</string>
     <string name="stop_wake_up_checks_confirmation">The remaining follow-up alarms will be cancelled.</string>
+    <string name="skip_or_disable_alarm_title">Skip or turn off alarm?</string>
+    <string name="disable_alarm_title">Turn off alarm?</string>
+    <string name="skip_this_occurrence">Skip this occurrence</string>
+    <string name="turn_alarm_off">Turn alarm off</string>
+    <string name="skip_disable_cancels_checks">Any remaining wake-up checks will also be cancelled.</string>
+    <string name="alarm_paused_through">Skipped through %1$s</string>
+    <string name="resume_alarm_schedule">Resume schedule</string>
+    <string name="alarm_skipped_toast">Alarm skipped. Next: %1$s</string>
     <plurals name="first_wake_up_check_in_minutes">
         <item quantity="one">You’re up. First wake-up check in %1$d minute.</item>
         <item quantity="other">You’re up. First wake-up check in %1$d minutes.</item>

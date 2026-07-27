@@ -55,4 +55,4 @@ reschedule follow-up when its original delivery arrives.
 
 The direct-boot mirror, active alarm session, and pending queue are operational
 state. They are excluded from cloud backup and device transfer. Room schema
-version 9 adds the backup timeout and reinforcement-count settings.
+version 10 adds the backup timeout and reinforcement-count settings.

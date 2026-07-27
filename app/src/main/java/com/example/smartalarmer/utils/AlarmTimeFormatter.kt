@@ -3,6 +3,8 @@ package com.example.smartalarmer.utils
 import android.content.Context
 import android.text.format.DateFormat
 import android.text.format.DateUtils
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Calendar
 
 object AlarmTimeFormatter {
@@ -30,6 +32,21 @@ object AlarmTimeFormatter {
         DateUtils.FORMAT_SHOW_DATE or
             DateUtils.FORMAT_SHOW_WEEKDAY or
             DateUtils.FORMAT_SHOW_TIME or
+            DateUtils.FORMAT_ABBREV_MONTH
+    )
+
+    fun formatDate(
+        context: Context,
+        epochDay: Long
+    ): String = DateUtils.formatDateTime(
+        context,
+        LocalDate
+            .ofEpochDay(epochDay)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli(),
+        DateUtils.FORMAT_SHOW_DATE or
+            DateUtils.FORMAT_SHOW_WEEKDAY or
             DateUtils.FORMAT_ABBREV_MONTH
     )
 }

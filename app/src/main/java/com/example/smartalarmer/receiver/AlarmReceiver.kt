@@ -39,9 +39,25 @@ class AlarmReceiver : BroadcastReceiver() {
                 val database = AlarmDatabase.getDatabase(context)
                 val alarmDao = database.alarmDao()
                 val alarm = alarmDao.getAlarmById(payload.alarmId)
+                val directBootTriggerAtMillis =
+                    if (payload.launchType == AlarmLaunchType.MAIN) {
+                        runCatching {
+                            DirectBootAlarmStore(context)
+                                .snapshots()
+                                .firstOrNull { it.alarm.id == payload.alarmId }
+                                ?.triggerAtMillis
+                        }.getOrNull()
+                    } else {
+                        null
+                    }
                 val shouldDeliver =
                     when (payload.launchType) {
-                        AlarmLaunchType.MAIN -> shouldDeliver(alarm)
+                        AlarmLaunchType.MAIN ->
+                            shouldDeliver(
+                                alarm = alarm,
+                                occurrenceTriggerAtMillis = payload.occurrenceTriggerAtMillis,
+                                directBootTriggerAtMillis = directBootTriggerAtMillis
+                            )
                         AlarmLaunchType.WAKE_UP_CHECK -> {
                             val session = database.wakeUpCheckDao().getSession(payload.alarmId)
                             session != null &&
@@ -113,7 +129,16 @@ class AlarmReceiver : BroadcastReceiver() {
                 )
             )
         }
-        internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
+        internal fun shouldDeliver(
+            alarm: Alarm?,
+            occurrenceTriggerAtMillis: Long,
+            directBootTriggerAtMillis: Long? = null
+        ): Boolean {
+            if (alarm?.isEnabled != true) return false
+            if (occurrenceTriggerAtMillis == AlarmLaunchPayload.NO_OCCURRENCE) return true
+            return alarm.scheduledTriggerAtMillis == occurrenceTriggerAtMillis ||
+                directBootTriggerAtMillis == occurrenceTriggerAtMillis
+        }
 
         internal fun payloadForDelivery(
             alarm: Alarm,

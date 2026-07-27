@@ -53,7 +53,11 @@ data class AlarmDraft(
         wakeUpCheckCount = wakeUpCheckCount,
         wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
         scheduleStatus = if (isEnabled) AlarmScheduleStatus.UNKNOWN.name else AlarmScheduleStatus.DISABLED.name,
-        scheduledTriggerAtMillis = null
+        scheduledTriggerAtMillis = null,
+        suppressedThroughEpochDay =
+        existing
+            ?.suppressedThroughEpochDay
+            ?.takeUnless { repeatDays.isOneTime }
     )
 }
 

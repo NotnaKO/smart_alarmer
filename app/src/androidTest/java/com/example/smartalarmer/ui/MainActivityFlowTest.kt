@@ -4,7 +4,10 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
+import com.example.smartalarmer.data.AlarmScheduleStatus
+import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.MainActivity
@@ -95,5 +98,91 @@ class MainActivityFlowTest {
             composeTestRule.onAllNodesWithText("Plan Test Alarm").fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNodeWithText("Plan Test Alarm").assertIsDisplayed()
+    }
+
+    @Test
+    fun mainActivity_disablingRecurringAlarmOffersSkipOrTurnOff() {
+        val context = composeTestRule.activity
+        runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+            AlarmDatabase
+                .getDatabase(context)
+                .alarmDao()
+                .insertAlarm(
+                    Alarm(
+                        hour = 7,
+                        minute = 0,
+                        daysOfWeek = "1,2,3,4,5",
+                        puzzlesList = "MATH",
+                        label = "Toggle choice",
+                        scheduleStatus = AlarmScheduleStatus.SCHEDULED.name,
+                        scheduledTriggerAtMillis = System.currentTimeMillis() + 86_400_000L
+                    )
+                )
+        }
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule
+                .onAllNodesWithText("Toggle choice")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_CARD_TAG)))
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.skip_this_occurrence))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.turn_alarm_off))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun mainActivity_disablingOneTimeAlarmTurnsItOffWithoutDialog() {
+        val context = composeTestRule.activity
+        val alarmId =
+            runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                AlarmDatabase
+                    .getDatabase(context)
+                    .alarmDao()
+                    .insertAlarm(
+                        Alarm(
+                            hour = 7,
+                            minute = 0,
+                            daysOfWeek = "",
+                            puzzlesList = "MATH",
+                            label = "One-time toggle",
+                            scheduleStatus = AlarmScheduleStatus.SCHEDULED.name,
+                            scheduledTriggerAtMillis = System.currentTimeMillis() + 86_400_000L
+                        )
+                    ).toInt()
+            }
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule
+                .onAllNodesWithText("One-time toggle")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_CARD_TAG)))
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.turn_alarm_off))
+            .assertDoesNotExist()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                AlarmDatabase
+                    .getDatabase(context)
+                    .alarmDao()
+                    .getAlarmById(alarmId)
+                    ?.isEnabled == false
+            }
+        }
+        composeTestRule
+            .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_CARD_TAG)))
+            .assertIsOff()
     }
 }

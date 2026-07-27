@@ -46,6 +46,7 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
 import com.example.smartalarmer.domain.WakeUpCheckCoordinator
+import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
 import com.example.smartalarmer.scheduler.AndroidWakeUpCheckSchedulingGateway
 import com.example.smartalarmer.service.ActiveAlarmRecovery
@@ -82,8 +83,7 @@ class MainActivity : ComponentActivity() {
             SmartAlarmerTheme {
                 val context = LocalContext.current
                 val selectAlarmSoundTitle = stringResource(com.example.smartalarmer.R.string.select_alarm_sound)
-                val alarms by viewModel.alarms.collectAsStateWithLifecycle()
-                val wakeUpCheckSessions by viewModel.wakeUpCheckSessions.collectAsStateWithLifecycle()
+                val alarmCards by viewModel.alarmCards.collectAsStateWithLifecycle()
                 val isSheetVisible by viewModel.isBottomSheetVisible.collectAsStateWithLifecycle()
                 val editingAlarm by viewModel.editingAlarm.collectAsStateWithLifecycle()
 
@@ -91,6 +91,7 @@ class MainActivity : ComponentActivity() {
                 var showPrivacyPolicy by rememberSaveable { mutableStateOf(false) }
                 var pendingDelete by remember { mutableStateOf<Alarm?>(null) }
                 var pendingWakeUpCheckCancel by remember { mutableStateOf<Alarm?>(null) }
+                var pendingDisableChoice by remember { mutableStateOf<Alarm?>(null) }
                 val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
                 var isXiaomiDismissed by rememberSaveable { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
@@ -258,7 +259,7 @@ class MainActivity : ComponentActivity() {
 
                             MainScreenHeader(onPrivacyPolicyClick = { showPrivacyPolicy = true })
 
-                            if (alarms.isEmpty()) {
+                            if (alarmCards.isEmpty()) {
                                 Box(
                                     modifier =
                                     Modifier
@@ -284,13 +285,21 @@ class MainActivity : ComponentActivity() {
                                         .weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    items(alarms, key = { it.id }) { alarm ->
+                                    items(alarmCards, key = { it.alarm.id }) { cardState ->
+                                        val alarm = cardState.alarm
                                         AlarmItemCard(
                                             alarm = alarm,
-                                            wakeUpCheckSession =
-                                            wakeUpCheckSessions.firstOrNull { it.alarmId == alarm.id },
+                                            wakeUpCheckSession = cardState.wakeUpCheckSession,
                                             onToggle = { isChecked ->
-                                                viewModel.toggleAlarm(alarm, isChecked)
+                                                if (
+                                                    !isChecked &&
+                                                    alarm.isEnabled &&
+                                                    !alarm.repeatDays.isOneTime
+                                                ) {
+                                                    pendingDisableChoice = alarm
+                                                } else {
+                                                    viewModel.toggleAlarm(alarm, isChecked)
+                                                }
                                             },
                                             onDelete = {
                                                 pendingDelete = alarm
@@ -308,6 +317,9 @@ class MainActivity : ComponentActivity() {
                                             },
                                             onCancelWakeUpChecks = {
                                                 pendingWakeUpCheckCancel = alarm
+                                            },
+                                            onRestoreSchedule = {
+                                                viewModel.restoreSuppressedOccurrences(alarm)
                                             }
                                         )
                                     }
@@ -437,11 +449,124 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
+                        pendingDisableChoice?.let { alarm ->
+                            val canSkip =
+                                !alarm.repeatDays.isOneTime &&
+                                    alarm.scheduledTriggerAtMillis != null
+                            val hasActiveChecks =
+                                alarmCards.any {
+                                    it.alarm.id == alarm.id && it.wakeUpCheckSession != null
+                                }
+                            AlarmDisableChoiceDialog(
+                                alarm = alarm,
+                                hasActiveChecks = hasActiveChecks,
+                                onSkip =
+                                if (canSkip) {
+                                    {
+                                        viewModel.skipNextOccurrence(alarm)
+                                        pendingDisableChoice = null
+                                    }
+                                } else {
+                                    null
+                                },
+                                onDisable = {
+                                    viewModel.toggleAlarm(alarm, false)
+                                    pendingDisableChoice = null
+                                },
+                                onDismiss = { pendingDisableChoice = null }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+internal fun AlarmDisableChoiceDialog(
+    alarm: Alarm,
+    hasActiveChecks: Boolean,
+    onSkip: (() -> Unit)?,
+    onDisable: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                stringResource(
+                    if (onSkip != null) {
+                        com.example.smartalarmer.R.string.skip_or_disable_alarm_title
+                    } else {
+                        com.example.smartalarmer.R.string.disable_alarm_title
+                    }
+                )
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                alarm.scheduledTriggerAtMillis?.let { triggerAtMillis ->
+                    Text(
+                        stringResource(
+                            com.example.smartalarmer.R.string.next_alarm_format,
+                            AlarmTimeFormatter.formatNextTrigger(context, triggerAtMillis)
+                        )
+                    )
+                }
+                if (hasActiveChecks) {
+                    Text(
+                        stringResource(com.example.smartalarmer.R.string.skip_disable_cancels_checks),
+                        color = OrangeWarning
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                onSkip?.let { skip ->
+                    Button(
+                        onClick = skip,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = IndigoPrimary,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(stringResource(com.example.smartalarmer.R.string.skip_this_occurrence))
+                    }
+                }
+                OutlinedButton(
+                    onClick = onDisable,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                    ButtonDefaults.outlinedButtonColors(
+                        contentColor = RedErrorContent
+                    ),
+                    border =
+                    androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        RedErrorContent.copy(alpha = 0.65f)
+                    )
+                ) {
+                    Text(stringResource(com.example.smartalarmer.R.string.turn_alarm_off))
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(com.example.smartalarmer.R.string.cancel))
+                }
+            }
+        }
+    )
 }
 
 @Composable
