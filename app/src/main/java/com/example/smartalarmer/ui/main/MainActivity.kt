@@ -56,6 +56,8 @@ import com.example.smartalarmer.utils.AlarmCapabilityChecker
 import com.example.smartalarmer.utils.AlarmTimeFormatter
 import com.example.smartalarmer.utils.AndroidAlarmActivationGate
 import com.example.smartalarmer.utils.DeviceUtils
+import java.time.Instant
+import java.time.ZoneId
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels {
@@ -92,6 +94,7 @@ class MainActivity : ComponentActivity() {
                 var pendingDelete by remember { mutableStateOf<Alarm?>(null) }
                 var pendingWakeUpCheckCancel by remember { mutableStateOf<Alarm?>(null) }
                 var pendingDisableChoice by remember { mutableStateOf<Alarm?>(null) }
+                var pendingPauseDate by remember { mutableStateOf<Alarm?>(null) }
                 val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
                 var isXiaomiDismissed by rememberSaveable { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
@@ -470,12 +473,39 @@ class MainActivity : ComponentActivity() {
                                 } else {
                                     null
                                 },
+                                onPauseThroughDate =
+                                if (canSkip) {
+                                    {
+                                        pendingPauseDate = alarm
+                                        pendingDisableChoice = null
+                                    }
+                                } else {
+                                    null
+                                },
                                 onDisable = {
                                     viewModel.toggleAlarm(alarm, false)
                                     pendingDisableChoice = null
                                 },
                                 onDismiss = { pendingDisableChoice = null }
                             )
+                        }
+
+                        pendingPauseDate?.let { alarm ->
+                            alarm.scheduledTriggerAtMillis?.let { triggerAtMillis ->
+                                AlarmPauseDateDialog(
+                                    minimumEpochDay =
+                                    Instant
+                                        .ofEpochMilli(triggerAtMillis)
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                                        .toEpochDay(),
+                                    onConfirm = { epochDay ->
+                                        viewModel.pauseThroughDate(alarm, epochDay)
+                                        pendingPauseDate = null
+                                    },
+                                    onDismiss = { pendingPauseDate = null }
+                                )
+                            }
                         }
                     }
                 }
@@ -489,6 +519,7 @@ internal fun AlarmDisableChoiceDialog(
     alarm: Alarm,
     hasActiveChecks: Boolean,
     onSkip: (() -> Unit)?,
+    onPauseThroughDate: (() -> Unit)?,
     onDisable: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -543,6 +574,23 @@ internal fun AlarmDisableChoiceDialog(
                         Text(stringResource(com.example.smartalarmer.R.string.skip_this_occurrence))
                     }
                 }
+                onPauseThroughDate?.let { pause ->
+                    OutlinedButton(
+                        onClick = pause,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = IndigoContent
+                        ),
+                        border =
+                        androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            IndigoContent.copy(alpha = 0.65f)
+                        )
+                    ) {
+                        Text(stringResource(com.example.smartalarmer.R.string.pause_through_date))
+                    }
+                }
                 OutlinedButton(
                     onClick = onDisable,
                     modifier = Modifier.fillMaxWidth(),
@@ -567,6 +615,60 @@ internal fun AlarmDisableChoiceDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun AlarmPauseDateDialog(
+    minimumEpochDay: Long,
+    onConfirm: (Long) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val selectableDates =
+        remember(minimumEpochDay) {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean = Math.floorDiv(
+                    utcTimeMillis,
+                    MILLIS_PER_DAY
+                ) >= minimumEpochDay
+            }
+        }
+    val datePickerState =
+        rememberDatePickerState(
+            initialSelectedDateMillis = minimumEpochDay * MILLIS_PER_DAY,
+            selectableDates = selectableDates
+        )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedDateMillis ->
+                        onConfirm(Math.floorDiv(selectedDateMillis, MILLIS_PER_DAY))
+                    }
+                },
+                enabled = datePickerState.selectedDateMillis != null
+            ) {
+                Text(stringResource(com.example.smartalarmer.R.string.pause_alarm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(com.example.smartalarmer.R.string.cancel))
+            }
+        }
+    ) {
+        DatePicker(
+            state = datePickerState,
+            title = {
+                Text(
+                    text = stringResource(com.example.smartalarmer.R.string.pause_alarm_date_title),
+                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -602,3 +704,4 @@ private fun MainScreenTitle(modifier: Modifier = Modifier) {
 internal const val MAIN_HEADER_TAG = "main_header"
 internal const val MAIN_HEADER_TITLE_TAG = "main_header_title"
 internal const val MAIN_HEADER_PRIVACY_TAG = "main_header_privacy"
+private const val MILLIS_PER_DAY = 86_400_000L

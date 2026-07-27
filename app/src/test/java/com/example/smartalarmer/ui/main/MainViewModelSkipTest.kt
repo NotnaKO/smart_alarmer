@@ -94,6 +94,67 @@ class MainViewModelSkipTest {
     }
 
     @Test
+    fun pauseThroughDateReschedulesAfterSelectedDateAndCancelsChecks() = runTest(mainDispatcherRule.dispatcher) {
+        val originalTrigger = Instant.parse("2026-07-28T07:00:00Z").toEpochMilli()
+        val replacementTrigger = Instant.parse("2026-08-04T07:00:00Z").toEpochMilli()
+        val alarm = alarm(originalTrigger)
+        val repository = SkipRepository(alarm)
+        val sessionDao = SkipSessionDao(session(alarm.id))
+        val wakeScheduler = SkipWakeScheduler()
+        val viewModel =
+            MainViewModel(
+                alarmRepository = repository,
+                alarmScheduler = SkipMainScheduler(replacementTrigger),
+                wakeUpCheckCoordinator =
+                WakeUpCheckCoordinator(
+                    alarmRepository = repository,
+                    sessionDao = sessionDao,
+                    scheduler = wakeScheduler
+                ),
+                wakeUpCheckSessionFlow = sessionDao.observeAllSessions(),
+                zoneIdProvider = { ZoneId.of("UTC") }
+            )
+        val event = async { viewModel.uiEvents.first() }
+        val pauseThrough = LocalDate.parse("2026-08-03").toEpochDay()
+
+        viewModel.pauseThroughDate(alarm, pauseThrough)
+        advanceUntilIdle()
+
+        val updated = repository.items.value.single()
+        assertTrue(updated.isEnabled)
+        assertEquals(pauseThrough, updated.suppressedThroughEpochDay)
+        assertEquals(replacementTrigger, updated.scheduledTriggerAtMillis)
+        assertNull(sessionDao.current.value)
+        assertEquals(listOf(alarm.id), wakeScheduler.cancelled)
+        assertEquals(MainUiEvent.AlarmPaused(replacementTrigger), event.await())
+    }
+
+    @Test
+    fun pauseThroughDateCannotPrecedeScheduledOccurrence() = runTest(mainDispatcherRule.dispatcher) {
+        val originalTrigger = Instant.parse("2026-07-28T23:30:00Z").toEpochMilli()
+        val replacementTrigger = Instant.parse("2026-07-29T23:30:00Z").toEpochMilli()
+        val alarm = alarm(originalTrigger)
+        val repository = SkipRepository(alarm)
+        val viewModel =
+            MainViewModel(
+                alarmRepository = repository,
+                alarmScheduler = SkipMainScheduler(replacementTrigger),
+                zoneIdProvider = { ZoneId.of("Asia/Tokyo") }
+            )
+
+        viewModel.pauseThroughDate(
+            alarm,
+            LocalDate.parse("2026-07-01").toEpochDay()
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            LocalDate.parse("2026-07-29").toEpochDay(),
+            repository.items.value.single().suppressedThroughEpochDay
+        )
+    }
+
+    @Test
     fun disablingAlarmAlsoCancelsActiveWakeUpChecks() = runTest(mainDispatcherRule.dispatcher) {
         val alarm = alarm(Instant.parse("2026-07-27T07:00:00Z").toEpochMilli())
         val repository = SkipRepository(alarm)

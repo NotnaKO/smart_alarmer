@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalConfiguration
@@ -38,6 +41,7 @@ import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmDisableChoiceDialog
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
+import com.example.smartalarmer.ui.main.AlarmPauseDateDialog
 import com.example.smartalarmer.ui.main.MAIN_HEADER_PRIVACY_TAG
 import com.example.smartalarmer.ui.main.MAIN_HEADER_TAG
 import com.example.smartalarmer.ui.main.MAIN_HEADER_TITLE_TAG
@@ -256,27 +260,38 @@ class LocalizedLayoutTest {
     }
 
     private fun assertSkipDialogLocalized(languageTag: String) {
+        var showDatePicker by mutableStateOf(false)
         setLocalizedContent(languageTag) {
-            AlarmDisableChoiceDialog(
-                alarm =
-                Alarm(
-                    id = 1,
-                    hour = 7,
-                    minute = 30,
-                    daysOfWeek = "1,2,3,4,5",
-                    puzzlesList = "MATH",
-                    scheduledTriggerAtMillis = System.currentTimeMillis() + 86_400_000L
-                ),
-                hasActiveChecks = true,
-                onSkip = {},
-                onDisable = {},
-                onDismiss = {}
-            )
+            if (showDatePicker) {
+                AlarmPauseDateDialog(
+                    minimumEpochDay = 25_000L,
+                    onConfirm = {},
+                    onDismiss = {}
+                )
+            } else {
+                AlarmDisableChoiceDialog(
+                    alarm =
+                    Alarm(
+                        id = 1,
+                        hour = 7,
+                        minute = 30,
+                        daysOfWeek = "1,2,3,4,5",
+                        puzzlesList = "MATH",
+                        scheduledTriggerAtMillis = System.currentTimeMillis() + 86_400_000L
+                    ),
+                    hasActiveChecks = true,
+                    onSkip = {},
+                    onPauseThroughDate = { showDatePicker = true },
+                    onDisable = {},
+                    onDismiss = {}
+                )
+            }
         }
 
         listOf(
             R.string.skip_or_disable_alarm_title,
             R.string.skip_this_occurrence,
+            R.string.pause_through_date,
             R.string.turn_alarm_off,
             R.string.skip_disable_cancels_checks,
             R.string.cancel
@@ -285,6 +300,16 @@ class LocalizedLayoutTest {
                 .onNodeWithText(localizedContext.getString(stringResource))
                 .assertExists()
         }
+
+        composeTestRule
+            .onNodeWithText(localizedContext.getString(R.string.pause_through_date))
+            .performClick()
+        composeTestRule
+            .onNodeWithText(localizedContext.getString(R.string.pause_alarm_date_title))
+            .assertExists()
+        composeTestRule
+            .onNodeWithText(localizedContext.getString(R.string.pause_alarm))
+            .assertExists()
     }
 
     private fun setLocalizedContent(
