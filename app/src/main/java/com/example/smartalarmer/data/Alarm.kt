@@ -20,7 +20,8 @@ data class Alarm(
     val wakeUpCheckCount: Int = 3,
     val wakeUpCheckIntervalMinutes: Int = 5,
     val scheduleStatus: String = AlarmScheduleStatus.UNKNOWN.name,
-    val scheduledTriggerAtMillis: Long? = null
+    val scheduledTriggerAtMillis: Long? = null,
+    val suppressedThroughEpochDay: Long? = null
 )
 
 @Entity(tableName = "wake_up_check_sessions")

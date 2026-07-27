@@ -2,6 +2,7 @@ package com.example.smartalarmer.ui.main
 
 import android.content.Context
 import android.widget.Toast
+import com.example.smartalarmer.utils.AlarmTimeFormatter
 
 internal fun handleMainUiEvent(
     context: Context,
@@ -9,6 +10,15 @@ internal fun handleMainUiEvent(
 ) {
     when (event) {
         is MainUiEvent.AlarmScheduled -> showScheduledToast(context, event.triggerAtMillis)
+        is MainUiEvent.AlarmSkipped ->
+            Toast.makeText(
+                context,
+                context.getString(
+                    com.example.smartalarmer.R.string.alarm_skipped_toast,
+                    AlarmTimeFormatter.formatNextTrigger(context, event.nextTriggerAtMillis)
+                ),
+                Toast.LENGTH_LONG
+            ).show()
         MainUiEvent.ExactAlarmPermissionRequired ->
             Toast.makeText(
                 context,

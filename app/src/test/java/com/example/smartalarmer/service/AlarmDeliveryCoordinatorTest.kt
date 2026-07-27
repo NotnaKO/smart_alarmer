@@ -27,13 +27,19 @@ class AlarmDeliveryCoordinatorTest {
 
     @Test
     fun recurringAlarmPersistsNextScheduledTrigger() = runTest {
-        val repository = DeliveryRepository(alarm(days = "1,3"))
+        val repository =
+            DeliveryRepository(
+                alarm(days = "1,3").copy(suppressedThroughEpochDay = 25_000L)
+            )
+        val scheduler = DeliveryScheduler()
 
-        AlarmDeliveryCoordinator(repository, DeliveryScheduler()).onAlarmSessionStarted(1)
+        AlarmDeliveryCoordinator(repository, scheduler).onAlarmSessionStarted(1)
 
         val updated = repository.items.value.single()
         assertEquals(AlarmScheduleStatus.SCHEDULED.name, updated.scheduleStatus)
         assertEquals(12_345L, updated.scheduledTriggerAtMillis)
+        assertEquals(null, updated.suppressedThroughEpochDay)
+        assertEquals(null, scheduler.scheduledAlarm?.suppressedThroughEpochDay)
     }
 
     @Test
@@ -76,8 +82,10 @@ private class DeliveryRepository(initial: Alarm) : AlarmRepository {
 
 private class DeliveryScheduler : AlarmSchedulingGateway {
     var scheduleCalls = 0
+    var scheduledAlarm: Alarm? = null
     override fun schedule(alarm: Alarm): AlarmScheduleResult {
         scheduleCalls++
+        scheduledAlarm = alarm
         return AlarmScheduleResult.Scheduled(12_345L)
     }
 

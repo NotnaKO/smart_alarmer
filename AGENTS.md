@@ -131,6 +131,11 @@ Puzzle behavior is provided through small injectable interfaces:
 - **Schema changes**: Commit generated files under `app/schemas/` and extend `AlarmMigrationTest` across every supported upgrade path
 - **Emulator required**: Start and use an available Android emulator for Compose UI and other instrumented tests; do not treat Android-test compilation alone as sufficient verification when an AVD is available
 - **Agent workflow**: Start the emulator normally with `bash run_app.sh`, then use `bash run_instrumented_tests.sh`. Prefer a targeted test class while iterating. The wrapper prevents parallel runs, uses one Gradle worker, applies a timeout, and prevents accidental back-to-back full suites.
+- **Emulator discovery**: Do not infer that no emulator is available merely because
+  `adb` or `emulator` is absent from `PATH`. `run_app.sh` resolves the Android SDK
+  from `ANDROID_HOME` or `local.properties`, selects `ANDROID_AVD` (or the first
+  installed AVD), starts it through the environment's `android emulator start`
+  helper, waits for a booted device, builds, installs, and launches the app.
 
 ### Test Fixtures
 - Use `IS_PREVIEW = true` flag in test mode to avoid loud audio and back-button traps

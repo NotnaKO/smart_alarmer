@@ -4,11 +4,14 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.scheduler.AlarmTimeCalculator
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AlarmTimeCalculatorTest {
@@ -167,6 +170,87 @@ class AlarmTimeCalculatorTest {
 
         assertEquals(Instant.parse("2026-06-18T08:00:00Z"), utcResult)
         assertEquals(Instant.parse("2026-06-18T23:00:00Z"), tokyoResult)
+    }
+
+    @Test
+    fun suppressionSkipsNextRecurringLocalDate() {
+        val result =
+            calculator("2026-06-22T06:00:00Z").nextTrigger(
+                alarm(hour = 7, minute = 0, days = "1,3,5")
+                    .copy(suppressedThroughEpochDay = LocalDate.parse("2026-06-22").toEpochDay())
+            )
+
+        assertEquals(Instant.parse("2026-06-24T07:00:00Z"), result)
+    }
+
+    @Test
+    fun suppressionFindsFollowingAlternatingWeekOccurrence() {
+        val result =
+            calculator("2026-06-22T06:00:00Z").nextTrigger(
+                alarm(hour = 7, minute = 0, days = "1", weekParity = "EVEN")
+                    .copy(suppressedThroughEpochDay = LocalDate.parse("2026-06-22").toEpochDay())
+            )
+
+        assertEquals(Instant.parse("2026-07-06T07:00:00Z"), result)
+    }
+
+    @Test
+    fun suppressionExpiresWhenSkippedOccurrenceTimeArrives() {
+        val alarm =
+            alarm(hour = 23, minute = 52, days = "1,2,3,4,5,6,7")
+                .copy(suppressedThroughEpochDay = LocalDate.parse("2026-07-27").toEpochDay())
+
+        val result = calculator("2026-07-27T23:55:00Z").suppressionExpiresAt(alarm)
+
+        assertEquals(Instant.parse("2026-07-27T23:52:00Z"), result)
+    }
+
+    @Test
+    fun suppressionInDstOverlapExpiresAfterSecondOccurrence() {
+        val zone = ZoneId.of("America/New_York")
+        val alarm =
+            alarm(hour = 1, minute = 30, days = "7")
+                .copy(suppressedThroughEpochDay = LocalDate.parse("2026-11-01").toEpochDay())
+
+        val result = calculator("2026-11-01T04:00:00Z", zone).suppressionExpiresAt(alarm)
+
+        assertEquals(
+            ZonedDateTime
+                .ofLocal(
+                    LocalDateTime.of(2026, 11, 1, 1, 30),
+                    zone,
+                    ZoneOffset.ofHours(-5)
+                ).toInstant(),
+            result
+        )
+    }
+
+    @Test
+    fun midnightSuppressionIsConsumedAtTwelveTwentyFourAm() {
+        val zone = ZoneId.of("Europe/Moscow")
+        val alarm =
+            alarm(hour = 0, minute = 23, days = "1,2,3,4,5,6,7")
+                .copy(suppressedThroughEpochDay = LocalDate.parse("2026-07-28").toEpochDay())
+
+        val isPending =
+            calculator("2026-07-27T21:24:00Z", zone)
+                .isSuppressionPending(alarm)
+
+        assertFalse(isPending)
+    }
+
+    @Test
+    fun noonSuppressionIsStillPendingAtTwelveTwentyFourAm() {
+        val zone = ZoneId.of("Europe/Moscow")
+        val alarm =
+            alarm(hour = 12, minute = 23, days = "1,2,3,4,5,6,7")
+                .copy(suppressedThroughEpochDay = LocalDate.parse("2026-07-28").toEpochDay())
+
+        val isPending =
+            calculator("2026-07-27T21:24:00Z", zone)
+                .isSuppressionPending(alarm)
+
+        assertTrue(isPending)
     }
 
     private fun calculator(

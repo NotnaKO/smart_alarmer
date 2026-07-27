@@ -86,6 +86,13 @@ class AlarmDaoTest {
     }
 
     @Test
+    fun insertAndGetAlarm_withSuppressedDate() = runTest {
+        dao.insertAlarm(alarm().copy(suppressedThroughEpochDay = 25_000L))
+
+        assertEquals(25_000L, dao.getAllAlarms().first().single().suppressedThroughEpochDay)
+    }
+
+    @Test
     fun wakeUpCheckSession_canBePersistedAndCleared() = runTest {
         val dao = database.wakeUpCheckDao()
         val session =

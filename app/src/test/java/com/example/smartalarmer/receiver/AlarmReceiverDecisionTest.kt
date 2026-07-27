@@ -9,9 +9,34 @@ import org.junit.Test
 class AlarmReceiverDecisionTest {
     @Test
     fun onlyExistingEnabledAlarmsAreDelivered() {
-        assertEquals(false, AlarmReceiver.shouldDeliver(null))
-        assertEquals(false, AlarmReceiver.shouldDeliver(alarm(false, "")))
-        assertEquals(true, AlarmReceiver.shouldDeliver(alarm(true, "")))
+        assertEquals(false, AlarmReceiver.shouldDeliver(null, 123L))
+        assertEquals(false, AlarmReceiver.shouldDeliver(alarm(false, ""), 123L))
+        assertEquals(
+            true,
+            AlarmReceiver.shouldDeliver(
+                alarm(true, "").copy(scheduledTriggerAtMillis = 123L),
+                123L
+            )
+        )
+    }
+
+    @Test
+    fun staleMainOccurrenceIsRejectedAfterReschedule() {
+        val alarm = alarm(true, "").copy(scheduledTriggerAtMillis = 456L)
+
+        assertEquals(false, AlarmReceiver.shouldDeliver(alarm, 123L))
+        assertEquals(true, AlarmReceiver.shouldDeliver(alarm, 456L))
+    }
+
+    @Test
+    fun legacyMainOccurrenceWithoutIdentityRemainsDeliverable() {
+        assertEquals(
+            true,
+            AlarmReceiver.shouldDeliver(
+                alarm(true, ""),
+                AlarmLaunchPayload.NO_OCCURRENCE
+            )
+        )
     }
 
     @Test

@@ -36,7 +36,10 @@ import com.example.smartalarmer.scheduler.AlarmTimeCalculator
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.utils.AlarmTimeFormatter
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 
 @Composable
 fun AlarmItemCard(
@@ -46,10 +49,34 @@ fun AlarmItemCard(
     onDelete: () -> Unit,
     onEdit: () -> Unit = {},
     onTest: () -> Unit = {},
-    onCancelWakeUpChecks: () -> Unit = {}
+    onCancelWakeUpChecks: () -> Unit = {},
+    onRestoreSchedule: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = androidx.compose.ui.platform.LocalResources.current
+    val zoneId = ZoneId.systemDefault()
+    val suppressionExpiresAt =
+        remember(alarm.suppressedThroughEpochDay, alarm.hour, alarm.minute, zoneId) {
+            runCatching {
+                AlarmTimeCalculator(Clock.systemUTC(), zoneId).suppressionExpiresAt(alarm)
+            }.getOrNull()
+        }
+    val hasPendingSuppression by produceState(
+        initialValue = suppressionExpiresAt?.isAfter(Instant.now()) == true,
+        key1 = suppressionExpiresAt
+    ) {
+        val expiration = suppressionExpiresAt
+        value = expiration?.isAfter(Instant.now()) == true
+        if (!value) return@produceState
+        val remainingMillis =
+            runCatching {
+                Duration.between(Instant.now(), checkNotNull(expiration)).toMillis()
+            }.getOrDefault(0L)
+        if (remainingMillis > 0L) {
+            delay(remainingMillis)
+        }
+        value = false
+    }
     val daysList = alarm.repeatDays.values.sortedBy(AlarmDay::isoValue)
     val daysSummary =
         when {
@@ -169,6 +196,18 @@ fun AlarmItemCard(
                         color = IndigoContent
                     )
                 }
+                alarm.suppressedThroughEpochDay?.takeIf { hasPendingSuppression }?.let { epochDay ->
+                    Text(
+                        text =
+                        stringResource(
+                            com.example.smartalarmer.R.string.alarm_paused_through,
+                            AlarmTimeFormatter.formatDate(context, epochDay)
+                        ),
+                        fontSize = 12.sp,
+                        color = OrangeWarning,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
                 wakeUpCheckSession?.let { session ->
                     val remainingChecks = session.totalChecks - session.nextCheckNumber + 1
                     Text(
@@ -191,7 +230,7 @@ fun AlarmItemCard(
                             val nextTrigger =
                                 alarm.scheduledTriggerAtMillis ?: remember(alarm) {
                                     runCatching {
-                                        AlarmTimeCalculator(Clock.systemUTC(), ZoneId.systemDefault())
+                                        AlarmTimeCalculator(Clock.systemUTC(), zoneId)
                                             .nextTrigger(alarm)
                                             .toEpochMilli()
                                     }.getOrNull()
@@ -225,6 +264,20 @@ fun AlarmItemCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 itemVerticalAlignment = Alignment.CenterVertically
             ) {
+                if (alarm.isEnabled && hasPendingSuppression) {
+                    OutlinedButton(
+                        onClick = onRestoreSchedule,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = IndigoContent),
+                        border = BorderStroke(1.dp, IndigoContent.copy(alpha = 0.65f)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            stringResource(com.example.smartalarmer.R.string.resume_alarm_schedule),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
                 if (wakeUpCheckSession != null) {
                     OutlinedButton(
                         onClick = onCancelWakeUpChecks,

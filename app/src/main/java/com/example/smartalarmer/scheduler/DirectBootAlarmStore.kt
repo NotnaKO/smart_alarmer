@@ -132,6 +132,7 @@ internal class DirectBootAlarmStore(
         .put("wakeUpCheckIntervalMinutes", alarm.wakeUpCheckIntervalMinutes)
         .put("scheduleStatus", alarm.scheduleStatus)
         .put("scheduledTriggerAtMillis", alarm.scheduledTriggerAtMillis ?: JSONObject.NULL)
+        .put("suppressedThroughEpochDay", alarm.suppressedThroughEpochDay ?: JSONObject.NULL)
 
     private fun decodeAlarm(json: JSONObject): Alarm = Alarm(
         id = json.getInt("id"),
@@ -154,6 +155,12 @@ internal class DirectBootAlarmStore(
             null
         } else {
             json.optLong("scheduledTriggerAtMillis")
+        },
+        suppressedThroughEpochDay =
+        if (json.isNull("suppressedThroughEpochDay")) {
+            null
+        } else {
+            json.optLong("suppressedThroughEpochDay")
         }
     )
 

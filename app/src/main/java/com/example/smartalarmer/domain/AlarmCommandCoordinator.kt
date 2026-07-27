@@ -150,6 +150,25 @@ class AlarmCommandCoordinator(
         }
     }
 
+    suspend fun suppressThrough(
+        alarm: Alarm,
+        epochDay: Long
+    ): AlarmCommandResult {
+        if (!alarm.isEnabled || alarm.repeatDays.isOneTime) {
+            return AlarmCommandResult.Updated(alarm)
+        }
+        val candidate = alarm.copy(suppressedThroughEpochDay = epochDay)
+        return scheduleUpdatedAlarm(alarm, candidate)
+    }
+
+    suspend fun clearSuppression(alarm: Alarm): AlarmCommandResult {
+        if (alarm.suppressedThroughEpochDay == null) {
+            return AlarmCommandResult.Updated(alarm)
+        }
+        val candidate = alarm.copy(suppressedThroughEpochDay = null)
+        return scheduleUpdatedAlarm(alarm, candidate)
+    }
+
     suspend fun delete(alarm: Alarm): AlarmCommandResult = when (val cancellation = scheduler.cancel(alarm)) {
         AlarmCancelResult.Cancelled -> {
             try {
@@ -172,6 +191,24 @@ class AlarmCommandCoordinator(
         } else {
             scheduler.cancel(candidate)
         }
+    }
+
+    private suspend fun scheduleUpdatedAlarm(
+        original: Alarm,
+        candidate: Alarm
+    ): AlarmCommandResult = when (val schedule = scheduler.schedule(candidate)) {
+        is AlarmScheduleResult.Scheduled -> {
+            val scheduledCandidate = candidate.withScheduleResult(schedule)
+            try {
+                repository.updateAlarm(scheduledCandidate)
+                AlarmCommandResult.Scheduled(scheduledCandidate, schedule.triggerAtMillis)
+            } catch (e: Exception) {
+                restore(original, candidate)
+                AlarmCommandResult.PersistenceFailed(e)
+            }
+        }
+        AlarmScheduleResult.PermissionRequired -> AlarmCommandResult.PermissionRequired
+        is AlarmScheduleResult.Failure -> AlarmCommandResult.SchedulingFailed(schedule.exception)
     }
 
     private fun Alarm.withScheduleResult(result: AlarmScheduleResult.Scheduled): Alarm = copy(

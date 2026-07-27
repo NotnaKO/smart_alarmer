@@ -15,6 +15,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
 - **Wake-up checks**: Optional chained follow-up alarms require one easy task after the main alarm, with configurable count and 5, 10, or 15 minute intervals measured from each completion.
+- **Skip next occurrence**: Toggling off a recurring alarm offers a reversible one-occurrence skip or a complete disable; either choice cancels remaining wake-up checks, and cards reorder by their actual next event.
 - **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
 - **Always-on backup escalation**: After 5, 10, or 15 minutes without verified puzzle progress, playback switches to a dependable built-in alarm at maximum volume and reinforces it with one to three vibration attempts.
 - **Challenge-preserving fallback**: After three failed submissions or 30 seconds, a blocked task can be exchanged for a different available puzzle without bypassing the alarm.
@@ -142,7 +143,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `data/Alarm.kt` | Room entities for alarm configuration and durable active wake-up-check sessions. Alarm settings include alternating-week parity plus check enablement, count, and interval. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 8. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag; version 8 adds alternating-week schedules. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 9. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag; version 8 adds alternating-week schedules; version 9 adds local-date alarm suppression. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android

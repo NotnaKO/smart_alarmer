@@ -55,6 +55,14 @@
     <string name="stop_wake_up_checks">Detener comprobaciones</string>
     <string name="stop_wake_up_checks_title">¿Detener las comprobaciones?</string>
     <string name="stop_wake_up_checks_confirmation">Se cancelarán las alarmas de seguimiento restantes.</string>
+    <string name="skip_or_disable_alarm_title">¿Omitir o desactivar la alarma?</string>
+    <string name="disable_alarm_title">¿Desactivar la alarma?</string>
+    <string name="skip_this_occurrence">Omitir esta activación</string>
+    <string name="turn_alarm_off">Desactivar la alarma</string>
+    <string name="skip_disable_cancels_checks">También se cancelarán las comprobaciones de despertar restantes.</string>
+    <string name="alarm_paused_through">Omitida hasta %1$s inclusive</string>
+    <string name="resume_alarm_schedule">Reanudar programación</string>
+    <string name="alarm_skipped_toast">Alarma omitida. Siguiente: %1$s</string>
     <plurals name="first_wake_up_check_in_minutes">
         <item quantity="one">Ya estás despierto. Primera comprobación en %1$d minuto.</item>
         <item quantity="many">Ya estás despierto. Primera comprobación en %1$d minutos.</item>

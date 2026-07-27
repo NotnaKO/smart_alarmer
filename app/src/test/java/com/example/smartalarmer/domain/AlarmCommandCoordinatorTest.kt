@@ -140,6 +140,40 @@ class AlarmCommandCoordinatorTest {
     }
 
     @Test
+    fun suppressThroughKeepsAlarmEnabledAndPersistsReplacementSchedule() = runTest {
+        val original = alarm(id = 9).copy(daysOfWeek = "1,2,3", scheduledTriggerAtMillis = 100L)
+        val repository = FakeRepository(listOf(original))
+        val scheduler = FakeScheduler(scheduleResult = AlarmScheduleResult.Scheduled(200L))
+
+        val result = AlarmCommandCoordinator(repository, scheduler).suppressThrough(original, 25_000L)
+
+        assertTrue(result is AlarmCommandResult.Scheduled)
+        val updated = repository.items.value.single()
+        assertTrue(updated.isEnabled)
+        assertEquals(25_000L, updated.suppressedThroughEpochDay)
+        assertEquals(200L, updated.scheduledTriggerAtMillis)
+    }
+
+    @Test
+    fun clearSuppressionRestoresNormalSchedule() = runTest {
+        val original =
+            alarm(id = 9)
+                .copy(
+                    daysOfWeek = "1,2,3",
+                    suppressedThroughEpochDay = 25_000L,
+                    scheduledTriggerAtMillis = 200L
+                )
+        val repository = FakeRepository(listOf(original))
+        val scheduler = FakeScheduler(scheduleResult = AlarmScheduleResult.Scheduled(100L))
+
+        val result = AlarmCommandCoordinator(repository, scheduler).clearSuppression(original)
+
+        assertTrue(result is AlarmCommandResult.Scheduled)
+        assertEquals(null, repository.items.value.single().suppressedThroughEpochDay)
+        assertEquals(100L, repository.items.value.single().scheduledTriggerAtMillis)
+    }
+
+    @Test
     fun notificationGatePreventsInsertAndSchedule() = runTest {
         val repository = FakeRepository()
         val scheduler = FakeScheduler()

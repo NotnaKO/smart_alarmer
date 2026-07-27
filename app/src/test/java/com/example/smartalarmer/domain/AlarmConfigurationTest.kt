@@ -103,4 +103,37 @@ class AlarmConfigurationTest {
         assertEquals(AlarmWeekParity.ODD.name, recurring.weekParity)
         assertEquals(AlarmWeekParity.EVERY.name, oneTime.weekParity)
     }
+
+    @Test
+    fun editingRecurringAlarmPreservesSuppressionButChangingToOneTimeClearsIt() {
+        val existing =
+            com.example.smartalarmer.data.Alarm(
+                id = 4,
+                hour = 7,
+                minute = 0,
+                daysOfWeek = "1",
+                puzzlesList = "MATH",
+                suppressedThroughEpochDay = 25_000L
+            )
+        val recurringDraft =
+            AlarmDraft(
+                hour = 8,
+                minute = 0,
+                repeatDays = AlarmDays.of(listOf(AlarmDay.MONDAY)),
+                puzzleSelection = PuzzleSelection.DEFAULT,
+                puzzleCount = 1,
+                label = "",
+                soundUri = null
+            )
+        val oneTimeDraft = recurringDraft.copy(repeatDays = AlarmDays.ONE_TIME)
+
+        assertEquals(
+            25_000L,
+            recurringDraft.toAlarm(existing = existing, isEnabled = true).suppressedThroughEpochDay
+        )
+        assertEquals(
+            null,
+            oneTimeDraft.toAlarm(existing = existing, isEnabled = true).suppressedThroughEpochDay
+        )
+    }
 }

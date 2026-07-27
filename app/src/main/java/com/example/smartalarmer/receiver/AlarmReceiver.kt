@@ -41,7 +41,11 @@ class AlarmReceiver : BroadcastReceiver() {
                 val alarm = alarmDao.getAlarmById(payload.alarmId)
                 val shouldDeliver =
                     when (payload.launchType) {
-                        AlarmLaunchType.MAIN -> shouldDeliver(alarm)
+                        AlarmLaunchType.MAIN ->
+                            shouldDeliver(
+                                alarm = alarm,
+                                occurrenceTriggerAtMillis = payload.occurrenceTriggerAtMillis
+                            )
                         AlarmLaunchType.WAKE_UP_CHECK -> {
                             val session = database.wakeUpCheckDao().getSession(payload.alarmId)
                             session != null &&
@@ -113,7 +117,14 @@ class AlarmReceiver : BroadcastReceiver() {
                 )
             )
         }
-        internal fun shouldDeliver(alarm: Alarm?): Boolean = alarm?.isEnabled == true
+        internal fun shouldDeliver(
+            alarm: Alarm?,
+            occurrenceTriggerAtMillis: Long
+        ): Boolean {
+            if (alarm?.isEnabled != true) return false
+            if (occurrenceTriggerAtMillis == AlarmLaunchPayload.NO_OCCURRENCE) return true
+            return alarm.scheduledTriggerAtMillis == occurrenceTriggerAtMillis
+        }
 
         internal fun payloadForDelivery(
             alarm: Alarm,
