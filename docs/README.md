@@ -239,6 +239,13 @@ worker at reduced priority, applies a 10-minute timeout, and places a 10-minute
 cooldown between full suites. Targeted test classes are not subject to the
 full-suite cooldown.
 
+Project builds use a 1 GiB Gradle heap and run the Kotlin compiler in that same
+JVM, avoiding a second long-lived compiler daemon with another independent
+heap. The Gradle daemon exits after one idle minute so completed builds do not
+retain substantial host memory. A fully uncached debug-and-release build may
+temporarily use roughly 2–2.5 GiB including native JVM and Android build-tool
+memory; ordinary incremental debug builds use less.
+
 After building, the APK file can be retrieved at:
 `app/build/outputs/apk/debug/app-debug.apk`
 
