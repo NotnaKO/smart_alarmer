@@ -61,7 +61,6 @@ fun AlarmEditSheet(
     isSoundPreviewPlaying: Boolean = false,
     onResetSound: () -> Unit = {},
     selectedSoundName: String,
-    initialLabel: String,
     pickedSoundUri: String?,
     shakeSensorAvailable: Boolean = AndroidShakeSensorProvider(LocalContext.current).isAvailable
 ) {
@@ -69,6 +68,7 @@ fun AlarmEditSheet(
     val focusManager = LocalFocusManager.current
     var hour by rememberSaveable(alarm?.id) { mutableIntStateOf(alarm?.hour ?: 8) }
     var minute by rememberSaveable(alarm?.id) { mutableIntStateOf(alarm?.minute ?: 0) }
+    val initialLabel = alarm?.label.orEmpty()
     val labelLimit = maxOf(ALARM_LABEL_MAX_LENGTH, initialLabel.length)
     var label by rememberSaveable(alarm?.id) { mutableStateOf(initialLabel) }
 
