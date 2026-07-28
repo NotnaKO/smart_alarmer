@@ -1,7 +1,6 @@
 package com.example.smartalarmer.ui.main
 
 import android.app.TimePickerDialog
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -291,9 +290,10 @@ fun AlarmEditSheet(
                     modifier =
                     Modifier
                         .fillMaxWidth()
+                        .padding(bottom = 88.dp)
                         .verticalScroll(rememberScrollState())
                         .testTag(ALARM_EDITOR_SCROLL_TAG)
-                        .padding(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 112.dp),
+                        .padding(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Surface(
@@ -1048,41 +1048,36 @@ private fun repeatSummary(
 }
 
 @Composable
-private fun volumeRampSummary(seconds: Int): String =
-    if (seconds < 60) {
-        stringResource(R.string.volume_ramp_seconds_format, seconds)
-    } else {
-        stringResource(R.string.volume_ramp_minutes_format, seconds / 60)
-    }
+private fun volumeRampSummary(seconds: Int): String = if (seconds < 60) {
+    stringResource(R.string.volume_ramp_seconds_format, seconds)
+} else {
+    stringResource(R.string.volume_ramp_minutes_format, seconds / 60)
+}
 
-private fun PuzzleType.nameResource(): Int =
-    when (this) {
-        PuzzleType.MATH -> R.string.puzzle_math
-        PuzzleType.MEMORY -> R.string.puzzle_memory
-        PuzzleType.TYPING -> R.string.puzzle_typing
-        PuzzleType.SHAKE -> R.string.puzzle_shake
-    }
+private fun PuzzleType.nameResource(): Int = when (this) {
+    PuzzleType.MATH -> R.string.puzzle_math
+    PuzzleType.MEMORY -> R.string.puzzle_memory
+    PuzzleType.TYPING -> R.string.puzzle_typing
+    PuzzleType.SHAKE -> R.string.puzzle_shake
+}
 
-private fun String?.toggled(section: String): String? =
-    if (this == section) null else section
+private fun String?.toggled(section: String): String? = if (this == section) null else section
 
 @Composable
-private fun editorSwitchColors(): SwitchColors =
-    SwitchDefaults.colors(
-        checkedThumbColor = IndigoPrimary,
-        checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
-        uncheckedThumbColor = Color.Gray,
-        uncheckedTrackColor = CardBorderGlass
-    )
+private fun editorSwitchColors(): SwitchColors = SwitchDefaults.colors(
+    checkedThumbColor = IndigoPrimary,
+    checkedTrackColor = IndigoPrimary.copy(alpha = 0.3f),
+    uncheckedThumbColor = Color.Gray,
+    uncheckedTrackColor = CardBorderGlass
+)
 
 @Composable
-private fun editorFilterChipColors(): SelectableChipColors =
-    FilterChipDefaults.filterChipColors(
-        selectedContainerColor = IndigoPrimary,
-        selectedLabelColor = Color.White,
-        containerColor = KeyButtonBg,
-        labelColor = InactiveControlText
-    )
+private fun editorFilterChipColors(): SelectableChipColors = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = IndigoPrimary,
+    selectedLabelColor = Color.White,
+    containerColor = KeyButtonBg,
+    labelColor = InactiveControlText
+)
 
 internal const val ALARM_EDITOR_CONTENT_TAG = "alarm_editor_content"
 internal const val ALARM_EDITOR_SCROLL_TAG = "alarm_editor_scroll"

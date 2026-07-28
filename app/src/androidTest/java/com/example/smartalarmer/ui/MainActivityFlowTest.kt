@@ -14,8 +14,8 @@ import com.example.smartalarmer.ui.main.MainActivity
 import com.example.smartalarmer.utils.AlarmCapabilityChecker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertFalse
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -86,7 +86,7 @@ class MainActivityFlowTest {
 
         // Enable the recurring schedule before saving.
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_schedule))
             .performScrollTo()
             .performClick()
         composeTestRule

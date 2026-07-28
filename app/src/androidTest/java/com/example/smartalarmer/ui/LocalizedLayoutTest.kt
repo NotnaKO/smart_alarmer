@@ -33,13 +33,10 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.main.ALARM_CARD_ACTIONS_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_SUMMARY_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_CHALLENGE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_DAYS_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_PUZZLE_COUNT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_ROW_TAG
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_SECTION_TAG
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmDisableChoiceDialog
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
@@ -103,7 +100,7 @@ class LocalizedLayoutTest {
         }
 
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .onNodeWithText(localizedContext.getString(R.string.editor_section_sound))
             .performScrollTo()
             .performClick()
         val soundRow =
@@ -132,7 +129,7 @@ class LocalizedLayoutTest {
         assertTrue("Sound label and value overlap", soundLabel.right <= soundValue.left + PIXEL_TOLERANCE)
 
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_CHALLENGE_TAG)
+            .onNodeWithText(localizedContext.getString(R.string.editor_section_challenge))
             .performScrollTo()
             .performClick()
         val puzzleCountText = localizedContext.getString(R.string.puzzles_required)
@@ -153,12 +150,12 @@ class LocalizedLayoutTest {
             puzzleCountLabel.right <= decreaseButton.left + PIXEL_TOLERANCE
         )
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)
+            .onNodeWithText(localizedContext.getString(R.string.editor_section_after_dismissal))
             .performScrollTo()
             .performClick()
 
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .onNodeWithText(localizedContext.getString(R.string.editor_section_schedule))
             .performScrollTo()
             .performClick()
         composeTestRule
@@ -193,7 +190,7 @@ class LocalizedLayoutTest {
         )
 
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .onNodeWithText(localizedContext.getString(R.string.editor_section_sound))
             .performScrollTo()
             .performClick()
         listOf(
