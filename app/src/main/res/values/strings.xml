@@ -27,6 +27,11 @@
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">New Alarm</string>
     <string name="edit_alarm">Edit Alarm</string>
+    <string name="editor_section_schedule">Schedule</string>
+    <string name="editor_section_challenge">Dismiss challenge</string>
+    <string name="editor_section_sound">Sound</string>
+    <string name="editor_section_after_dismissal">After dismissal</string>
+    <string name="editor_off">Off</string>
     <string name="time_label">Time</string>
     <string name="repeat_days_label">Repeat Days</string>
     <string name="repeat_alarm_description">Choose which days this alarm repeats.</string>

@@ -27,6 +27,11 @@
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">Новый будильник</string>
     <string name="edit_alarm">Изменить будильник</string>
+    <string name="editor_section_schedule">Расписание</string>
+    <string name="editor_section_challenge">Задания для выключения</string>
+    <string name="editor_section_sound">Звук</string>
+    <string name="editor_section_after_dismissal">После выключения</string>
+    <string name="editor_off">Выключено</string>
     <string name="time_label">Время</string>
     <string name="repeat_days_label">Дни повтора</string>
     <string name="repeat_alarm_description">Выберите дни, по которым будильник будет повторяться.</string>

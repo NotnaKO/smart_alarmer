@@ -168,10 +168,34 @@ class AlarmListScreenTest {
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 2, 2)
 
-        val expected = "$mon, $wed, $fri • $math, $memory ($puzzleCount) • $defaultSound"
+        val expected = "$mon, $wed, $fri • $math, $memory • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_displaysPuzzleCountWhenOnlySubsetIsRequired() {
+        setAlarmCard(
+            alarm = testAlarm(puzzlesList = "MATH,MEMORY,TYPING", puzzleCount = 2)
+        )
+
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
+        val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
+        val typing = context.getString(com.example.smartalarmer.R.string.puzzle_typing)
+        val puzzleCount =
+            context.resources.getQuantityString(
+                com.example.smartalarmer.R.plurals.puzzles_plural,
+                2,
+                2
+            )
+
+        composeTestRule
+            .onNodeWithText("$math, $memory, $typing ($puzzleCount)", substring = true)
+            .assertIsDisplayed()
     }
 
     @Test
@@ -187,9 +211,8 @@ class AlarmListScreenTest {
         val oneTime = context.getString(com.example.smartalarmer.R.string.one_time)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 1, 1)
 
-        val expected = "$oneTime • $math ($puzzleCount) • $defaultSound"
+        val expected = "$oneTime • $math • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
@@ -452,6 +475,10 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
             .assertDoesNotExist()
         composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_sound))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_minutes_format, 2))
             .performScrollTo()
             .performClick()
@@ -485,6 +512,10 @@ class AlarmListScreenTest {
         }
 
         composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_schedule))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
             .performClick()
@@ -492,6 +523,10 @@ class AlarmListScreenTest {
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.day_mon))
             .assertHasClickAction()
             .assertHeightIsAtLeast(48.dp)
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_challenge))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.increase_puzzle_count))
             .performScrollTo()
@@ -519,6 +554,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_schedule))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
@@ -559,6 +598,10 @@ class AlarmListScreenTest {
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.repeat_week_pattern_label))
             .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_schedule))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
@@ -601,6 +644,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_schedule))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
             .assertExists()
@@ -715,13 +762,24 @@ class AlarmListScreenTest {
 
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_sound))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .performScrollTo()
+            .assertIsDisplayed()
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.stop_sound_preview))
+            .performScrollTo()
             .assertIsDisplayed()
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -752,6 +810,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_after_dismissal))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)))
             .performScrollTo()
@@ -796,14 +858,14 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_sound))
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithTag(ALARM_EDITOR_SCROLL_TAG)
-            .performTouchInput {
-                repeat(8) {
-                    swipeUp(durationMillis = 50)
-                }
-            }
-
+            .performTouchInput { swipeUp(durationMillis = 100) }
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_duration))
             .assertIsDisplayed()

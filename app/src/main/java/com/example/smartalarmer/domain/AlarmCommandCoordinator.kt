@@ -42,15 +42,15 @@ class AlarmCommandCoordinator(
     private val activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY
 ) {
     suspend fun create(draft: AlarmDraft): AlarmCommandResult {
-        if (!activationGate.isNotificationDeliveryReady()) {
-            return AlarmCommandResult.NotificationCapabilityRequired
-        }
         val inserted =
             try {
                 repository.insertAlarm(draft.toAlarm(isEnabled = false))
             } catch (e: Exception) {
                 return AlarmCommandResult.PersistenceFailed(e)
             }
+        if (!activationGate.isNotificationDeliveryReady()) {
+            return AlarmCommandResult.Updated(inserted)
+        }
         val candidate = inserted.copy(isEnabled = true)
         return when (val schedule = scheduler.schedule(candidate)) {
             is AlarmScheduleResult.Scheduled -> {
@@ -69,10 +69,7 @@ class AlarmCommandCoordinator(
                     }
                 }
             }
-            AlarmScheduleResult.PermissionRequired -> {
-                runCatching { repository.deleteAlarm(inserted) }
-                AlarmCommandResult.PermissionRequired
-            }
+            AlarmScheduleResult.PermissionRequired -> AlarmCommandResult.Updated(inserted)
             is AlarmScheduleResult.Failure -> {
                 runCatching { repository.deleteAlarm(inserted) }
                 AlarmCommandResult.SchedulingFailed(schedule.exception)
@@ -85,7 +82,7 @@ class AlarmCommandCoordinator(
         draft: AlarmDraft
     ): AlarmCommandResult {
         if (!activationGate.isNotificationDeliveryReady()) {
-            return AlarmCommandResult.NotificationCapabilityRequired
+            return persistDisabledUpdate(original, draft)
         }
         val candidate = draft.toAlarm(existing = original, isEnabled = true)
         return when (val schedule = scheduler.schedule(candidate)) {
@@ -99,7 +96,7 @@ class AlarmCommandCoordinator(
                     AlarmCommandResult.PersistenceFailed(e)
                 }
             }
-            AlarmScheduleResult.PermissionRequired -> AlarmCommandResult.PermissionRequired
+            AlarmScheduleResult.PermissionRequired -> persistDisabledUpdate(original, draft)
             is AlarmScheduleResult.Failure -> AlarmCommandResult.SchedulingFailed(schedule.exception)
         }
     }
@@ -190,6 +187,27 @@ class AlarmCommandCoordinator(
             scheduler.schedule(original)
         } else {
             scheduler.cancel(candidate)
+        }
+    }
+
+    private suspend fun persistDisabledUpdate(
+        original: Alarm,
+        draft: AlarmDraft
+    ): AlarmCommandResult {
+        val disabled = draft.toAlarm(existing = original, isEnabled = false)
+        if (original.isEnabled) {
+            when (val cancellation = scheduler.cancel(original)) {
+                AlarmCancelResult.Cancelled -> Unit
+                is AlarmCancelResult.Failure ->
+                    return AlarmCommandResult.CancellationFailed(cancellation.exception)
+            }
+        }
+        return try {
+            repository.updateAlarm(disabled)
+            AlarmCommandResult.Updated(disabled)
+        } catch (e: Exception) {
+            if (original.isEnabled) scheduler.schedule(original)
+            AlarmCommandResult.PersistenceFailed(e)
         }
     }
 

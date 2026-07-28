@@ -89,11 +89,10 @@ class MainViewModelTest {
     }
 
     @Test
-    fun saveNewAlarm_permissionMissing_removesDraftAndPublishesPermissionEvent() = runTest(mainDispatcherRule.dispatcher) {
+    fun saveNewAlarm_exactPermissionMissing_persistsDisabledAndClosesEditor() = runTest(mainDispatcherRule.dispatcher) {
         val viewModel = createViewModel()
         scheduler.nextResult = AlarmScheduleResult.PermissionRequired
         viewModel.openEditSheet()
-        val event = async { viewModel.uiEvents.first() }
 
         viewModel.saveAlarm(
             hour = 8,
@@ -106,10 +105,11 @@ class MainViewModelTest {
         )
         advanceUntilIdle()
 
-        assertTrue(repository.alarms.value.isEmpty())
+        val saved = repository.alarms.value.single()
+        assertFalse(saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.DISABLED.name, saved.scheduleStatus)
         assertTrue(scheduler.cancelled.isEmpty())
-        assertEquals(MainUiEvent.ExactAlarmPermissionRequired, event.await())
-        assertTrue(viewModel.isBottomSheetVisible.value)
+        assertFalse(viewModel.isBottomSheetVisible.value)
     }
 
     @Test
@@ -163,22 +163,23 @@ class MainViewModelTest {
     }
 
     @Test
-    fun saveEditedAlarm_permissionDenied_preservesExistingRow() = runTest(mainDispatcherRule.dispatcher) {
+    fun saveEditedAlarm_permissionDenied_persistsChangesDisabledAndClosesEditor() = runTest(mainDispatcherRule.dispatcher) {
         val existing = alarm(id = 8, isEnabled = true)
         repository.seed(existing)
         scheduler.nextResult = AlarmScheduleResult.PermissionRequired
         val viewModel = createViewModel()
         viewModel.openEditSheet(existing)
-        val event = async { viewModel.uiEvents.first() }
 
         saveDefaultAlarm(viewModel)
         advanceUntilIdle()
 
         val saved = repository.alarms.value.single()
-        assertEquals(existing, saved)
-        assertTrue(scheduler.cancelled.isEmpty())
-        assertEquals(MainUiEvent.ExactAlarmPermissionRequired, event.await())
-        assertTrue(viewModel.isBottomSheetVisible.value)
+        assertEquals(existing.id, saved.id)
+        assertEquals("Morning", saved.label)
+        assertFalse(saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.DISABLED.name, saved.scheduleStatus)
+        assertEquals(existing, scheduler.cancelled.single())
+        assertFalse(viewModel.isBottomSheetVisible.value)
     }
 
     @Test
@@ -286,15 +287,24 @@ class MainViewModelTest {
     }
 
     @Test
-    fun notificationDeliveryUnavailable_blocksAlarmActivation() = runTest(mainDispatcherRule.dispatcher) {
+    fun notificationDeliveryUnavailable_savesDisabledThenBlocksActivation() = runTest(mainDispatcherRule.dispatcher) {
         val viewModel = MainViewModel(repository, scheduler, AlarmActivationGate { false })
         viewModel.openEditSheet()
-        val event = async { viewModel.uiEvents.first() }
 
         saveDefaultAlarm(viewModel)
         advanceUntilIdle()
 
-        assertTrue(repository.alarms.value.isEmpty())
+        val saved = repository.alarms.value.single()
+        assertFalse(saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.DISABLED.name, saved.scheduleStatus)
+        assertTrue(scheduler.scheduled.isEmpty())
+        assertFalse(viewModel.isBottomSheetVisible.value)
+
+        val event = async { viewModel.uiEvents.first() }
+        viewModel.toggleAlarm(saved, isChecked = true)
+        advanceUntilIdle()
+
+        assertFalse(repository.alarms.value.single().isEnabled)
         assertTrue(scheduler.scheduled.isEmpty())
         assertEquals(MainUiEvent.NotificationCapabilityRequired, event.await())
     }

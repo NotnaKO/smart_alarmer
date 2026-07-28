@@ -11,8 +11,11 @@ import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.MainActivity
+import com.example.smartalarmer.utils.AlarmCapabilityChecker
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -83,6 +86,10 @@ class MainActivityFlowTest {
 
         // Enable the recurring schedule before saving.
         composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_schedule))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
             .performClick()
@@ -98,6 +105,20 @@ class MainActivityFlowTest {
             composeTestRule.onAllNodesWithText("Plan Test Alarm").fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNodeWithText("Plan Test Alarm").assertIsDisplayed()
+
+        val capabilities = AlarmCapabilityChecker.check(context)
+        if (!capabilities.notificationDeliveryReady || !capabilities.exactAlarmAccess) {
+            val saved =
+                runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                    AlarmDatabase
+                        .getDatabase(context)
+                        .alarmDao()
+                        .getAllAlarms()
+                        .first()
+                        .single()
+                }
+            assertFalse("Alarm must remain disabled until required access is granted", saved.isEnabled)
+        }
     }
 
     @Test
