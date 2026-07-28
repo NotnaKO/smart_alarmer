@@ -174,7 +174,7 @@ class AlarmCommandCoordinatorTest {
     }
 
     @Test
-    fun notificationGatePreventsInsertAndSchedule() = runTest {
+    fun notificationGatePersistsDisabledAlarmWithoutScheduling() = runTest {
         val repository = FakeRepository()
         val scheduler = FakeScheduler()
 
@@ -185,8 +185,46 @@ class AlarmCommandCoordinatorTest {
                 AlarmActivationGate { false }
             ).create(draft())
 
-        assertEquals(AlarmCommandResult.NotificationCapabilityRequired, result)
-        assertTrue(repository.items.value.isEmpty())
+        assertTrue(result is AlarmCommandResult.Updated)
+        val saved = repository.items.value.single()
+        assertEquals(false, saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.DISABLED.name, saved.scheduleStatus)
+        assertTrue(scheduler.scheduled.isEmpty())
+    }
+
+    @Test
+    fun exactAlarmPermissionMissingPersistsDisabledAlarm() = runTest {
+        val repository = FakeRepository()
+        val scheduler = FakeScheduler(scheduleResult = AlarmScheduleResult.PermissionRequired)
+
+        val result = AlarmCommandCoordinator(repository, scheduler).create(draft())
+
+        assertTrue(result is AlarmCommandResult.Updated)
+        val saved = repository.items.value.single()
+        assertEquals(false, saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.DISABLED.name, saved.scheduleStatus)
+        assertEquals(saved.id, scheduler.scheduled.single().id)
+    }
+
+    @Test
+    fun editWithoutNotificationCapabilityPersistsChangesDisabledAndCancelsOriginal() = runTest {
+        val original = alarm(id = 7, hour = 6)
+        val repository = FakeRepository(listOf(original))
+        val scheduler = FakeScheduler()
+
+        val result =
+            AlarmCommandCoordinator(
+                repository,
+                scheduler,
+                AlarmActivationGate { false }
+            ).update(original, draft(hour = 9))
+
+        assertTrue(result is AlarmCommandResult.Updated)
+        val saved = repository.items.value.single()
+        assertEquals(9, saved.hour)
+        assertEquals(false, saved.isEnabled)
+        assertEquals(AlarmScheduleStatus.DISABLED.name, saved.scheduleStatus)
+        assertEquals(original, scheduler.cancelled.single())
         assertTrue(scheduler.scheduled.isEmpty())
     }
 

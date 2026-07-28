@@ -9,9 +9,11 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.smartalarmer.data.Alarm
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_CHALLENGE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SCROLL_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_SECTION_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
@@ -452,6 +454,9 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
             .assertDoesNotExist()
         composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .performClick()
+        composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_minutes_format, 2))
             .performScrollTo()
             .performClick()
@@ -485,6 +490,10 @@ class AlarmListScreenTest {
         }
 
         composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .performScrollTo()
+            .performClick()
+        composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
             .performClick()
@@ -492,6 +501,10 @@ class AlarmListScreenTest {
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.day_mon))
             .assertHasClickAction()
             .assertHeightIsAtLeast(48.dp)
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_CHALLENGE_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithContentDescription(context.getString(com.example.smartalarmer.R.string.increase_puzzle_count))
             .performScrollTo()
@@ -519,6 +532,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
@@ -559,6 +576,10 @@ class AlarmListScreenTest {
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.repeat_week_pattern_label))
             .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
@@ -601,6 +622,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.weekdays))
             .assertExists()
@@ -715,6 +740,12 @@ class AlarmListScreenTest {
 
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .performClick()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.stop_sound_preview))
@@ -752,6 +783,10 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)))
             .performScrollTo()
@@ -796,14 +831,14 @@ class AlarmListScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNodeWithTag(ALARM_EDITOR_SCROLL_TAG)
-            .performTouchInput {
-                repeat(8) {
-                    swipeUp(durationMillis = 50)
-                }
-            }
-
+            .performTouchInput { swipeUp(durationMillis = 100) }
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_duration))
             .assertIsDisplayed()

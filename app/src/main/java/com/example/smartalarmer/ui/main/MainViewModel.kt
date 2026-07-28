@@ -128,10 +128,13 @@ class MainViewModel(
                     commandCoordinator.update(current, draft)
                 }
             publishCommandResult(result, publishSuccess = true)
-            if (current != null && result is AlarmCommandResult.Scheduled) {
+            val saved =
+                result is AlarmCommandResult.Scheduled ||
+                    result is AlarmCommandResult.Updated
+            if (current != null && saved) {
                 cancelWakeUpChecksAndPublish(current.id)
             }
-            if (result is AlarmCommandResult.Scheduled) closeEditSheet()
+            if (saved) closeEditSheet()
         }
     }
 

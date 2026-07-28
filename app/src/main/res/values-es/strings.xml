@@ -27,6 +27,11 @@
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">Nueva alarma</string>
     <string name="edit_alarm">Editar alarma</string>
+    <string name="editor_section_schedule">Horario</string>
+    <string name="editor_section_challenge">Reto para apagar</string>
+    <string name="editor_section_sound">Sonido</string>
+    <string name="editor_section_after_dismissal">Después de apagar</string>
+    <string name="editor_off">Desactivado</string>
     <string name="time_label">Hora</string>
     <string name="repeat_days_label">Repetir días</string>
     <string name="repeat_alarm_description">Elige los días en que se repetirá la alarma.</string>

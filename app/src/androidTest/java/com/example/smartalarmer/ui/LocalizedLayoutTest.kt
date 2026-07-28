@@ -33,10 +33,12 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.main.ALARM_CARD_ACTIONS_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_SUMMARY_TAG
 import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_CHALLENGE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_DAYS_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_PUZZLE_COUNT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_ROW_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_SECTION_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmDisableChoiceDialog
 import com.example.smartalarmer.ui.main.AlarmEditSheet
@@ -100,6 +102,10 @@ class LocalizedLayoutTest {
             }
         }
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .performScrollTo()
+            .performClick()
         val soundRow =
             composeTestRule
                 .onNodeWithTag(ALARM_EDITOR_SOUND_ROW_TAG, useUnmergedTree = true)
@@ -125,6 +131,10 @@ class LocalizedLayoutTest {
         assertWithin(soundRow, soundValue, "Russian sound value")
         assertTrue("Sound label and value overlap", soundLabel.right <= soundValue.left + PIXEL_TOLERANCE)
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_CHALLENGE_TAG)
+            .performScrollTo()
+            .performClick()
         val puzzleCountText = localizedContext.getString(R.string.puzzles_required)
         composeTestRule.onNodeWithText(puzzleCountText).performScrollTo()
         val puzzleCountRow =
@@ -142,16 +152,15 @@ class LocalizedLayoutTest {
             "Puzzle-count label overlaps its controls",
             puzzleCountLabel.right <= decreaseButton.left + PIXEL_TOLERANCE
         )
-        composeTestRule.onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG).performScrollTo()
-        val visiblePuzzleCountRow =
-            composeTestRule.onNodeWithTag(ALARM_EDITOR_PUZZLE_COUNT_TAG).fetchSemanticsNode().boundsInRoot
-        val wakeUpChecks =
-            composeTestRule.onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG).fetchSemanticsNode().boundsInRoot
-        assertTrue(
-            "Puzzle-count controls overlap the wake-up-check card",
-            visiblePuzzleCountRow.bottom <= wakeUpChecks.top
-        )
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_WAKE_UP_CHECKS_TAG)
+            .performScrollTo()
+            .performClick()
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_REPEAT_TAG)
+            .performScrollTo()
+            .performClick()
         composeTestRule
             .onNode(isToggleable() and hasAnyAncestor(hasTestTag(ALARM_EDITOR_REPEAT_TAG)))
             .performScrollTo()
@@ -183,6 +192,10 @@ class LocalizedLayoutTest {
             }
         )
 
+        composeTestRule
+            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .performScrollTo()
+            .performClick()
         listOf(
             localizedContext.getString(R.string.volume_ramp_seconds_format, 30),
             localizedContext.getString(R.string.volume_ramp_minutes_format, 1),

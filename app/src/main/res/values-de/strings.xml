@@ -27,6 +27,11 @@
     <!-- Alarm Edit Sheet -->
     <string name="new_alarm">Neuer Alarm</string>
     <string name="edit_alarm">Alarm bearbeiten</string>
+    <string name="editor_section_schedule">Zeitplan</string>
+    <string name="editor_section_challenge">Aufgabe zum Ausschalten</string>
+    <string name="editor_section_sound">Ton</string>
+    <string name="editor_section_after_dismissal">Nach dem Ausschalten</string>
+    <string name="editor_off">Aus</string>
     <string name="time_label">Uhrzeit</string>
     <string name="repeat_days_label">Wiederholungstage</string>
     <string name="repeat_alarm_description">Wähle die Tage aus, an denen der Alarm wiederholt wird.</string>
