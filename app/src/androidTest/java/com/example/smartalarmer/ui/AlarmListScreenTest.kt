@@ -12,7 +12,6 @@ import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SCROLL_TAG
-import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_SECTION_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_WAKE_UP_CHECKS_TAG
 import com.example.smartalarmer.ui.main.AlarmEditSheet
 import com.example.smartalarmer.ui.main.AlarmItemCard
@@ -476,7 +475,8 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.puzzle_shake))
             .assertDoesNotExist()
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_sound))
+            .performScrollTo()
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.volume_ramp_minutes_format, 2))
@@ -764,17 +764,22 @@ class AlarmListScreenTest {
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
             .assertDoesNotExist()
         composeTestRule
-            .onNodeWithTag(ALARM_EDITOR_SOUND_SECTION_TAG)
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.editor_section_sound))
+            .performScrollTo()
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .performScrollTo()
+            .assertIsDisplayed()
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.stop_sound_preview))
+            .performScrollTo()
             .assertIsDisplayed()
             .performClick()
         composeTestRule
             .onNodeWithText(context.getString(com.example.smartalarmer.R.string.preview_sound))
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
