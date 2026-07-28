@@ -182,7 +182,12 @@ fun AlarmEditSheet(
             puzzleCount,
             puzzleCount
         )
-    val puzzleSummary = "$puzzleNames · $puzzleCountText"
+    val puzzleSummary =
+        if (puzzleCount == selectedPuzzles.size) {
+            puzzleNames
+        } else {
+            "$puzzleNames · $puzzleCountText"
+        }
     val rampSummary = volumeRampSummary(volumeRampSeconds)
     val soundSummary = "$selectedSoundName · $rampSummary"
     val wakeUpCheckSummary =

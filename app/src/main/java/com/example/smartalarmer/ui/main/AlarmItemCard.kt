@@ -131,6 +131,12 @@ fun AlarmItemCard(
             alarm.puzzleCount,
             alarm.puzzleCount
         )
+    val puzzleSummary =
+        if (alarm.puzzleCount == alarm.puzzleSelection.values.size) {
+            puzzlesText
+        } else {
+            "$puzzlesText ($puzzleCountText)"
+        }
 
     Card(
         modifier =
@@ -179,7 +185,7 @@ fun AlarmItemCard(
                         }.getOrNull()
                     } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
                 Text(
-                    text = "$repeatSummary • $puzzlesText ($puzzleCountText) • $soundName",
+                    text = "$repeatSummary • $puzzleSummary • $soundName",
                     fontSize = 13.sp,
                     color = SecondaryText,
                     modifier = Modifier.testTag(ALARM_CARD_SUMMARY_TAG)

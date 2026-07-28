@@ -170,10 +170,34 @@ class AlarmListScreenTest {
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 2, 2)
 
-        val expected = "$mon, $wed, $fri • $math, $memory ($puzzleCount) • $defaultSound"
+        val expected = "$mon, $wed, $fri • $math, $memory • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_displaysPuzzleCountWhenOnlySubsetIsRequired() {
+        setAlarmCard(
+            alarm = testAlarm(puzzlesList = "MATH,MEMORY,TYPING", puzzleCount = 2)
+        )
+
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
+        val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
+        val typing = context.getString(com.example.smartalarmer.R.string.puzzle_typing)
+        val puzzleCount =
+            context.resources.getQuantityString(
+                com.example.smartalarmer.R.plurals.puzzles_plural,
+                2,
+                2
+            )
+
+        composeTestRule
+            .onNodeWithText("$math, $memory, $typing ($puzzleCount)", substring = true)
+            .assertIsDisplayed()
     }
 
     @Test
@@ -189,9 +213,8 @@ class AlarmListScreenTest {
         val oneTime = context.getString(com.example.smartalarmer.R.string.one_time)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
-        val puzzleCount = context.resources.getQuantityString(com.example.smartalarmer.R.plurals.puzzles_plural, 1, 1)
 
-        val expected = "$oneTime • $math ($puzzleCount) • $defaultSound"
+        val expected = "$oneTime • $math • $defaultSound"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
     }
 
