@@ -442,7 +442,6 @@ class AlarmListScreenTest {
                     },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -479,7 +478,6 @@ class AlarmListScreenTest {
                     onSave = {},
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -515,7 +513,6 @@ class AlarmListScreenTest {
                     onSave = { savedDays = it.repeatDays.encoded },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -553,7 +550,6 @@ class AlarmListScreenTest {
                     onSave = { savedWeekParity = it.repeatWeekParity.name },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -599,7 +595,6 @@ class AlarmListScreenTest {
                     },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -653,7 +648,6 @@ class AlarmListScreenTest {
                     onSave = { savedLabel = it.label },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = legacyLabel,
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -664,6 +658,36 @@ class AlarmListScreenTest {
         composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
 
         assertEquals(legacyLabel, savedLabel)
+    }
+
+    @Test
+    fun alarmEditSheet_clearingExistingLabel_savesEmptyLabel() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        var savedLabel: String? = null
+        composeTestRule.setContent {
+            SmartAlarmerTheme {
+                AlarmEditSheet(
+                    alarm = testAlarm(label = "Stored alarm name"),
+                    onDismiss = {},
+                    onSave = { savedLabel = it.label },
+                    onPickSound = {},
+                    selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = false
+                )
+            }
+        }
+
+        composeTestRule
+            .onNode(hasSetTextAction())
+            .assertTextContains("Stored alarm name")
+            .performTextReplacement("")
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).performClick()
+
+        assertEquals("", savedLabel)
     }
 
     @Test
@@ -683,7 +707,6 @@ class AlarmListScreenTest {
                     onPreviewSound = { isPreviewPlaying.value = !isPreviewPlaying.value },
                     isSoundPreviewPlaying = isPreviewPlaying.value,
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -723,7 +746,6 @@ class AlarmListScreenTest {
                     },
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )
@@ -768,7 +790,6 @@ class AlarmListScreenTest {
                     onSave = {},
                     onPickSound = {},
                     selectedSoundName = context.getString(com.example.smartalarmer.R.string.sound_default),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = false
                 )

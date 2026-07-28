@@ -101,6 +101,37 @@ class MainActivityFlowTest {
     }
 
     @Test
+    fun mainActivity_editNamedAlarm_populatesLabelField() {
+        val context = composeTestRule.activity
+        runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+            AlarmDatabase
+                .getDatabase(context)
+                .alarmDao()
+                .insertAlarm(
+                    Alarm(
+                        hour = 7,
+                        minute = 30,
+                        daysOfWeek = "1,2,3,4,5",
+                        puzzlesList = "MATH",
+                        label = "Stored alarm name"
+                    )
+                )
+        }
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule
+                .onAllNodesWithText("Stored alarm name")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithTag(ALARM_CARD_TAG).performClick()
+
+        composeTestRule
+            .onNode(hasSetTextAction())
+            .assertTextContains("Stored alarm name")
+    }
+
+    @Test
     fun mainActivity_disablingRecurringAlarmOffersSkipOrTurnOff() {
         val context = composeTestRule.activity
         runBlocking(kotlinx.coroutines.Dispatchers.IO) {

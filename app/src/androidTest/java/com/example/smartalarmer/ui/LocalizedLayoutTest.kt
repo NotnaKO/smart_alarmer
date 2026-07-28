@@ -94,7 +94,6 @@ class LocalizedLayoutTest {
                     onSave = {},
                     onPickSound = {},
                     selectedSoundName = localizedContext.getString(R.string.select_alarm_sound),
-                    initialLabel = "",
                     pickedSoundUri = null,
                     shakeSensorAvailable = true
                 )

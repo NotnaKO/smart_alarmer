@@ -106,7 +106,6 @@ class MainActivity : ComponentActivity() {
                     )
 
                 var pickedSoundUri by rememberSaveable { mutableStateOf<String?>(null) }
-                var labelInput by rememberSaveable { mutableStateOf("") }
                 var previewRingtone by remember { mutableStateOf<android.media.Ringtone?>(null) }
                 var isSoundPreviewPlaying by remember { mutableStateOf(false) }
                 val stopSoundPreview = {
@@ -130,7 +129,6 @@ class MainActivity : ComponentActivity() {
                     stopSoundPreview()
                     if (isSheetVisible) {
                         pickedSoundUri = editingAlarm?.soundUri
-                        labelInput = editingAlarm?.label ?: ""
                     }
                 }
 
@@ -382,7 +380,6 @@ class MainActivity : ComponentActivity() {
                                     pickedSoundUri = null
                                 },
                                 selectedSoundName = resolvedSoundName,
-                                initialLabel = labelInput,
                                 pickedSoundUri = pickedSoundUri
                             )
                         }
