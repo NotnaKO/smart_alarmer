@@ -19,12 +19,12 @@
     <string name="delivery_test_action_desc">Проверить доставку будильника</string>
     <string name="delivery_test_cancel_desc">Отменить запланированную проверку</string>
     <string name="delivery_test_confirm_title">Проверить доставку будильника?</string>
-    <string name="delivery_test_confirm_description">Через 15 секунд прозвучит негромкий тестовый сигнал. Заблокируйте телефон, чтобы проверить экран будильника. Громкость не изменится, а после доставки можно будет попробовать задания этого будильника.</string>
+    <string name="delivery_test_confirm_description">Через 15 секунд негромко прозвучит выбранная мелодия этого будильника. Заблокируйте телефон, чтобы проверить экран будильника. Системная громкость будильника не изменится, а после доставки можно будет попробовать его задания.</string>
     <string name="delivery_test_scheduled">Проверка сработает через 15 секунд.</string>
     <string name="delivery_test_notification_title">Проверка будильника</string>
     <string name="delivery_test_notification_text">Нажмите, чтобы открыть задания этого будильника.</string>
     <string name="delivery_test_success_title">Тестовый сигнал доставлен</string>
-    <string name="delivery_test_success_description">Расписание, уведомление, звук, экран будильника и выбранные задания работают.</string>
+    <string name="delivery_test_success_description">Расписание, уведомление, выбранная мелодия, экран будильника и задания работают.</string>
     <string name="delete_alarm_desc">Удалить будильник</string>
     <string name="delete_alarm_title">Удалить будильник?</string>
     <string name="delete_alarm_confirmation">Удалить «%1$s»? Этот будильник больше не сработает.</string>

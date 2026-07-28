@@ -12,9 +12,9 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **Customizable Alarm Configuration**: A slide-up editor offers day and alternating ISO-week repeat controls, puzzle selection, visible wake-up and volume controls, sticky save actions, and ringtone preview/stop/reset.
 - **Modern Glassmorphic Dark Theme**: Premium styling featuring semi-transparent overlays, glowing accents, and smooth feedback animations.
 - **Safe Delivery Test**: Test the real exact-alarm, receiver, foreground-service,
-  notification, sound, and lock-screen path from an alarm card. The test uses a
-  gentle fixed tone without volume locking or escalation, then previews that
-  alarm’s configured puzzle sequence.
+  notification, selected ringtone, and lock-screen path from an alarm card. The
+  test caps playback internally without changing system alarm volume, volume
+  locking, or escalation, then previews that alarm’s configured puzzle sequence.
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
 - **Wake-up checks**: Optional chained follow-up alarms require one easy task after the main alarm, with configurable count and 5, 10, or 15 minute intervals measured from each completion.

@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.SystemClock
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -107,6 +108,15 @@ class AlarmDeliveryEndToEndTest {
         val audioManager = context.getSystemService(AudioManager::class.java)
         val notificationManager = context.getSystemService(NotificationManager::class.java)
         val volumeBefore = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        val selectedSoundUri =
+            requireNotNull(
+                RingtoneManager.getActualDefaultRingtoneUri(
+                    context,
+                    RingtoneManager.TYPE_ALARM
+                )
+            ) {
+                "The emulator must provide an alarm ringtone for this delivery test"
+            }.toString()
         val deliveryTestNotificationId =
             AlarmNotification.notificationIdForPayload(
                 AlarmLaunchPayload(launchType = AlarmLaunchType.DELIVERY_TEST)
@@ -120,7 +130,8 @@ class AlarmDeliveryEndToEndTest {
                 daysOfWeek = "",
                 puzzlesList = "MATH",
                 puzzleCount = 1,
-                label = "Delivery test"
+                label = "Delivery test",
+                soundUri = selectedSoundUri
             )
 
         try {
@@ -156,6 +167,11 @@ class AlarmDeliveryEndToEndTest {
             assertEquals(
                 "MATH",
                 AlarmIntentContract.read(requireNotNull(activity).intent).puzzlesList
+            )
+            assertEquals(
+                "Delivery test should carry the selected ringtone into playback",
+                selectedSoundUri,
+                AlarmIntentContract.read(requireNotNull(activity).intent).soundUri
             )
             composeTestRule.waitUntil(
                 timeoutMillis = 10_000L,

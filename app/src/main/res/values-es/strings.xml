@@ -19,12 +19,12 @@
     <string name="delivery_test_action_desc">Probar la entrega de la alarma</string>
     <string name="delivery_test_cancel_desc">Cancelar la prueba de entrega programada</string>
     <string name="delivery_test_confirm_title">¿Probar la entrega de la alarma?</string>
-    <string name="delivery_test_confirm_description">Sonará una alarma de prueba suave en 15 segundos. Bloquea el teléfono para comprobar la pantalla de alarma. El volumen no cambiará; después de la entrega podrás probar las tareas de esta alarma.</string>
+    <string name="delivery_test_confirm_description">El tono elegido para esta alarma sonará suavemente en 15 segundos. Bloquea el teléfono para comprobar la pantalla de alarma. El volumen de alarma del sistema no cambiará; después podrás probar las tareas de esta alarma.</string>
     <string name="delivery_test_scheduled">Prueba de entrega programada para dentro de 15 segundos.</string>
     <string name="delivery_test_notification_title">Prueba de entrega de alarma</string>
     <string name="delivery_test_notification_text">Toca para abrir las tareas de esta alarma.</string>
     <string name="delivery_test_success_title">Alarma de prueba entregada</string>
-    <string name="delivery_test_success_description">La programación, la notificación, el sonido, la pantalla de alarma y las tareas configuradas funcionan.</string>
+    <string name="delivery_test_success_description">La programación, la notificación, el tono elegido, la pantalla de alarma y las tareas configuradas funcionan.</string>
     <string name="delete_alarm_desc">Eliminar alarma</string>
     <string name="delete_alarm_title">¿Eliminar alarma?</string>
     <string name="delete_alarm_confirmation">¿Eliminar «%1$s»? Esta alarma dejará de sonar.</string>

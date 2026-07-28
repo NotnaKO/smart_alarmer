@@ -19,12 +19,12 @@
     <string name="delivery_test_action_desc">Alarmzustellung testen</string>
     <string name="delivery_test_cancel_desc">Geplanten Zustellungstest abbrechen</string>
     <string name="delivery_test_confirm_title">Alarmzustellung testen?</string>
-    <string name="delivery_test_confirm_description">In 15 Sekunden ertönt ein sanfter Testalarm. Sperre jetzt das Telefon, um die Sperrbildschirm-Anzeige zu prüfen. Die Alarmlautstärke bleibt unverändert; nach der Zustellung kannst du die Aufgaben dieses Alarms testen.</string>
+    <string name="delivery_test_confirm_description">In 15 Sekunden wird der ausgewählte Klingelton dieses Alarms leise abgespielt. Sperre jetzt das Telefon, um die Sperrbildschirm-Anzeige zu prüfen. Die System-Alarmlautstärke bleibt unverändert; danach kannst du die Aufgaben dieses Alarms testen.</string>
     <string name="delivery_test_scheduled">Zustellungstest in 15 Sekunden geplant.</string>
     <string name="delivery_test_notification_title">Alarm-Zustellungstest</string>
     <string name="delivery_test_notification_text">Tippe, um die Aufgaben dieses Alarms zu öffnen.</string>
     <string name="delivery_test_success_title">Testalarm zugestellt</string>
-    <string name="delivery_test_success_description">Zeitplanung, Benachrichtigung, Ton, Alarmbildschirm und konfigurierte Aufgaben funktionieren.</string>
+    <string name="delivery_test_success_description">Zeitplanung, Benachrichtigung, ausgewählter Klingelton, Alarmbildschirm und konfigurierte Aufgaben funktionieren.</string>
     <string name="delete_alarm_desc">Alarm löschen</string>
     <string name="delete_alarm_title">Alarm löschen?</string>
     <string name="delete_alarm_confirmation">„%1$s“ löschen? Dieser Alarm wird nicht mehr klingeln.</string>
