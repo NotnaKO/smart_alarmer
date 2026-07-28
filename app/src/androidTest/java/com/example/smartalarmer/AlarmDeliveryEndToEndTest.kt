@@ -8,15 +8,15 @@ import android.content.Intent
 import android.media.AudioManager
 import android.os.Build
 import android.os.SystemClock
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
-import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.Until
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmLaunchType
@@ -31,11 +31,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmDeliveryEndToEndTest {
+    @get:Rule
+    val composeTestRule = createEmptyComposeRule()
+
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
     fun scheduledPreviewAlarmReachesReceiverAndServiceWithoutChangingVolume() {
@@ -153,15 +157,16 @@ class AlarmDeliveryEndToEndTest {
                 "MATH",
                 AlarmIntentContract.read(requireNotNull(activity).intent).puzzlesList
             )
-            assertTrue(
-                "Delivery test should open the configured task preview",
-                device.wait(
-                    Until.hasObject(
-                        By.text(context.getString(R.string.task_progress_format, 1, 1))
-                    ),
-                    5_000L
-                )
-            )
+            composeTestRule.waitUntil(
+                timeoutMillis = 10_000L,
+                conditionDescription = "configured delivery-test task preview"
+            ) {
+                composeTestRule
+                    .onAllNodesWithText(
+                        context.getString(R.string.task_progress_format, 1, 1)
+                    ).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
             assertEquals(volumeBefore, audioManager.getStreamVolume(AudioManager.STREAM_ALARM))
             assertTrue(
                 "Delivery-test notification should be posted while its foreground service is active",

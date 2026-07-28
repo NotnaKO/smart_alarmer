@@ -118,16 +118,34 @@ class AlarmService : Service() {
             return START_NOT_STICKY
         }
 
+        if (intent.action == ACTION_STOP_DELIVERY_TEST) {
+            if (resumePriorityRealAlarm()) {
+                return START_REDELIVER_INTENT
+            }
+            val requestedSessionIdentity = intent.getStringExtra(EXTRA_DELIVERY_TEST_SESSION_ID)
+            if (shouldStopDeliveryTest(activePayload, requestedSessionIdentity)) {
+                stopSelf(startId)
+            } else if (activePayload == null) {
+                stopSelf(startId)
+            }
+            return START_NOT_STICKY
+        }
+
         val incomingPayload = AlarmIntentContract.read(intent)
         if (incomingPayload.executionMode == AlarmExecutionMode.DELIVERY_TEST) {
-            val active = activePayload
-            if (active?.executionMode == AlarmExecutionMode.REAL) {
-                return START_NOT_STICKY
+            if (resumePriorityRealAlarm()) {
+                return START_REDELIVER_INTENT
             }
+
+            val active = activePayload
             if (active?.sessionIdentity == incomingPayload.sessionIdentity) {
                 return START_NOT_STICKY
             }
-            val foregroundNotification = startAlarm(incomingPayload)
+            val foregroundNotification =
+                startAlarm(
+                    payload = incomingPayload,
+                    deliveryTestStartId = startId
+                )
             AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
             return START_NOT_STICKY
         }
@@ -195,7 +213,8 @@ class AlarmService : Service() {
 
     private fun startAlarm(
         payload: AlarmLaunchPayload,
-        deliveryAlreadyRecorded: Boolean = false
+        deliveryAlreadyRecorded: Boolean = false,
+        deliveryTestStartId: Int? = null
     ): AlarmForegroundNotification {
         val isRecoveredSession =
             sessionStore
@@ -223,7 +242,9 @@ class AlarmService : Service() {
             deliveryTestTimeoutJob =
                 serviceScope.launch {
                     delay(DELIVERY_TEST_TIMEOUT_MILLIS)
-                    stopSelf()
+                    if (activePayload?.sessionIdentity == payload.sessionIdentity) {
+                        deliveryTestStartId?.let(::stopSelf)
+                    }
                 }
             return foregroundNotification
         }
@@ -344,6 +365,46 @@ class AlarmService : Service() {
         activePayload = null
     }
 
+    private fun resumePriorityRealAlarm(): Boolean {
+        val recoveredRealPayload =
+            sessionStore
+                .current()
+                ?.takeUnless(AlarmAudioSession::dismissRequested)
+                ?.payload
+                ?.takeIf { it.executionMode == AlarmExecutionMode.REAL }
+        val queuedRealPayload =
+            pendingAlarmQueue
+                .peek()
+                ?.takeIf { it.executionMode == AlarmExecutionMode.REAL }
+        val priorityRealPayload =
+            realAlarmPriority(
+                active = activePayload,
+                recovered = recoveredRealPayload,
+                queued = queuedRealPayload
+            ) ?: return false
+
+        if (activePayload?.executionMode == AlarmExecutionMode.DELIVERY_TEST) {
+            stopDeliveryTestForRealAlarm()
+        }
+        if (activePayload == null) {
+            val wasQueued =
+                queuedRealPayload?.sessionIdentity == priorityRealPayload.sessionIdentity
+            val foregroundNotification =
+                startAlarm(
+                    payload = priorityRealPayload,
+                    deliveryAlreadyRecorded = wasQueued
+                )
+            if (wasQueued) {
+                pendingAlarmQueue.removeHead(priorityRealPayload)
+            }
+            AlarmScreenLauncher.launchIfUnlocked(
+                this,
+                foregroundNotification.dismissPendingIntent
+            )
+        }
+        return true
+    }
+
     private fun recordMainAlarmDelivery(payload: AlarmLaunchPayload) {
         if (payload.launchType != AlarmLaunchType.MAIN) return
         if (getSystemService(UserManager::class.java).isUserUnlocked) {
@@ -420,9 +481,32 @@ class AlarmService : Service() {
 
     companion object {
         private const val TAG = "AlarmService"
+        private const val ACTION_STOP_DELIVERY_TEST =
+            "com.notnako.smartalarmer.action.STOP_DELIVERY_TEST"
+        private const val EXTRA_DELIVERY_TEST_SESSION_ID = "DELIVERY_TEST_SESSION_ID"
         internal const val DELIVERY_TEST_TIMEOUT_MILLIS = 30_000L
         internal const val WAKE_LOCK_RENEWAL_INTERVAL_MILLIS = AlarmWakeLockController.RENEWAL_INTERVAL_MILLIS
         internal const val WAKE_LOCK_TIMEOUT_MILLIS = AlarmWakeLockController.TIMEOUT_MILLIS
+
+        internal fun stopDeliveryTestIntent(
+            context: Context,
+            sessionIdentity: String
+        ): Intent = Intent(context, AlarmService::class.java)
+            .setAction(ACTION_STOP_DELIVERY_TEST)
+            .putExtra(EXTRA_DELIVERY_TEST_SESSION_ID, sessionIdentity)
+
+        internal fun shouldStopDeliveryTest(
+            active: AlarmLaunchPayload?,
+            requestedSessionIdentity: String?
+        ): Boolean = active?.executionMode == AlarmExecutionMode.DELIVERY_TEST &&
+            active.sessionIdentity == requestedSessionIdentity
+
+        internal fun realAlarmPriority(
+            active: AlarmLaunchPayload?,
+            recovered: AlarmLaunchPayload?,
+            queued: AlarmLaunchPayload?
+        ): AlarmLaunchPayload? = listOf(active, recovered, queued)
+            .firstOrNull { it?.executionMode == AlarmExecutionMode.REAL }
 
         internal fun overlapDecision(
             active: AlarmLaunchPayload?,

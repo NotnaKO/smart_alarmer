@@ -2,10 +2,13 @@ package com.example.smartalarmer
 
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmLaunchType
+import com.example.smartalarmer.alarm.sessionIdentity
 import com.example.smartalarmer.service.AlarmOverlapDecision
 import com.example.smartalarmer.service.AlarmService
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -80,6 +83,62 @@ class AlarmServiceTest {
                     wakeUpCheckNumber = 1,
                     wakeUpCheckToken = "token"
                 )
+            )
+        )
+    }
+
+    @Test
+    fun deliveryTestAdmissionAlwaysPrioritizesRealAlarmState() {
+        val activeReal = AlarmLaunchPayload(alarmId = 1, occurrenceTriggerAtMillis = 100L)
+        val recoveredReal = AlarmLaunchPayload(alarmId = 2, occurrenceTriggerAtMillis = 200L)
+        val queuedReal = AlarmLaunchPayload(alarmId = 3, occurrenceTriggerAtMillis = 300L)
+        val deliveryTest =
+            AlarmLaunchPayload(
+                launchType = AlarmLaunchType.DELIVERY_TEST,
+                occurrenceTriggerAtMillis = 400L
+            )
+
+        assertEquals(
+            activeReal,
+            AlarmService.realAlarmPriority(activeReal, recoveredReal, queuedReal)
+        )
+        assertEquals(
+            recoveredReal,
+            AlarmService.realAlarmPriority(deliveryTest, recoveredReal, queuedReal)
+        )
+        assertEquals(
+            queuedReal,
+            AlarmService.realAlarmPriority(deliveryTest, null, queuedReal)
+        )
+        assertNull(AlarmService.realAlarmPriority(deliveryTest, null, null))
+    }
+
+    @Test
+    fun deliveryTestStopIsScopedToItsActiveSession() {
+        val activeDeliveryTest =
+            AlarmLaunchPayload(
+                launchType = AlarmLaunchType.DELIVERY_TEST,
+                occurrenceTriggerAtMillis = 400L
+            )
+        val laterDeliveryTest = activeDeliveryTest.copy(occurrenceTriggerAtMillis = 500L)
+        val realAlarm = AlarmLaunchPayload(alarmId = 42, occurrenceTriggerAtMillis = 400L)
+
+        assertTrue(
+            AlarmService.shouldStopDeliveryTest(
+                activeDeliveryTest,
+                activeDeliveryTest.sessionIdentity
+            )
+        )
+        assertFalse(
+            AlarmService.shouldStopDeliveryTest(
+                activeDeliveryTest,
+                laterDeliveryTest.sessionIdentity
+            )
+        )
+        assertFalse(
+            AlarmService.shouldStopDeliveryTest(
+                realAlarm,
+                activeDeliveryTest.sessionIdentity
             )
         )
     }

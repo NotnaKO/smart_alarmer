@@ -38,6 +38,7 @@ import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEvent
 import com.example.smartalarmer.alarm.AlarmProgressEventType
+import com.example.smartalarmer.alarm.sessionIdentity
 import com.example.smartalarmer.receiver.WakeUpCheckCommandReceiver
 import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import com.example.smartalarmer.service.ActiveAlarmRecovery
@@ -58,7 +59,8 @@ class AlarmDismissActivity : ComponentActivity() {
         val wakeUpCheckTotal: Int = 0,
         val wakeUpCheckToken: String = "",
         val wakeUpChecksEnabled: Boolean = false,
-        val wakeUpCheckIntervalMinutes: Int = 5
+        val wakeUpCheckIntervalMinutes: Int = 5,
+        val sessionIdentity: String = ""
     )
 
     private data class CompletionConfig(
@@ -79,9 +81,11 @@ class AlarmDismissActivity : ComponentActivity() {
 
         onBackPressedDispatcher.addCallback(this) {
             if (
-                dismissConfig.isPreview ||
                 dismissConfig.launchType == AlarmLaunchType.DELIVERY_TEST
             ) {
+                requestDeliveryTestStop(dismissConfig)
+                finish()
+            } else if (dismissConfig.isPreview) {
                 stopService(Intent(this@AlarmDismissActivity, AlarmService::class.java))
                 finish()
             }
@@ -97,7 +101,7 @@ class AlarmDismissActivity : ComponentActivity() {
                         deliveryTestCompleted
                     ) {
                         DeliveryTestView {
-                            stopService(Intent(this, AlarmService::class.java))
+                            requestDeliveryTestStop(config)
                             finish()
                         }
                     } else if (completion != null) {
@@ -134,7 +138,7 @@ class AlarmDismissActivity : ComponentActivity() {
                                 },
                                 onDismissComplete = {
                                     if (dismissConfig.launchType == AlarmLaunchType.DELIVERY_TEST) {
-                                        stopService(Intent(this, AlarmService::class.java))
+                                        requestDeliveryTestStop(dismissConfig)
                                         deliveryTestCompleted = true
                                         return@AlarmDismissScreen
                                     }
@@ -215,6 +219,15 @@ class AlarmDismissActivity : ComponentActivity() {
         )
     }
 
+    private fun requestDeliveryTestStop(config: DismissConfig) {
+        startService(
+            AlarmService.stopDeliveryTestIntent(
+                context = this,
+                sessionIdentity = config.sessionIdentity
+            )
+        )
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -238,7 +251,8 @@ class AlarmDismissActivity : ComponentActivity() {
                 wakeUpCheckTotal = payload.wakeUpCheckTotal,
                 wakeUpCheckToken = payload.wakeUpCheckToken,
                 wakeUpChecksEnabled = payload.wakeUpChecksEnabled,
-                wakeUpCheckIntervalMinutes = payload.wakeUpCheckIntervalMinutes
+                wakeUpCheckIntervalMinutes = payload.wakeUpCheckIntervalMinutes,
+                sessionIdentity = payload.sessionIdentity
             )
     }
 
