@@ -28,6 +28,12 @@ internal fun handleMainUiEvent(
                 ),
                 Toast.LENGTH_LONG
             ).show()
+        is MainUiEvent.DeliveryTestScheduled ->
+            Toast.makeText(
+                context,
+                context.getString(com.example.smartalarmer.R.string.delivery_test_scheduled),
+                Toast.LENGTH_LONG
+            ).show()
         MainUiEvent.ExactAlarmPermissionRequired ->
             Toast.makeText(
                 context,

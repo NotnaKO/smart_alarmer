@@ -15,7 +15,8 @@ data class AlarmDraft(
     val wakeUpChecksEnabled: Boolean = false,
     val wakeUpCheckCount: Int = WakeUpCheckConfig.DEFAULT_COUNT,
     val wakeUpCheckIntervalMinutes: Int = WakeUpCheckConfig.DEFAULT_INTERVAL_MINUTES,
-    val volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS
+    val volumeRampSeconds: Int = AlarmVolumeRamp.DEFAULT_SECONDS,
+    val oneTimeDateEpochDay: Long? = null
 ) {
     init {
         require(hour in 0..23) { "Alarm hour must be between 0 and 23" }
@@ -57,7 +58,8 @@ data class AlarmDraft(
         suppressedThroughEpochDay =
         existing
             ?.suppressedThroughEpochDay
-            ?.takeUnless { repeatDays.isOneTime }
+            ?.takeUnless { repeatDays.isOneTime },
+        oneTimeDateEpochDay = oneTimeDateEpochDay.takeIf { repeatDays.isOneTime }
     )
 }
 

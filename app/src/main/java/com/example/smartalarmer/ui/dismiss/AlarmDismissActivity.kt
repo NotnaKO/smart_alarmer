@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,11 +38,13 @@ import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEvent
 import com.example.smartalarmer.alarm.AlarmProgressEventType
+import com.example.smartalarmer.alarm.sessionIdentity
 import com.example.smartalarmer.receiver.WakeUpCheckCommandReceiver
 import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import com.example.smartalarmer.service.ActiveAlarmRecovery
 import com.example.smartalarmer.service.AlarmService
 import com.example.smartalarmer.service.PendingAlarmQueueStore
+import com.example.smartalarmer.ui.theme.IndigoPrimary
 import com.example.smartalarmer.ui.theme.SmartAlarmerTheme
 
 class AlarmDismissActivity : ComponentActivity() {
@@ -55,7 +59,8 @@ class AlarmDismissActivity : ComponentActivity() {
         val wakeUpCheckTotal: Int = 0,
         val wakeUpCheckToken: String = "",
         val wakeUpChecksEnabled: Boolean = false,
-        val wakeUpCheckIntervalMinutes: Int = 5
+        val wakeUpCheckIntervalMinutes: Int = 5,
+        val sessionIdentity: String = ""
     )
 
     private data class CompletionConfig(
@@ -67,6 +72,7 @@ class AlarmDismissActivity : ComponentActivity() {
 
     private var dismissConfig by mutableStateOf(DismissConfig())
     private var completionConfig by mutableStateOf<CompletionConfig?>(null)
+    private var deliveryTestCompleted by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,7 +80,13 @@ class AlarmDismissActivity : ComponentActivity() {
         applyWindowMode()
 
         onBackPressedDispatcher.addCallback(this) {
-            if (dismissConfig.isPreview) {
+            if (
+                dismissConfig.launchType == AlarmLaunchType.DELIVERY_TEST
+            ) {
+                requestDeliveryTestStop(dismissConfig)
+                finish()
+            } else if (dismissConfig.isPreview) {
+                stopService(Intent(this@AlarmDismissActivity, AlarmService::class.java))
                 finish()
             }
         }
@@ -84,7 +96,15 @@ class AlarmDismissActivity : ComponentActivity() {
             SmartAlarmerTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF121212)) {
                     val completion = completionConfig
-                    if (completion != null) {
+                    if (
+                        config.launchType == AlarmLaunchType.DELIVERY_TEST &&
+                        deliveryTestCompleted
+                    ) {
+                        DeliveryTestView {
+                            requestDeliveryTestStop(config)
+                            finish()
+                        }
+                    } else if (completion != null) {
                         AlarmCompletionView(completion) { finish() }
                     } else {
                         key(
@@ -117,6 +137,11 @@ class AlarmDismissActivity : ComponentActivity() {
                                     )
                                 },
                                 onDismissComplete = {
+                                    if (dismissConfig.launchType == AlarmLaunchType.DELIVERY_TEST) {
+                                        requestDeliveryTestStop(dismissConfig)
+                                        deliveryTestCompleted = true
+                                        return@AlarmDismissScreen
+                                    }
                                     if (!dismissConfig.isPreview) {
                                         if (getSystemService(UserManager::class.java).isUserUnlocked) {
                                             val commandIntent =
@@ -194,9 +219,19 @@ class AlarmDismissActivity : ComponentActivity() {
         )
     }
 
+    private fun requestDeliveryTestStop(config: DismissConfig) {
+        startService(
+            AlarmService.stopDeliveryTestIntent(
+                context = this,
+                sessionIdentity = config.sessionIdentity
+            )
+        )
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        deliveryTestCompleted = false
         updateConfig(intent)
         applyWindowMode()
     }
@@ -216,7 +251,8 @@ class AlarmDismissActivity : ComponentActivity() {
                 wakeUpCheckTotal = payload.wakeUpCheckTotal,
                 wakeUpCheckToken = payload.wakeUpCheckToken,
                 wakeUpChecksEnabled = payload.wakeUpChecksEnabled,
-                wakeUpCheckIntervalMinutes = payload.wakeUpCheckIntervalMinutes
+                wakeUpCheckIntervalMinutes = payload.wakeUpCheckIntervalMinutes,
+                sessionIdentity = payload.sessionIdentity
             )
     }
 
@@ -247,6 +283,46 @@ class AlarmDismissActivity : ComponentActivity() {
             )
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    @Composable
+    private fun DeliveryTestView(onClose: () -> Unit) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "✓",
+                color = Color(0xFF4ADE80),
+                fontSize = 56.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.delivery_test_success_title),
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.delivery_test_success_description),
+                color = Color.White,
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onClose,
+                colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = IndigoPrimary,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(stringResource(R.string.close))
+            }
+        }
     }
 
     @Composable

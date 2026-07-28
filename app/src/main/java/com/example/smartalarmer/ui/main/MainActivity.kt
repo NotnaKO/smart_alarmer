@@ -39,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smartalarmer.alarm.AlarmIntentContract
-import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmSoundResolver
 import com.example.smartalarmer.data.Alarm
 import com.example.smartalarmer.data.AlarmDatabase
@@ -48,9 +46,9 @@ import com.example.smartalarmer.data.RoomAlarmRepository
 import com.example.smartalarmer.domain.WakeUpCheckCoordinator
 import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
+import com.example.smartalarmer.scheduler.AndroidDeliveryTestSchedulingGateway
 import com.example.smartalarmer.scheduler.AndroidWakeUpCheckSchedulingGateway
 import com.example.smartalarmer.service.ActiveAlarmRecovery
-import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.utils.AlarmCapabilityChecker
 import com.example.smartalarmer.utils.AlarmTimeFormatter
@@ -73,7 +71,8 @@ class MainActivity : ComponentActivity() {
                 sessionDao = database.wakeUpCheckDao(),
                 scheduler = AndroidWakeUpCheckSchedulingGateway(applicationContext)
             ),
-            wakeUpCheckSessionFlow = database.wakeUpCheckDao().observeAllSessions()
+            wakeUpCheckSessionFlow = database.wakeUpCheckDao().observeAllSessions(),
+            deliveryTestScheduler = AndroidDeliveryTestSchedulingGateway(applicationContext)
         )
     }
 
@@ -88,6 +87,7 @@ class MainActivity : ComponentActivity() {
                 val alarmCards by viewModel.alarmCards.collectAsStateWithLifecycle()
                 val isSheetVisible by viewModel.isBottomSheetVisible.collectAsStateWithLifecycle()
                 val editingAlarm by viewModel.editingAlarm.collectAsStateWithLifecycle()
+                val pendingDeliveryTest by viewModel.pendingDeliveryTest.collectAsStateWithLifecycle()
 
                 var capabilities by remember { mutableStateOf(AlarmCapabilityChecker.check(context)) }
                 var showPrivacyPolicy by rememberSaveable { mutableStateOf(false) }
@@ -95,6 +95,7 @@ class MainActivity : ComponentActivity() {
                 var pendingWakeUpCheckCancel by remember { mutableStateOf<Alarm?>(null) }
                 var pendingDisableChoice by remember { mutableStateOf<Alarm?>(null) }
                 var pendingPauseDate by remember { mutableStateOf<Alarm?>(null) }
+                var pendingDeliveryTestConfirmation by remember { mutableStateOf<Alarm?>(null) }
                 val sharedPrefs = remember { context.getSharedPreferences("smart_alarmer_prefs", Context.MODE_PRIVATE) }
                 var isXiaomiDismissed by rememberSaveable { mutableStateOf(sharedPrefs.getBoolean("xiaomi_warning_dismissed", false)) }
                 val isXiaomiDevice = remember { DeviceUtils.isXiaomi() }
@@ -309,13 +310,16 @@ class MainActivity : ComponentActivity() {
                                                 viewModel.openEditSheet(alarm)
                                             },
                                             onTest = {
-                                                val intent =
-                                                    AlarmIntentContract.write(
-                                                        Intent(context, AlarmDismissActivity::class.java),
-                                                        AlarmLaunchPayload.fromAlarm(alarm, isPreview = true)
-                                                    )
-                                                context.startActivity(intent)
+                                                if (pendingDeliveryTest?.alarmId == alarm.id) {
+                                                    viewModel.cancelDeliveryTest()
+                                                } else {
+                                                    pendingDeliveryTestConfirmation = alarm
+                                                }
                                             },
+                                            isDeliveryTestPending = pendingDeliveryTest?.alarmId == alarm.id,
+                                            deliveryTestEnabled =
+                                            pendingDeliveryTest == null ||
+                                                pendingDeliveryTest?.alarmId == alarm.id,
                                             onCancelWakeUpChecks = {
                                                 pendingWakeUpCheckCancel = alarm
                                             },
@@ -417,6 +421,33 @@ class MainActivity : ComponentActivity() {
                                 },
                                 dismissButton = {
                                     TextButton(onClick = { pendingDelete = null }) {
+                                        Text(stringResource(com.example.smartalarmer.R.string.cancel))
+                                    }
+                                }
+                            )
+                        }
+
+                        pendingDeliveryTestConfirmation?.let { alarm ->
+                            AlertDialog(
+                                onDismissRequest = { pendingDeliveryTestConfirmation = null },
+                                title = {
+                                    Text(stringResource(com.example.smartalarmer.R.string.delivery_test_confirm_title))
+                                },
+                                text = {
+                                    Text(stringResource(com.example.smartalarmer.R.string.delivery_test_confirm_description))
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            viewModel.scheduleDeliveryTest(alarm)
+                                            pendingDeliveryTestConfirmation = null
+                                        }
+                                    ) {
+                                        Text(stringResource(com.example.smartalarmer.R.string.test_btn))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { pendingDeliveryTestConfirmation = null }) {
                                         Text(stringResource(com.example.smartalarmer.R.string.cancel))
                                     }
                                 }

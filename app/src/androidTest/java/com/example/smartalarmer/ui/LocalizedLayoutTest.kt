@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isToggleable
@@ -25,6 +27,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -36,6 +39,7 @@ import com.example.smartalarmer.ui.main.ALARM_CARD_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_DAYS_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_PUZZLE_COUNT_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_REPEAT_TAG
+import com.example.smartalarmer.ui.main.ALARM_EDITOR_SAVE_TAG
 import com.example.smartalarmer.ui.main.ALARM_EDITOR_SOUND_ROW_TAG
 import com.example.smartalarmer.ui.main.AlarmDisableChoiceDialog
 import com.example.smartalarmer.ui.main.AlarmEditSheet
@@ -203,6 +207,33 @@ class LocalizedLayoutTest {
         }
     }
 
+    @Test
+    fun dashboardAndEditor_supportTwoHundredPercentFontScale() {
+        setLocalizedContent("ru", fontScale = 2f) {
+            Box(modifier = Modifier.width(COMPACT_WIDTH).fillMaxHeight()) {
+                AlarmEditSheet(
+                    alarm = null,
+                    onDismiss = {},
+                    onSave = {},
+                    onPickSound = {},
+                    selectedSoundName = localizedContext.getString(R.string.sound_default),
+                    pickedSoundUri = null,
+                    shakeSensorAvailable = true
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag(ALARM_EDITOR_SAVE_TAG).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(localizedContext.getString(R.string.editor_section_schedule))
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithTag(com.example.smartalarmer.ui.main.ALARM_EDITOR_ONE_TIME_DATE_TAG)
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
     private fun assertDashboardFits(languageTag: String) {
         setLocalizedContent(languageTag) {
             Column(modifier = Modifier.width(COMPACT_WIDTH)) {
@@ -323,6 +354,7 @@ class LocalizedLayoutTest {
 
     private fun setLocalizedContent(
         languageTag: String,
+        fontScale: Float = 1f,
         content: @Composable () -> Unit
     ) {
         val baseContext = InstrumentationRegistry.getInstrumentation().targetContext
@@ -331,10 +363,12 @@ class LocalizedLayoutTest {
         localizedContext = baseContext.createConfigurationContext(configuration)
 
         composeTestRule.setContent {
+            val density = LocalDensity.current
             CompositionLocalProvider(
                 LocalContext provides localizedContext,
                 LocalConfiguration provides configuration,
-                LocalResources provides localizedContext.resources
+                LocalResources provides localizedContext.resources,
+                LocalDensity provides Density(density.density, fontScale)
             ) {
                 SmartAlarmerTheme { content() }
             }

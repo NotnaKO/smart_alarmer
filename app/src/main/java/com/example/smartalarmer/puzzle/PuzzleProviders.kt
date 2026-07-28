@@ -31,7 +31,7 @@ interface ShakeSensorProvider {
     val isAvailable: Boolean
         get() = true
 
-    fun register(onSensorChanged: (Float, Float, Float) -> Unit)
+    fun register(onSensorChanged: (Float, Float, Float) -> Unit): Boolean
 
     fun unregister()
 }
@@ -46,7 +46,8 @@ class AndroidShakeSensorProvider(
     override val isAvailable: Boolean
         get() = accelerometer != null
 
-    override fun register(onSensorChanged: (Float, Float, Float) -> Unit) {
+    override fun register(onSensorChanged: (Float, Float, Float) -> Unit): Boolean {
+        val sensor = accelerometer ?: return false
         eventListener =
             object : android.hardware.SensorEventListener {
                 override fun onSensorChanged(event: android.hardware.SensorEvent?) {
@@ -60,9 +61,11 @@ class AndroidShakeSensorProvider(
                     accuracy: Int
                 ) {}
             }
-        if (accelerometer != null) {
-            sensorManager.registerListener(eventListener, accelerometer, android.hardware.SensorManager.SENSOR_DELAY_UI)
-        }
+        return sensorManager.registerListener(
+            eventListener,
+            sensor,
+            android.hardware.SensorManager.SENSOR_DELAY_UI
+        )
     }
 
     override fun unregister() {

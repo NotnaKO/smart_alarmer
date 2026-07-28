@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +57,9 @@ import com.example.smartalarmer.domain.repeatWeekParity
 import com.example.smartalarmer.puzzle.AndroidShakeSensorProvider
 import com.example.smartalarmer.ui.theme.*
 import com.example.smartalarmer.utils.AlarmTimeFormatter
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +106,9 @@ fun AlarmEditSheet(
     }
     var repeatWeekParity by rememberSaveable(alarm?.id) {
         mutableStateOf(alarm?.repeatWeekParity ?: AlarmWeekParity.EVERY)
+    }
+    var oneTimeDateEpochDay by rememberSaveable(alarm?.id) {
+        mutableStateOf(alarm?.oneTimeDateEpochDay)
     }
 
     val puzzleTypes =
@@ -169,8 +176,19 @@ fun AlarmEditSheet(
         repeatSummary(
             repeatEnabled = repeatEnabled,
             selectedDays = selectedDays,
-            repeatWeekParity = repeatWeekParity
+            repeatWeekParity = repeatWeekParity,
+            oneTimeDateEpochDay = oneTimeDateEpochDay
         )
+    val hasInvalidSpecificDate =
+        !repeatEnabled &&
+            oneTimeDateEpochDay?.let { epochDay ->
+                !LocalDate
+                    .ofEpochDay(epochDay)
+                    .atTime(hour, minute)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .isAfter(Instant.now())
+            } == true
     val puzzleNames =
         selectedPuzzles.joinToString(", ") { puzzle ->
             resources.getString(puzzle.nameResource())
@@ -225,7 +243,8 @@ fun AlarmEditSheet(
                 wakeUpChecksEnabled = wakeUpChecksEnabled,
                 wakeUpCheckCount = wakeUpCheckCount,
                 wakeUpCheckIntervalMinutes = wakeUpCheckIntervalMinutes,
-                volumeRampSeconds = volumeRampSeconds
+                volumeRampSeconds = volumeRampSeconds,
+                oneTimeDateEpochDay = oneTimeDateEpochDay.takeUnless { repeatEnabled }
             )
         )
     }
@@ -391,7 +410,10 @@ fun AlarmEditSheet(
                             },
                             selectedDays = selectedDays,
                             repeatWeekParity = repeatWeekParity,
-                            onRepeatWeekParityChange = { repeatWeekParity = it }
+                            onRepeatWeekParityChange = { repeatWeekParity = it },
+                            oneTimeDateEpochDay = oneTimeDateEpochDay,
+                            onOneTimeDateChange = { oneTimeDateEpochDay = it },
+                            hasInvalidSpecificDate = hasInvalidSpecificDate
                         )
                     }
 
@@ -460,6 +482,7 @@ fun AlarmEditSheet(
 
                 Button(
                     onClick = saveDraft,
+                    enabled = !hasInvalidSpecificDate,
                     modifier =
                     Modifier
                         .align(Alignment.BottomCenter)
@@ -496,6 +519,10 @@ private fun EditorSection(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val expandedDescription =
+        stringResource(
+            if (expanded) R.string.accessibility_expanded else R.string.accessibility_collapsed
+        )
     Column(
         modifier =
         modifier
@@ -511,6 +538,10 @@ private fun EditorSection(
             Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onToggle)
+                .semantics {
+                    role = Role.Button
+                    stateDescription = expandedDescription
+                }
                 .padding(horizontal = 16.dp, vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -558,8 +589,16 @@ private fun RepeatEditor(
     onRepeatEnabledChange: (Boolean) -> Unit,
     selectedDays: MutableList<AlarmDay>,
     repeatWeekParity: AlarmWeekParity,
-    onRepeatWeekParityChange: (AlarmWeekParity) -> Unit
+    onRepeatWeekParityChange: (AlarmWeekParity) -> Unit,
+    oneTimeDateEpochDay: Long?,
+    onOneTimeDateChange: (Long?) -> Unit,
+    hasInvalidSpecificDate: Boolean
 ) {
+    val context = LocalContext.current
+    var showOneTimeDatePicker by rememberSaveable { mutableStateOf(false) }
+    val onState = stringResource(R.string.accessibility_on)
+    val offState = stringResource(R.string.accessibility_off)
+    val repeatDescription = stringResource(R.string.repeat_days_label)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -580,11 +619,71 @@ private fun RepeatEditor(
         Switch(
             checked = repeatEnabled,
             onCheckedChange = onRepeatEnabledChange,
+            modifier =
+            Modifier.semantics {
+                contentDescription = repeatDescription
+                stateDescription = if (repeatEnabled) onState else offState
+            },
             colors = editorSwitchColors()
         )
     }
 
-    if (repeatEnabled) {
+    if (!repeatEnabled) {
+        val selectedDateText =
+            oneTimeDateEpochDay?.let { AlarmTimeFormatter.formatDate(context, it) }
+                ?: stringResource(R.string.one_time_next_occurrence)
+        val dateLabel = stringResource(R.string.one_time_date_label)
+        Surface(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { showOneTimeDatePicker = true }
+                .semantics {
+                    contentDescription = "$dateLabel: $selectedDateText"
+                    role = Role.Button
+                }
+                .testTag(ALARM_EDITOR_ONE_TIME_DATE_TAG),
+            color = KeyButtonBg,
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text(
+                        text = stringResource(R.string.one_time_date_label),
+                        color = SecondaryText,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = selectedDateText,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.one_time_choose_date),
+                    color = IndigoContent,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+        if (oneTimeDateEpochDay != null) {
+            TextButton(onClick = { onOneTimeDateChange(null) }) {
+                Text(stringResource(R.string.one_time_clear_date))
+            }
+        }
+        if (hasInvalidSpecificDate) {
+            Text(
+                text = stringResource(R.string.one_time_date_must_be_future),
+                color = RedErrorContent,
+                fontSize = 12.sp
+            )
+        }
+    } else {
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -715,6 +814,50 @@ private fun RepeatEditor(
                     )
                 }
             }
+        }
+    }
+
+    if (showOneTimeDatePicker) {
+        val todayEpochDay = LocalDate.now().toEpochDay()
+        val datePickerState =
+            rememberDatePickerState(
+                initialSelectedDateMillis =
+                (oneTimeDateEpochDay ?: todayEpochDay) * MILLIS_PER_DAY,
+                selectableDates =
+                object : SelectableDates {
+                    override fun isSelectableDate(utcTimeMillis: Long): Boolean = Math.floorDiv(utcTimeMillis, MILLIS_PER_DAY) >= todayEpochDay
+                }
+            )
+        DatePickerDialog(
+            onDismissRequest = { showOneTimeDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { selectedMillis ->
+                            onOneTimeDateChange(Math.floorDiv(selectedMillis, MILLIS_PER_DAY))
+                        }
+                        showOneTimeDatePicker = false
+                    },
+                    enabled = datePickerState.selectedDateMillis != null
+                ) {
+                    Text(stringResource(R.string.one_time_choose_date))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOneTimeDatePicker = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                title = {
+                    Text(
+                        text = stringResource(R.string.one_time_date_picker_title),
+                        modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
+                    )
+                }
+            )
         }
     }
 }
@@ -870,6 +1013,9 @@ private fun WakeUpChecksEditor(
     intervalMinutes: Int,
     onIntervalChange: (Int) -> Unit
 ) {
+    val onState = stringResource(R.string.accessibility_on)
+    val offState = stringResource(R.string.accessibility_off)
+    val wakeUpChecksDescription = stringResource(R.string.wake_up_checks_label)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -890,6 +1036,11 @@ private fun WakeUpChecksEditor(
         Switch(
             checked = enabled,
             onCheckedChange = onEnabledChange,
+            modifier =
+            Modifier.semantics {
+                contentDescription = wakeUpChecksDescription
+                stateDescription = if (enabled) onState else offState
+            },
             colors = editorSwitchColors()
         )
     }
@@ -1011,10 +1162,14 @@ private fun StepperRow(
 private fun repeatSummary(
     repeatEnabled: Boolean,
     selectedDays: List<AlarmDay>,
-    repeatWeekParity: AlarmWeekParity
+    repeatWeekParity: AlarmWeekParity,
+    oneTimeDateEpochDay: Long?
 ): String {
     if (!repeatEnabled || selectedDays.isEmpty()) {
-        return stringResource(R.string.one_time)
+        val oneTime = stringResource(R.string.one_time)
+        return oneTimeDateEpochDay?.let {
+            "$oneTime · ${AlarmTimeFormatter.formatDate(LocalContext.current, it)}"
+        } ?: oneTime
     }
     val days = selectedDays.sortedBy(AlarmDay::isoValue)
     val daySummary =
@@ -1086,6 +1241,7 @@ internal const val ALARM_EDITOR_SOUND_ROW_TAG = "alarm_editor_sound_row"
 internal const val ALARM_EDITOR_REPEAT_TAG = "alarm_editor_repeat"
 internal const val ALARM_EDITOR_DAYS_TAG = "alarm_editor_days"
 internal const val ALARM_EDITOR_WEEK_PARITY_TAG = "alarm_editor_week_parity"
+internal const val ALARM_EDITOR_ONE_TIME_DATE_TAG = "alarm_editor_one_time_date"
 internal const val ALARM_EDITOR_CHALLENGE_TAG = "alarm_editor_challenge"
 internal const val ALARM_EDITOR_SOUND_SECTION_TAG = "alarm_editor_sound_section"
 internal const val ALARM_EDITOR_PUZZLE_COUNT_TAG = "alarm_editor_puzzle_count"
@@ -1097,3 +1253,4 @@ private const val EDITOR_SECTION_SCHEDULE = "schedule"
 private const val EDITOR_SECTION_CHALLENGE = "challenge"
 private const val EDITOR_SECTION_SOUND = "sound"
 private const val EDITOR_SECTION_AFTER_DISMISSAL = "after_dismissal"
+private const val MILLIS_PER_DAY = 86_400_000L

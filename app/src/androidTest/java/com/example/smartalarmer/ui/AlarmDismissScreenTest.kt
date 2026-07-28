@@ -69,8 +69,9 @@ class AlarmDismissScreenTest {
         object : ShakeSensorProvider {
             private var callback: ((Float, Float, Float) -> Unit)? = null
 
-            override fun register(onSensorChanged: (Float, Float, Float) -> Unit) {
+            override fun register(onSensorChanged: (Float, Float, Float) -> Unit): Boolean {
                 callback = onSensorChanged
+                return true
             }
 
             override fun unregister() {
@@ -799,7 +800,7 @@ class AlarmDismissScreenTest {
             object : ShakeSensorProvider {
                 override val isAvailable = false
 
-                override fun register(onSensorChanged: (Float, Float, Float) -> Unit) = Unit
+                override fun register(onSensorChanged: (Float, Float, Float) -> Unit): Boolean = true
 
                 override fun unregister() = Unit
             }
@@ -819,6 +820,60 @@ class AlarmDismissScreenTest {
 
         composeTestRule.onNodeWithText("5 + 3").assertIsDisplayed()
         assertFalse("Missing sensor must not dismiss the alarm", dismissed)
+    }
+
+    @Test
+    fun alarmDismissScreen_touchExplorationOffersImmediateAccessibleAlternative() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "MEMORY",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = fakeShake,
+                touchExplorationEnabled = true
+            )
+        }
+
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.try_different_puzzle))
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.onNodeWithText("5 + 3").assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmDismissScreen_failedShakeRegistrationAutomaticallyUsesAlternative() {
+        val failedShake =
+            object : ShakeSensorProvider {
+                override val isAvailable = true
+
+                override fun register(onSensorChanged: (Float, Float, Float) -> Unit): Boolean = false
+
+                override fun unregister() = Unit
+            }
+
+        composeTestRule.setContent {
+            AlarmDismissScreen(
+                puzzlesList = "SHAKE",
+                puzzleCount = 1,
+                onDismissComplete = {},
+                mathProvider = fakeMath,
+                typingProvider = fakeTyping,
+                memoryProvider = fakeMemory,
+                shakeProvider = failedShake
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("5 + 3").assertIsDisplayed()
     }
 
     @Test

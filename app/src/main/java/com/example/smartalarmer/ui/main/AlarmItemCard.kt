@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,11 +51,32 @@ fun AlarmItemCard(
     onDelete: () -> Unit,
     onEdit: () -> Unit = {},
     onTest: () -> Unit = {},
+    isDeliveryTestPending: Boolean = false,
+    deliveryTestEnabled: Boolean = true,
     onCancelWakeUpChecks: () -> Unit = {},
     onRestoreSchedule: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = androidx.compose.ui.platform.LocalResources.current
+    val deliveryTestActionDescription =
+        stringResource(com.example.smartalarmer.R.string.delivery_test_action_desc)
+    val deliveryTestCancelDescription =
+        stringResource(com.example.smartalarmer.R.string.delivery_test_cancel_desc)
+    val alarmToggleDescription =
+        stringResource(
+            com.example.smartalarmer.R.string.alarm_toggle_description,
+            alarm.label.ifBlank {
+                AlarmTimeFormatter.formatTime(context, alarm.hour, alarm.minute)
+            }
+        )
+    val alarmToggleState =
+        stringResource(
+            if (alarm.isEnabled) {
+                com.example.smartalarmer.R.string.accessibility_on
+            } else {
+                com.example.smartalarmer.R.string.accessibility_off
+            }
+        )
     val zoneId = ZoneId.systemDefault()
     val suppressionExpiresAt =
         remember(alarm.suppressedThroughEpochDay, alarm.hour, alarm.minute, zoneId) {
@@ -106,7 +129,11 @@ fun AlarmItemCard(
         }
     val repeatSummary =
         when {
-            daysList.isEmpty() || alarm.repeatWeekParity == AlarmWeekParity.EVERY -> daysSummary
+            daysList.isEmpty() ->
+                alarm.oneTimeDateEpochDay?.let { epochDay ->
+                    "$daysSummary · ${AlarmTimeFormatter.formatDate(context, epochDay)}"
+                } ?: daysSummary
+            alarm.repeatWeekParity == AlarmWeekParity.EVERY -> daysSummary
             alarm.repeatWeekParity == AlarmWeekParity.ODD ->
                 "$daysSummary · ${stringResource(com.example.smartalarmer.R.string.repeat_week_odd_summary)}"
             else ->
@@ -183,9 +210,14 @@ fun AlarmItemCard(
                         runCatching {
                             RingtoneManager.getRingtone(context, uriStr.toUri())?.getTitle(context)
                         }.getOrNull()
-                    } ?: stringResource(com.example.smartalarmer.R.string.sound_default)
+                    }
                 Text(
-                    text = "$repeatSummary • $puzzleSummary • $soundName",
+                    text =
+                    listOfNotNull(
+                        repeatSummary,
+                        puzzleSummary,
+                        soundName
+                    ).joinToString(" • "),
                     fontSize = 13.sp,
                     color = SecondaryText,
                     modifier = Modifier.testTag(ALARM_CARD_SUMMARY_TAG)
@@ -300,7 +332,16 @@ fun AlarmItemCard(
                 }
                 OutlinedButton(
                     onClick = onTest,
-                    modifier = Modifier,
+                    enabled = deliveryTestEnabled,
+                    modifier =
+                    Modifier.semantics {
+                        contentDescription =
+                            if (isDeliveryTestPending) {
+                                deliveryTestCancelDescription
+                            } else {
+                                deliveryTestActionDescription
+                            }
+                    },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenSuccessContent),
                     border = BorderStroke(1.dp, GreenSuccessContent.copy(alpha = 0.65f)),
                     shape = RoundedCornerShape(12.dp),
@@ -308,15 +349,19 @@ fun AlarmItemCard(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
-                        contentDescription =
-                        androidx.compose.ui.res
-                            .stringResource(com.example.smartalarmer.R.string.test_btn),
+                        contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         androidx.compose.ui.res
-                            .stringResource(com.example.smartalarmer.R.string.test_btn),
+                            .stringResource(
+                                if (isDeliveryTestPending) {
+                                    com.example.smartalarmer.R.string.cancel_test_btn
+                                } else {
+                                    com.example.smartalarmer.R.string.test_btn
+                                }
+                            ),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -325,6 +370,11 @@ fun AlarmItemCard(
                 Switch(
                     checked = alarm.isEnabled,
                     onCheckedChange = onToggle,
+                    modifier =
+                    Modifier.semantics {
+                        contentDescription = alarmToggleDescription
+                        stateDescription = alarmToggleState
+                    },
                     colors =
                     SwitchDefaults.colors(
                         checkedThumbColor = IndigoPrimary,

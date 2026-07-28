@@ -18,10 +18,12 @@ import com.example.smartalarmer.domain.WakeUpCheckCoordinator
 import com.example.smartalarmer.scheduler.AlarmCancelResult
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmSchedulingGateway
+import com.example.smartalarmer.scheduler.DeliveryTestSchedulingGateway
 import com.example.smartalarmer.scheduler.RescheduleEnabledAlarms
 import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,6 +48,10 @@ sealed interface MainUiEvent {
         val nextTriggerAtMillis: Long
     ) : MainUiEvent
 
+    data class DeliveryTestScheduled(
+        val triggerAtMillis: Long
+    ) : MainUiEvent
+
     data object ExactAlarmPermissionRequired : MainUiEvent
 
     data object NotificationCapabilityRequired : MainUiEvent
@@ -65,12 +71,18 @@ data class AlarmCardState(
     val effectiveNextAtMillis: Long?
 )
 
+data class PendingDeliveryTest(
+    val alarmId: Int,
+    val triggerAtMillis: Long
+)
+
 class MainViewModel(
     private val alarmRepository: AlarmRepository,
     private val alarmScheduler: AlarmSchedulingGateway,
-    activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY,
+    private val activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY,
     private val wakeUpCheckCoordinator: WakeUpCheckCoordinator? = null,
     wakeUpCheckSessionFlow: Flow<List<WakeUpCheckSession>> = flowOf(emptyList()),
+    private val deliveryTestScheduler: DeliveryTestSchedulingGateway? = null,
     private val zoneIdProvider: () -> ZoneId = ZoneId::systemDefault
 ) : ViewModel() {
     private val commandCoordinator = AlarmCommandCoordinator(alarmRepository, alarmScheduler, activationGate)
@@ -107,6 +119,9 @@ class MainViewModel(
 
     private val _uiEvents = Channel<MainUiEvent>(Channel.BUFFERED)
     val uiEvents = _uiEvents.receiveAsFlow()
+
+    private val _pendingDeliveryTest = MutableStateFlow<PendingDeliveryTest?>(null)
+    val pendingDeliveryTest = _pendingDeliveryTest.asStateFlow()
 
     fun openEditSheet(alarm: Alarm? = null) {
         _editingAlarm.value = alarm
@@ -269,6 +284,46 @@ class MainViewModel(
         }
     }
 
+    fun scheduleDeliveryTest(alarm: Alarm) {
+        viewModelScope.launch {
+            if (!activationGate.isNotificationDeliveryReady()) {
+                _uiEvents.send(MainUiEvent.NotificationCapabilityRequired)
+                return@launch
+            }
+            val scheduler = deliveryTestScheduler ?: return@launch
+            when (val result = scheduler.schedule(alarm)) {
+                is AlarmScheduleResult.Scheduled -> {
+                    _pendingDeliveryTest.value =
+                        PendingDeliveryTest(
+                            alarmId = alarm.id,
+                            triggerAtMillis = result.triggerAtMillis
+                        )
+                    _uiEvents.send(MainUiEvent.DeliveryTestScheduled(result.triggerAtMillis))
+                    delay((result.triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0L))
+                    if (_pendingDeliveryTest.value?.triggerAtMillis == result.triggerAtMillis) {
+                        _pendingDeliveryTest.value = null
+                    }
+                }
+                AlarmScheduleResult.PermissionRequired ->
+                    _uiEvents.send(MainUiEvent.ExactAlarmPermissionRequired)
+                is AlarmScheduleResult.Failure ->
+                    _uiEvents.send(MainUiEvent.AlarmScheduleFailed(result.exception))
+            }
+        }
+    }
+
+    fun cancelDeliveryTest() {
+        viewModelScope.launch {
+            when (val result = deliveryTestScheduler?.cancel()) {
+                AlarmCancelResult.Cancelled,
+                null
+                -> _pendingDeliveryTest.value = null
+                is AlarmCancelResult.Failure ->
+                    _uiEvents.send(MainUiEvent.AlarmOperationFailed(result.exception))
+            }
+        }
+    }
+
     fun reconcileEnabledAlarms() {
         viewModelScope.launch {
             try {
@@ -347,7 +402,8 @@ class MainViewModel(
         private val alarmScheduler: AlarmSchedulingGateway,
         private val activationGate: AlarmActivationGate = AlarmActivationGate.ALWAYS_READY,
         private val wakeUpCheckCoordinator: WakeUpCheckCoordinator? = null,
-        private val wakeUpCheckSessionFlow: Flow<List<WakeUpCheckSession>> = flowOf(emptyList())
+        private val wakeUpCheckSessionFlow: Flow<List<WakeUpCheckSession>> = flowOf(emptyList()),
+        private val deliveryTestScheduler: DeliveryTestSchedulingGateway? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -357,7 +413,8 @@ class MainViewModel(
                     alarmScheduler,
                     activationGate,
                     wakeUpCheckCoordinator,
-                    wakeUpCheckSessionFlow
+                    wakeUpCheckSessionFlow,
+                    deliveryTestScheduler
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

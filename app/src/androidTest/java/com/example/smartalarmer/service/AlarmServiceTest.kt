@@ -13,6 +13,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.alarm.AlarmLaunchType
+import com.example.smartalarmer.alarm.sessionIdentity
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 import org.junit.Assert.*
 import org.junit.Test
@@ -74,6 +77,24 @@ class AlarmServiceTest {
         assertEquals(
             PackageManager.PERMISSION_GRANTED,
             ContextCompat.checkSelfPermission(context, Manifest.permission.MODIFY_AUDIO_SETTINGS)
+        )
+    }
+
+    @Test
+    fun deliveryTestStopIntentCarriesTheExactSessionIdentity() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val payload =
+            AlarmLaunchPayload(
+                launchType = AlarmLaunchType.DELIVERY_TEST,
+                occurrenceTriggerAtMillis = 123_456L
+            )
+
+        val intent = AlarmService.stopDeliveryTestIntent(context, payload.sessionIdentity)
+
+        assertEquals(AlarmService::class.java.name, intent.component?.className)
+        assertEquals(
+            payload.sessionIdentity,
+            intent.getStringExtra("DELIVERY_TEST_SESSION_ID")
         )
     }
 

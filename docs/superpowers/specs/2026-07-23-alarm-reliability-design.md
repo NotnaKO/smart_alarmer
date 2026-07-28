@@ -27,8 +27,8 @@ dismissed advances to the next persisted overlapping alarm instead.
 ## Always-on backup escalation
 
 Backup escalation is part of every real main alarm rather than an enable/disable
-option. The user may configure a 5, 10, or 15 minute inactivity timeout and one
-to three vibration reinforcement attempts.
+option. It currently uses a fixed 10 minute inactivity timeout and three
+vibration reinforcement attempts.
 
 The timeout is measured from the most recent verified puzzle progress. When it
 expires, playback switches away from the custom URI to the system fallback
@@ -54,5 +54,6 @@ reschedule follow-up when its original delivery arrives.
 ## Persistence and backup
 
 The direct-boot mirror, active alarm session, and pending queue are operational
-state. They are excluded from cloud backup and device transfer. Room schema
-version 10 adds the backup timeout and reinforcement-count settings.
+state. They are excluded from cloud backup and device transfer. Escalation does
+not add Room columns. Room schema version 10 is used by the later optional-date
+support for one-time alarms.

@@ -25,7 +25,8 @@ class DirectBootAlarmStoreTest {
                 minute = 45,
                 daysOfWeek = "1,3,5",
                 puzzlesList = "MATH,TYPING",
-                suppressedThroughEpochDay = 20_400L
+                suppressedThroughEpochDay = 20_400L,
+                oneTimeDateEpochDay = 20_500L
             )
 
         store.upsert(alarm, triggerAtMillis = 123_456L)

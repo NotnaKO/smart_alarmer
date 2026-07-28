@@ -84,6 +84,24 @@ internal class AlarmAudioPlayback(
         startNext(generation, ArrayDeque(uris))
     }
 
+    fun startDeliveryTestTone() {
+        release()
+        generation++
+        val expectedGeneration = generation
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, DELIVERY_TEST_VOLUME_PERCENT)
+            toneJob =
+                scope.launch {
+                    while (isActive && expectedGeneration == generation) {
+                        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
+                        delay(1_500)
+                    }
+                }
+        } catch (error: Exception) {
+            android.util.Log.e(TAG, "Unable to start delivery-test tone", error)
+        }
+    }
+
     private fun startRingtone(
         expectedGeneration: Int,
         uri: Uri
@@ -215,5 +233,6 @@ internal class AlarmAudioPlayback(
 
     private companion object {
         const val TAG = "AlarmService"
+        const val DELIVERY_TEST_VOLUME_PERCENT = 25
     }
 }
