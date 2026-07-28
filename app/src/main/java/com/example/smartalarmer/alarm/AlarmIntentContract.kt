@@ -7,7 +7,14 @@ import com.example.smartalarmer.domain.PuzzleSelection
 
 enum class AlarmLaunchType {
     MAIN,
-    WAKE_UP_CHECK
+    WAKE_UP_CHECK,
+    DELIVERY_TEST
+}
+
+enum class AlarmExecutionMode {
+    REAL,
+    PREVIEW,
+    DELIVERY_TEST
 }
 
 data class AlarmLaunchPayload(
@@ -126,3 +133,11 @@ internal val AlarmLaunchPayload.sessionIdentity: String
     get() =
         "$alarmId:${launchType.name}:$occurrenceTriggerAtMillis:" +
             "$wakeUpCheckNumber:$wakeUpCheckToken"
+
+val AlarmLaunchPayload.executionMode: AlarmExecutionMode
+    get() =
+        when {
+            launchType == AlarmLaunchType.DELIVERY_TEST -> AlarmExecutionMode.DELIVERY_TEST
+            isPreview -> AlarmExecutionMode.PREVIEW
+            else -> AlarmExecutionMode.REAL
+        }

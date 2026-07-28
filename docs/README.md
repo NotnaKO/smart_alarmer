@@ -11,11 +11,16 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 - **Four puzzle types**: Math equations, typing challenges, memory pattern games, and physical shake challenges with a sensor-safe fallback.
 - **Customizable Alarm Configuration**: A slide-up editor offers day and alternating ISO-week repeat controls, puzzle selection, visible wake-up and volume controls, sticky save actions, and ringtone preview/stop/reset.
 - **Modern Glassmorphic Dark Theme**: Premium styling featuring semi-transparent overlays, glowing accents, and smooth feedback animations.
-- **Safe Preview/Test Mode**: Test alarm configurations directly from the settings list with a single click. The test mode runs in a non-disruptive activity context (no loud sound, no max-volume locks, no disabled back button).
+- **Safe Delivery Test**: Test the real exact-alarm, receiver, foreground-service,
+  notification, sound, and lock-screen path from an alarm card. The test uses a
+  gentle fixed tone without volume locking or escalation, then previews that
+  alarm’s configured puzzle sequence.
 - **MVVM Architecture**: Clean separation of UI and business logic using ViewModels and reactive StateFlow streams.
 - **Boot persistence**: Alarms reschedule automatically when the device restarts.
 - **Wake-up checks**: Optional chained follow-up alarms require one easy task after the main alarm, with configurable count and 5, 10, or 15 minute intervals measured from each completion.
 - **Skip or pause recurring alarms**: Toggling off a recurring alarm offers a one-occurrence skip, a pause through a selected local date, or a complete disable; suppression is reversible, cancels remaining wake-up checks, and reorders cards by their actual next event.
+- **Optional dated one-time alarms**: A one-time alarm can keep the convenient
+  next-occurrence behavior or target one explicit local calendar date.
 - **Progress-aware volume**: Volume rises over a selectable 30, 60, 120, or 240 seconds, falls with verified puzzle progress, and resumes rising after five seconds of inactivity.
 - **Always-on backup escalation**: After 5, 10, or 15 minutes without verified puzzle progress, playback switches to a dependable built-in alarm at maximum volume and reinforces it with one to three vibration attempts.
 - **Challenge-preserving fallback**: After three failed submissions or 30 seconds, a blocked task can be exchanged for a different available puzzle without bypassing the alarm.
@@ -143,7 +148,7 @@ Smart Alarmer uses Android's `AlarmManager` to schedule exact alarms that trigge
 | `data/Alarm.kt` | Room entities for alarm configuration and durable active wake-up-check sessions. Alarm settings include alternating-week parity plus check enablement, count, and interval. |
 | `data/AlarmDao.kt` | Room DAO with `getAllAlarms()` (Flow), `getEnabledAlarms()`, `getAlarmById()`, `insertAlarm()`, `updateAlarm()`, `deleteAlarm()`. |
 | `data/AlarmRepository.kt` | Repository boundary used by the ViewModel, with a Room-backed implementation that owns generated-ID mapping. |
-| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 9. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag; version 8 adds alternating-week schedules; version 9 adds local-date alarm suppression. |
+| `data/AlarmDatabase.kt` | Singleton Room database with thread-safe `getDatabase()` builder and explicit migrations from versions 1 through 10. Versioned schemas are committed under `app/schemas/`. Version 6 adds wake-up-check settings and durable active sessions; version 7 removes the obsolete gradual-volume flag; version 8 adds alternating-week schedules; version 9 adds local-date alarm suppression; version 10 adds optional dates for one-time alarms. |
 
 Alarm database files are deliberately excluded from cloud backup and device
 transfer. Alarm rows contain operational enabled/disabled state, while Android
@@ -161,6 +166,11 @@ alarm-volume recovery state.
 | `puzzle/MathEngine.kt` | Generates arithmetic puzzles at Easy (add/subtract), Medium (multiply + add), and Hard (solve for x) difficulty levels. Implements `MathPuzzleProvider`. |
 | `puzzle/TypingEngine.kt` | Provides random motivational quotes and case-sensitive matching. Implements `TypingPuzzleProvider`. |
 | `puzzle/MemoryEngine.kt` | Generates random sequences of grid indices (0–8) and validates step-by-step user input. Implements `MemoryPuzzleProvider`. |
+
+Puzzle difficulty is an internal generation policy, not a user setting.
+Wake-up checks request easy variants; ordinary alarms retain the normal,
+harder randomized variants. Do not expose difficulty controls without a
+separate product-design decision.
 
 ---
 
@@ -344,7 +354,7 @@ is exercised at each relevant platform boundary.
 | `AlarmListScreenTest` | Tests Composable settings cards, dynamic weekdays text generation, play/test trigger callbacks, and edit clicks. |
 | `AlarmDismissScreenTest` | Verifies Math, Memory, Typing, and Shake behavior, accessibility semantics, saved puzzle input, and rotation-safe task progression. |
 | `AlarmDismissActivityTest` | Launches the activity in preview mode (`IS_PREVIEW = true`) to verify the back button destroys it correctly. |
-| `AlarmDeliveryEndToEndTest` | Schedules a safe preview alarm through `AlarmManager` and verifies receiver/service delivery without audio or volume changes. |
+| `AlarmDeliveryEndToEndTest` | Exercises both the internal preview fixture and the user-facing delivery test through `AlarmManager`, verifying receiver/service/activity delivery and unchanged system alarm volume. |
 
 ---
 

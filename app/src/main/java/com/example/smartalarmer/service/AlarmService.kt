@@ -11,12 +11,14 @@ import android.net.Uri
 import android.os.IBinder
 import android.os.UserManager
 import androidx.core.content.ContextCompat
+import com.example.smartalarmer.alarm.AlarmExecutionMode
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
 import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.alarm.AlarmProgressContract
 import com.example.smartalarmer.alarm.AlarmProgressEventType
 import com.example.smartalarmer.alarm.AlarmSoundResolver
+import com.example.smartalarmer.alarm.executionMode
 import com.example.smartalarmer.alarm.sessionIdentity
 import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
@@ -36,6 +38,7 @@ class AlarmService : Service() {
     private var originalAlarmVolume: Int? = null
     private var volumeJob: Job? = null
     private var backupEscalator: BackupAlarmEscalator? = null
+    private var deliveryTestTimeoutJob: Job? = null
 
     @Volatile
     private var volumeController: AlarmVolumeController? = null
@@ -116,6 +119,21 @@ class AlarmService : Service() {
         }
 
         val incomingPayload = AlarmIntentContract.read(intent)
+        if (incomingPayload.executionMode == AlarmExecutionMode.DELIVERY_TEST) {
+            val active = activePayload
+            if (active?.executionMode == AlarmExecutionMode.REAL) {
+                return START_NOT_STICKY
+            }
+            if (active?.sessionIdentity == incomingPayload.sessionIdentity) {
+                return START_NOT_STICKY
+            }
+            val foregroundNotification = startAlarm(incomingPayload)
+            AlarmScreenLauncher.launchIfUnlocked(this, foregroundNotification.dismissPendingIntent)
+            return START_NOT_STICKY
+        }
+        if (activePayload?.executionMode == AlarmExecutionMode.DELIVERY_TEST) {
+            stopDeliveryTestForRealAlarm()
+        }
         val recoveredPayload =
             if (activePayload == null) {
                 sessionStore
@@ -142,7 +160,7 @@ class AlarmService : Service() {
         ) {
             recordMainAlarmDelivery(incomingPayload)
         }
-        if (payload.isPreview && activePayload != null) {
+        if (payload.executionMode == AlarmExecutionMode.PREVIEW && activePayload != null) {
             return START_REDELIVER_INTENT
         }
 
@@ -166,7 +184,7 @@ class AlarmService : Service() {
                 deliveryAlreadyRecorded = deliveryAlreadyRecorded
             )
         pendingAlarmQueue.removeHead(payload)
-        if (payload.isPreview) {
+        if (payload.executionMode == AlarmExecutionMode.PREVIEW) {
             stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -193,11 +211,28 @@ class AlarmService : Service() {
         if (previousNotificationId != null && previousNotificationId != foregroundNotification.id) {
             notificationManager.cancel(previousNotificationId)
         }
-        if (payload.isPreview) return foregroundNotification
+        if (payload.executionMode == AlarmExecutionMode.PREVIEW) return foregroundNotification
+
+        if (payload.executionMode == AlarmExecutionMode.DELIVERY_TEST) {
+            activePayload = payload
+            audioPlayback.release()
+            deliveryTestTimeoutJob?.cancel()
+            audioPlayback.requestAudioFocus()
+            wakeLockController.acquire()
+            audioPlayback.startDeliveryTestTone()
+            deliveryTestTimeoutJob =
+                serviceScope.launch {
+                    delay(DELIVERY_TEST_TIMEOUT_MILLIS)
+                    stopSelf()
+                }
+            return foregroundNotification
+        }
 
         activePayload = payload
         audioPlayback.release()
         backupEscalator?.stop()
+        deliveryTestTimeoutJob?.cancel()
+        deliveryTestTimeoutJob = null
         vibrationController.cancel()
         backupEscalated = false
         volumeJob?.cancel()
@@ -300,6 +335,15 @@ class AlarmService : Service() {
         }
     }
 
+    private fun stopDeliveryTestForRealAlarm() {
+        deliveryTestTimeoutJob?.cancel()
+        deliveryTestTimeoutJob = null
+        audioPlayback.release()
+        audioPlayback.abandonAudioFocus()
+        wakeLockController.release()
+        activePayload = null
+    }
+
     private fun recordMainAlarmDelivery(payload: AlarmLaunchPayload) {
         if (payload.launchType != AlarmLaunchType.MAIN) return
         if (getSystemService(UserManager::class.java).isUserUnlocked) {
@@ -376,6 +420,7 @@ class AlarmService : Service() {
 
     companion object {
         private const val TAG = "AlarmService"
+        internal const val DELIVERY_TEST_TIMEOUT_MILLIS = 30_000L
         internal const val WAKE_LOCK_RENEWAL_INTERVAL_MILLIS = AlarmWakeLockController.RENEWAL_INTERVAL_MILLIS
         internal const val WAKE_LOCK_TIMEOUT_MILLIS = AlarmWakeLockController.TIMEOUT_MILLIS
 

@@ -9,7 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,10 +26,17 @@ fun ShakePuzzleView(
     onComplete: () -> Unit,
     onProgress: (Float) -> Unit = {},
     shakeProvider: ShakeSensorProvider,
+    onUnavailable: () -> Unit = {},
     easyMode: Boolean = false
 ) {
     val targetShakes = if (easyMode) 8 else 30
     var shakeCount by rememberSaveable(targetShakes) { mutableIntStateOf(targetShakes) }
+    val remainingDescription =
+        pluralStringResource(
+            R.plurals.shakes_remaining_accessibility,
+            shakeCount,
+            shakeCount
+        )
 
     DisposableEffect(key1 = shakeProvider) {
         var lastUpdate = System.currentTimeMillis()
@@ -33,7 +44,7 @@ fun ShakePuzzleView(
         var lastY = 0f
         var lastZ = 0f
 
-        shakeProvider.register { x, y, z ->
+        val registered = shakeProvider.register { x, y, z ->
             val curTime = System.currentTimeMillis()
             // Only check every 100ms
             if ((curTime - lastUpdate) > 100) {
@@ -56,6 +67,9 @@ fun ShakePuzzleView(
                 lastZ = z
             }
         }
+        if (!registered) {
+            onUnavailable()
+        }
 
         onDispose {
             shakeProvider.unregister()
@@ -77,7 +91,13 @@ fun ShakePuzzleView(
         Text(
             text = stringResource(R.string.shakes_remaining, shakeCount),
             color = SecondaryText,
-            fontSize = 18.sp
+            fontSize = 18.sp,
+            modifier =
+            Modifier.semantics {
+                stateDescription =
+                    remainingDescription
+                liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite
+            }
         )
         Spacer(modifier = Modifier.height(24.dp))
         LinearProgressIndicator(

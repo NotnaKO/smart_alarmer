@@ -21,7 +21,8 @@ data class Alarm(
     val wakeUpCheckIntervalMinutes: Int = 5,
     val scheduleStatus: String = AlarmScheduleStatus.UNKNOWN.name,
     val scheduledTriggerAtMillis: Long? = null,
-    val suppressedThroughEpochDay: Long? = null
+    val suppressedThroughEpochDay: Long? = null,
+    val oneTimeDateEpochDay: Long? = null
 )
 
 @Entity(tableName = "wake_up_check_sessions")

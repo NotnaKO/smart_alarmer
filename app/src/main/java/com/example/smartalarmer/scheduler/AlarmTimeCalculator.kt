@@ -22,7 +22,7 @@ class AlarmTimeCalculator(
         val repeatWeekParity = alarm.repeatWeekParity
         val firstSearchDate =
             if (repeatDays.isOneTime) {
-                today
+                alarm.oneTimeDateEpochDay?.let(LocalDate::ofEpochDay) ?: today
             } else {
                 alarm.suppressedThroughEpochDay
                     ?.let(LocalDate::ofEpochDay)
@@ -30,7 +30,12 @@ class AlarmTimeCalculator(
                     ?.takeIf { it > today }
                     ?: today
             }
-        val searchRange = if (repeatDays.isOneTime) 0..1 else 0..14
+        val searchRange =
+            when {
+                !repeatDays.isOneTime -> 0..14
+                alarm.oneTimeDateEpochDay != null -> 0..0
+                else -> 0..1
+            }
 
         for (daysAhead in searchRange) {
             val date = firstSearchDate.plusDays(daysAhead.toLong())

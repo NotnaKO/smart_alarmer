@@ -11,6 +11,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -41,6 +42,56 @@ class AlarmTimeCalculatorTest {
         val result = calculator("2028-02-29T23:59:59Z").nextTrigger(alarm(23, 59))
 
         assertEquals(Instant.parse("2028-03-01T23:59:00Z"), result)
+    }
+
+    @Test
+    fun datedOneTimeAlarmUsesSelectedFutureLocalDate() {
+        val result =
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(9, 30).copy(
+                    oneTimeDateEpochDay = LocalDate.parse("2026-06-21").toEpochDay()
+                )
+            )
+
+        assertEquals(Instant.parse("2026-06-21T09:30:00Z"), result)
+    }
+
+    @Test
+    fun datedOneTimeAlarmNeverRollsExpiredDateForward() {
+        assertThrows(IllegalStateException::class.java) {
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(9, 30).copy(
+                    oneTimeDateEpochDay = LocalDate.parse("2026-06-18").toEpochDay()
+                )
+            )
+        }
+    }
+
+    @Test
+    fun recurringAlarmIgnoresUnexpectedOneTimeDate() {
+        val result =
+            calculator("2026-06-18T10:00:00Z").nextTrigger(
+                alarm(hour = 9, minute = 30, days = "1")
+                    .copy(oneTimeDateEpochDay = LocalDate.parse("2030-01-01").toEpochDay())
+            )
+
+        assertEquals(Instant.parse("2026-06-22T09:30:00Z"), result)
+    }
+
+    @Test
+    fun datedOneTimeAlarmInDstGapMovesForwardByGapLength() {
+        val zone = ZoneId.of("America/New_York")
+        val result =
+            calculator("2026-03-07T12:00:00Z", zone).nextTrigger(
+                alarm(2, 30).copy(
+                    oneTimeDateEpochDay = LocalDate.parse("2026-03-08").toEpochDay()
+                )
+            )
+
+        assertEquals(
+            ZonedDateTime.parse("2026-03-08T03:30:00-04:00[America/New_York]").toInstant(),
+            result
+        )
     }
 
     @Test

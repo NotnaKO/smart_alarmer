@@ -136,4 +136,28 @@ class AlarmConfigurationTest {
             oneTimeDraft.toAlarm(existing = existing, isEnabled = true).suppressedThroughEpochDay
         )
     }
+
+    @Test
+    fun oneTimeDateIsPersistedOnlyForOneTimeAlarms() {
+        val dated =
+            AlarmDraft(
+                hour = 8,
+                minute = 0,
+                repeatDays = AlarmDays.ONE_TIME,
+                puzzleSelection = PuzzleSelection.DEFAULT,
+                puzzleCount = 1,
+                label = "",
+                soundUri = null,
+                oneTimeDateEpochDay = 25_100L
+            )
+
+        assertEquals(25_100L, dated.toAlarm(isEnabled = true).oneTimeDateEpochDay)
+        assertEquals(
+            null,
+            dated
+                .copy(repeatDays = AlarmDays.of(listOf(AlarmDay.MONDAY)))
+                .toAlarm(isEnabled = true)
+                .oneTimeDateEpochDay
+        )
+    }
 }

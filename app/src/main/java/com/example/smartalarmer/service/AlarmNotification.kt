@@ -12,6 +12,7 @@ import android.os.Build
 import com.example.smartalarmer.R
 import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.alarm.AlarmLaunchPayload
+import com.example.smartalarmer.alarm.AlarmLaunchType
 import com.example.smartalarmer.ui.dismiss.AlarmDismissActivity
 
 object AlarmNotification {
@@ -46,6 +47,8 @@ object AlarmNotification {
                             .appendPath(
                                 when {
                                     payload.isPreview -> "preview"
+                                    payload.launchType == AlarmLaunchType.DELIVERY_TEST ->
+                                        "delivery-test"
                                     payload.launchType == com.example.smartalarmer.alarm.AlarmLaunchType.WAKE_UP_CHECK ->
                                         "wake-up-check-${payload.alarmId}-${payload.wakeUpCheckNumber}"
                                     else -> payload.alarmId.toString()
@@ -61,7 +64,7 @@ object AlarmNotification {
         val options = creatorActivityOptions()
         return PendingIntent.getActivity(
             context,
-            notificationIdForAlarm(payload.alarmId, payload.isPreview),
+            notificationIdForPayload(payload),
             dismissIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             options?.toBundle()
@@ -93,7 +96,14 @@ object AlarmNotification {
         return ALARM_NOTIFICATION_ID_BASE + Math.floorMod(alarmId, ALARM_NOTIFICATION_ID_RANGE)
     }
 
+    internal fun notificationIdForPayload(payload: AlarmLaunchPayload): Int = if (payload.launchType == AlarmLaunchType.DELIVERY_TEST) {
+        DELIVERY_TEST_NOTIFICATION_ID
+    } else {
+        notificationIdForAlarm(payload.alarmId, payload.isPreview)
+    }
+
     private const val PREVIEW_NOTIFICATION_ID = 1
+    private const val DELIVERY_TEST_NOTIFICATION_ID = 2
     private const val ALARM_NOTIFICATION_ID_BASE = 10_000
     private const val ALARM_NOTIFICATION_ID_RANGE = 1_000_000
 }

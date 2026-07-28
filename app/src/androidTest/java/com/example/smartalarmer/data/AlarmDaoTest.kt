@@ -93,6 +93,15 @@ class AlarmDaoTest {
     }
 
     @Test
+    fun insertAndGetAlarm_withSpecificOneTimeDate() = runTest {
+        dao.insertAlarm(
+            alarm(daysOfWeek = "").copy(oneTimeDateEpochDay = 25_100L)
+        )
+
+        assertEquals(25_100L, dao.getAllAlarms().first().single().oneTimeDateEpochDay)
+    }
+
+    @Test
     fun wakeUpCheckSession_canBePersistedAndCleared() = runTest {
         val dao = database.wakeUpCheckDao()
         val session =

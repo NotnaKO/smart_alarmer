@@ -64,6 +64,7 @@ class AlarmReceiver : BroadcastReceiver() {
                                 session.token == payload.wakeUpCheckToken &&
                                 session.nextCheckNumber == payload.wakeUpCheckNumber
                         }
+                        AlarmLaunchType.DELIVERY_TEST -> false
                     }
                 if (!shouldDeliver || alarm == null) {
                     Log.i(TAG, "Ignoring stale alarm delivery for id ${payload.alarmId}")
@@ -154,6 +155,7 @@ class AlarmReceiver : BroadcastReceiver() {
                         ?: AlarmLaunchPayload.NO_OCCURRENCE
                 )
             AlarmLaunchType.WAKE_UP_CHECK -> scheduledPayload
+            AlarmLaunchType.DELIVERY_TEST -> scheduledPayload
         }
     }
 }

@@ -167,10 +167,12 @@ class AlarmListScreenTest {
         val fri = context.getString(com.example.smartalarmer.R.string.day_fri)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
         val memory = context.getString(com.example.smartalarmer.R.string.puzzle_memory)
-        val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
 
-        val expected = "$mon, $wed, $fri • $math, $memory • $defaultSound"
+        val expected = "$mon, $wed, $fri • $math, $memory"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(com.example.smartalarmer.R.string.sound_default))
+            .assertDoesNotExist()
     }
 
     @Test
@@ -210,10 +212,29 @@ class AlarmListScreenTest {
                 .targetContext
         val oneTime = context.getString(com.example.smartalarmer.R.string.one_time)
         val math = context.getString(com.example.smartalarmer.R.string.puzzle_math)
-        val defaultSound = context.getString(com.example.smartalarmer.R.string.sound_default)
 
-        val expected = "$oneTime • $math • $defaultSound"
+        val expected = "$oneTime • $math"
         composeTestRule.onNodeWithText(expected).assertIsDisplayed()
+    }
+
+    @Test
+    fun alarmCard_datedOneTimeAlarm_showsSpecificDate() {
+        val context =
+            androidx.test.platform.app.InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext
+        val epochDay = java.time.LocalDate.now().plusDays(3).toEpochDay()
+        setAlarmCard(
+            alarm =
+            testAlarm(daysOfWeek = "", puzzlesList = "MATH")
+                .copy(oneTimeDateEpochDay = epochDay)
+        )
+
+        composeTestRule
+            .onNodeWithText(
+                com.example.smartalarmer.utils.AlarmTimeFormatter.formatDate(context, epochDay),
+                substring = true
+            ).assertIsDisplayed()
     }
 
     @Test
@@ -228,7 +249,8 @@ class AlarmListScreenTest {
             androidx.test.platform.app.InstrumentationRegistry
                 .getInstrumentation()
                 .targetContext
-        val testBtnDesc = context.getString(com.example.smartalarmer.R.string.test_btn)
+        val testBtnDesc =
+            context.getString(com.example.smartalarmer.R.string.delivery_test_action_desc)
         composeTestRule.onNodeWithContentDescription(testBtnDesc).performClick()
         assertTrue(testClicked)
     }

@@ -1,5 +1,6 @@
 package com.example.smartalarmer.ui.dismiss
 
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +38,11 @@ fun AlarmDismissScreen(
     mathProvider: MathPuzzleProvider = MathEngine,
     typingProvider: TypingPuzzleProvider = TypingEngine,
     memoryProvider: MemoryPuzzleProvider = MemoryEngine,
-    shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(androidx.compose.ui.platform.LocalContext.current)
+    shakeProvider: ShakeSensorProvider = AndroidShakeSensorProvider(LocalContext.current),
+    touchExplorationEnabled: Boolean =
+        LocalContext.current
+            .getSystemService(AccessibilityManager::class.java)
+            ?.isTouchExplorationEnabled == true
 ) {
     val puzzles =
         rememberSaveable(
@@ -83,7 +89,7 @@ fun AlarmDismissScreen(
     val activeTaskIndex = currentTaskIndex
     val currentPuzzle = puzzles[activeTaskIndex]
     val alternatePuzzles =
-        remember(puzzlesList, shakeProvider.isAvailable) {
+        remember(puzzlesList, shakeProvider.isAvailable, touchExplorationEnabled) {
             buildList {
                 addAll(
                     PuzzleSelection
@@ -94,12 +100,20 @@ fun AlarmDismissScreen(
                 addAll(listOf(PuzzleType.MATH, PuzzleType.TYPING, PuzzleType.MEMORY))
                 if (shakeProvider.isAvailable) add(PuzzleType.SHAKE)
             }.distinct()
+                .filter {
+                    !touchExplorationEnabled ||
+                        it == PuzzleType.MATH ||
+                        it == PuzzleType.TYPING
+                }
         }
     var failureCount by rememberSaveable(activeTaskIndex, currentPuzzle) {
         mutableIntStateOf(0)
     }
     var isAlternateAvailable by rememberSaveable(activeTaskIndex, currentPuzzle) {
-        mutableStateOf(false)
+        mutableStateOf(
+            touchExplorationEnabled &&
+                (currentPuzzle == PuzzleType.MEMORY || currentPuzzle == PuzzleType.SHAKE)
+        )
     }
     LaunchedEffect(activeTaskIndex, currentPuzzle) {
         kotlinx.coroutines.delay(ALTERNATE_PUZZLE_DELAY_MILLIS)
@@ -227,6 +241,13 @@ fun AlarmDismissScreen(
                                 onComplete = completeCurrentTask,
                                 onProgress = { progress -> onVerifiedProgress(activeTaskIndex, progress) },
                                 shakeProvider = shakeProvider,
+                                onUnavailable = {
+                                    puzzles[activeTaskIndex] =
+                                        nextAlternatePuzzle(
+                                            current = currentPuzzle,
+                                            candidates = alternatePuzzles
+                                        )
+                                },
                                 easyMode = isWakeUpCheck
                             )
                     }
