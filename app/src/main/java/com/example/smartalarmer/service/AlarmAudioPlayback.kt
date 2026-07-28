@@ -11,6 +11,7 @@ import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
 import java.util.ArrayDeque
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -73,33 +74,21 @@ internal class AlarmAudioPlayback(
 
     fun start(
         uris: List<Uri>,
-        preferRingtoneApi: Boolean = false
+        preferRingtoneApi: Boolean = false,
+        volumeScale: Float = FULL_VOLUME_SCALE
     ) {
         generation++
+        val safeVolumeScale = volumeScale.coerceIn(0f, FULL_VOLUME_SCALE)
         if (preferRingtoneApi) {
             uris.firstOrNull()?.let { uri ->
                 if (startRingtone(generation, uri)) return
             }
         }
-        startNext(generation, ArrayDeque(uris))
-    }
-
-    fun startDeliveryTestTone() {
-        release()
-        generation++
-        val expectedGeneration = generation
-        try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, DELIVERY_TEST_VOLUME_PERCENT)
-            toneJob =
-                scope.launch {
-                    while (isActive && expectedGeneration == generation) {
-                        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 500)
-                        delay(1_500)
-                    }
-                }
-        } catch (error: Exception) {
-            android.util.Log.e(TAG, "Unable to start delivery-test tone", error)
-        }
+        startNext(
+            expectedGeneration = generation,
+            remainingUris = ArrayDeque(uris),
+            volumeScale = safeVolumeScale
+        )
     }
 
     private fun startRingtone(
@@ -139,12 +128,13 @@ internal class AlarmAudioPlayback(
 
     private fun startNext(
         expectedGeneration: Int,
-        remainingUris: ArrayDeque<Uri>
+        remainingUris: ArrayDeque<Uri>,
+        volumeScale: Float
     ) {
         if (expectedGeneration != generation) return
         val uri = remainingUris.pollFirst()
         if (uri == null) {
-            startToneFallback(expectedGeneration)
+            startToneFallback(expectedGeneration, volumeScale)
             return
         }
         val candidate = MediaPlayer()
@@ -153,6 +143,7 @@ internal class AlarmAudioPlayback(
             candidate.apply {
                 setDataSource(context, uri)
                 setAudioAttributes(attributes)
+                setVolume(volumeScale, volumeScale)
                 isLooping = true
                 setOnPreparedListener { player ->
                     if (expectedGeneration != generation || mediaPlayer !== player) {
@@ -164,13 +155,13 @@ internal class AlarmAudioPlayback(
                         .onFailure { error ->
                             android.util.Log.e(TAG, "Unable to start alarm URI $uri", error)
                             releasePlayer(player)
-                            startNext(expectedGeneration, remainingUris)
+                            startNext(expectedGeneration, remainingUris, volumeScale)
                         }
                 }
                 setOnErrorListener { player, _, _ ->
                     android.util.Log.e(TAG, "MediaPlayer error for alarm URI $uri")
                     releasePlayer(player)
-                    startNext(expectedGeneration, remainingUris)
+                    startNext(expectedGeneration, remainingUris, volumeScale)
                     true
                 }
                 prepareAsync()
@@ -178,14 +169,21 @@ internal class AlarmAudioPlayback(
         } catch (error: Exception) {
             android.util.Log.e(TAG, "Failed to prepare alarm URI $uri", error)
             releasePlayer(candidate)
-            startNext(expectedGeneration, remainingUris)
+            startNext(expectedGeneration, remainingUris, volumeScale)
         }
     }
 
-    private fun startToneFallback(expectedGeneration: Int) {
+    private fun startToneFallback(
+        expectedGeneration: Int,
+        volumeScale: Float
+    ) {
         if (expectedGeneration != generation) return
         try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+            val volumePercent =
+                (volumeScale * 100)
+                    .roundToInt()
+                    .coerceIn(0, 100)
+            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, volumePercent)
             toneJob =
                 scope.launch {
                     while (isActive && expectedGeneration == generation) {
@@ -233,6 +231,6 @@ internal class AlarmAudioPlayback(
 
     private companion object {
         const val TAG = "AlarmService"
-        const val DELIVERY_TEST_VOLUME_PERCENT = 25
+        const val FULL_VOLUME_SCALE = 1f
     }
 }

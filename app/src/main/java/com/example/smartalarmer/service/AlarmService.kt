@@ -238,7 +238,11 @@ class AlarmService : Service() {
             deliveryTestTimeoutJob?.cancel()
             audioPlayback.requestAudioFocus()
             wakeLockController.acquire()
-            audioPlayback.startDeliveryTestTone()
+            val selectedUri = payload.soundUri?.let(Uri::parse)
+            audioPlayback.start(
+                uris = AlarmSoundResolver.playbackCandidates(this, selectedUri),
+                volumeScale = DELIVERY_TEST_VOLUME_SCALE
+            )
             deliveryTestTimeoutJob =
                 serviceScope.launch {
                     delay(DELIVERY_TEST_TIMEOUT_MILLIS)
@@ -485,6 +489,7 @@ class AlarmService : Service() {
             "com.notnako.smartalarmer.action.STOP_DELIVERY_TEST"
         private const val EXTRA_DELIVERY_TEST_SESSION_ID = "DELIVERY_TEST_SESSION_ID"
         internal const val DELIVERY_TEST_TIMEOUT_MILLIS = 30_000L
+        internal const val DELIVERY_TEST_VOLUME_SCALE = 0.25f
         internal const val WAKE_LOCK_RENEWAL_INTERVAL_MILLIS = AlarmWakeLockController.RENEWAL_INTERVAL_MILLIS
         internal const val WAKE_LOCK_TIMEOUT_MILLIS = AlarmWakeLockController.TIMEOUT_MILLIS
 

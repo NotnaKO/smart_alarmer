@@ -117,4 +117,10 @@ class AlarmServiceTest {
         assertTrue(AlarmService.WAKE_LOCK_RENEWAL_INTERVAL_MILLIS > 0)
         assertTrue(AlarmService.WAKE_LOCK_TIMEOUT_MILLIS > AlarmService.WAKE_LOCK_RENEWAL_INTERVAL_MILLIS)
     }
+
+    @Test
+    fun deliveryTestUsesAnInternallyCappedPlaybackVolume() {
+        assertTrue(AlarmService.DELIVERY_TEST_VOLUME_SCALE > 0f)
+        assertTrue(AlarmService.DELIVERY_TEST_VOLUME_SCALE < 1f)
+    }
 }
