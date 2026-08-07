@@ -32,6 +32,7 @@ class WakeUpCheckCoordinatorTest {
         assertEquals(3, session.totalChecks)
         assertEquals("fixed-token", session.token)
         assertEquals(NOW.toEpochMilli() + FIVE_MINUTES, session.nextTriggerAtMillis)
+        assertEquals(30, session.volumeRampSeconds)
     }
 
     @Test
@@ -114,6 +115,7 @@ class WakeUpCheckCoordinatorTest {
                 daysOfWeek = "",
                 isEnabled = false,
                 puzzlesList = "MATH,MEMORY",
+                volumeRampSeconds = 30,
                 wakeUpChecksEnabled = true,
                 wakeUpCheckCount = totalChecks,
                 wakeUpCheckIntervalMinutes = 5
