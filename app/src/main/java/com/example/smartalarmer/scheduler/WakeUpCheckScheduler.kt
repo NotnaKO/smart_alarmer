@@ -31,7 +31,6 @@ class AndroidWakeUpCheckSchedulingGateway(
 
 object WakeUpCheckScheduler {
     private const val ACTION_DELIVER = "com.example.smartalarmer.action.DELIVER_WAKE_UP_CHECK"
-    private const val VOLUME_RAMP_SECONDS = 30
 
     @SuppressLint("ScheduleExactAlarm")
     fun schedule(
@@ -107,7 +106,7 @@ object WakeUpCheckScheduler {
         puzzleCount = 1,
         soundUri = soundUri,
         alarmLabel = alarmLabel,
-        volumeRampSeconds = VOLUME_RAMP_SECONDS,
+        volumeRampSeconds = volumeRampSeconds,
         launchType = AlarmLaunchType.WAKE_UP_CHECK,
         wakeUpCheckNumber = nextCheckNumber,
         wakeUpCheckTotal = totalChecks,

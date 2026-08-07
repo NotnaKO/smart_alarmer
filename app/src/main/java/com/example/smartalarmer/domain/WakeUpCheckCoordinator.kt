@@ -36,7 +36,8 @@ class WakeUpCheckCoordinator(
                 clock.instant().plusSeconds(intervalMinutes * 60L).toEpochMilli(),
                 puzzlesList = alarm.puzzleSelection.encoded,
                 soundUri = alarm.soundUri,
-                alarmLabel = alarm.label
+                alarmLabel = alarm.label,
+                volumeRampSeconds = AlarmVolumeRamp.sanitize(alarm.volumeRampSeconds)
             )
         sessionDao.upsertSession(session)
         return scheduler.schedule(session).also { result ->

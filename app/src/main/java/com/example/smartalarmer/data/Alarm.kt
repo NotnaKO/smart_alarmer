@@ -35,7 +35,8 @@ data class WakeUpCheckSession(
     val nextTriggerAtMillis: Long,
     val puzzlesList: String,
     val soundUri: String?,
-    val alarmLabel: String
+    val alarmLabel: String,
+    val volumeRampSeconds: Int = 60
 )
 
 enum class AlarmScheduleStatus {
