@@ -29,6 +29,8 @@ fun MathPuzzleView(
 ) {
     val puzzle =
         rememberSaveable(
+            easyMode,
+            mathProvider,
             saver =
             mapSaver(
                 save = { generated ->
@@ -50,8 +52,8 @@ fun MathPuzzleView(
             val difficulty = if (easyMode) Difficulty.EASY else listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
             mathProvider.generate(difficulty)
         }
-    var input by rememberSaveable { mutableStateOf("") }
-    var showError by rememberSaveable { mutableStateOf(false) }
+    var input by rememberSaveable(puzzle) { mutableStateOf("") }
+    var showError by rememberSaveable(puzzle) { mutableStateOf(false) }
     val backspaceDescription = stringResource(R.string.backspace_desc)
     val confirmDescription = stringResource(R.string.confirm_answer_desc)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

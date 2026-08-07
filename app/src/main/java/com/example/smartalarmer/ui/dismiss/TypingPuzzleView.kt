@@ -31,8 +31,8 @@ fun TypingPuzzleView(
         val quote = typingProvider.getRandomQuote(quotes)
         if (easyMode) quote.split(" ").take(4).joinToString(" ") else quote
     }
-    var input by rememberSaveable { mutableStateOf("") }
-    var showError by rememberSaveable { mutableStateOf(false) }
+    var input by rememberSaveable(targetQuote) { mutableStateOf("") }
+    var showError by rememberSaveable(targetQuote) { mutableStateOf(false) }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.type_sentence_label), color = SecondaryText, fontSize = 14.sp)
         Spacer(modifier = Modifier.height(8.dp))

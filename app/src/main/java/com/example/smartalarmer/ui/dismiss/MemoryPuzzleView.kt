@@ -31,7 +31,7 @@ fun MemoryPuzzleView(
     easyMode: Boolean = false
 ) {
     val sequence =
-        rememberSaveable {
+        rememberSaveable(easyMode, memoryProvider) {
             val difficulty = if (easyMode) Difficulty.EASY else listOf(Difficulty.MEDIUM, Difficulty.HARD).random()
             val length =
                 when (difficulty) {
@@ -43,16 +43,17 @@ fun MemoryPuzzleView(
         }
     val userInputs =
         rememberSaveable(
+            sequence,
             saver =
             listSaver(
                 save = { inputs -> inputs.toList() },
                 restore = { inputs -> mutableStateListOf<Int>().apply { addAll(inputs) } }
             )
         ) { mutableStateListOf<Int>() }
-    var hasStarted by rememberSaveable { mutableStateOf(false) }
-    var isShowingSequence by rememberSaveable { mutableStateOf(false) }
-    var activeFlashIndex by rememberSaveable { mutableIntStateOf(-1) }
-    var showError by rememberSaveable { mutableStateOf(false) }
+    var hasStarted by rememberSaveable(sequence) { mutableStateOf(false) }
+    var isShowingSequence by rememberSaveable(sequence) { mutableStateOf(false) }
+    var activeFlashIndex by rememberSaveable(sequence) { mutableIntStateOf(-1) }
+    var showError by rememberSaveable(sequence) { mutableStateOf(false) }
     val memoryCellDescriptions = (1..9).map { stringResource(R.string.memory_cell_desc, it) }
     val lifecycleOwner = LocalLifecycleOwner.current
     var isResumed by

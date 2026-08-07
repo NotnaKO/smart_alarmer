@@ -453,6 +453,34 @@ class AlarmDismissScreenTest {
     }
 
     @Test
+    fun memoryPuzzle_easyMode_requestsEasySequenceLength3() {
+        var requestedLength: Int? = null
+        val capturingMemoryProvider =
+            object : MemoryPuzzleProvider {
+                override fun generateSequence(length: Int): List<Int> {
+                    requestedLength = length
+                    return listOf(0, 1, 2)
+                }
+
+                override fun verifyStep(
+                    sequence: List<Int>,
+                    userInputs: List<Int>
+                ): Boolean = MemoryEngine.verifyStep(sequence, userInputs)
+            }
+
+        composeTestRule.setContent {
+            MemoryPuzzleView(
+                onComplete = {},
+                memoryProvider = capturingMemoryProvider,
+                easyMode = true
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        assertEquals(3, requestedLength)
+    }
+
+    @Test
     fun memoryPuzzle_gridCellsHaveDistinctSemanticLabels() {
         composeTestRule.setContent {
             MemoryPuzzleView(onComplete = {}, memoryProvider = fakeMemory)
