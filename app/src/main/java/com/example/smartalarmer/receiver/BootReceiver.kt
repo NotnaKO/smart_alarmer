@@ -12,10 +12,12 @@ import com.example.smartalarmer.alarm.AlarmIntentContract
 import com.example.smartalarmer.data.AlarmDatabase
 import com.example.smartalarmer.data.RoomAlarmRepository
 import com.example.smartalarmer.domain.WakeUpCheckCoordinator
+import com.example.smartalarmer.domain.repeatDays
 import com.example.smartalarmer.scheduler.AlarmScheduleResult
 import com.example.smartalarmer.scheduler.AlarmScheduler
 import com.example.smartalarmer.scheduler.AndroidAlarmSchedulingGateway
 import com.example.smartalarmer.scheduler.AndroidWakeUpCheckSchedulingGateway
+import com.example.smartalarmer.scheduler.DirectBootAlarmSnapshot
 import com.example.smartalarmer.scheduler.DirectBootAlarmStore
 import com.example.smartalarmer.scheduler.RescheduleEnabledAlarms
 import com.example.smartalarmer.service.AlarmDeliveryCoordinator
@@ -127,7 +129,12 @@ class BootReceiver : BroadcastReceiver() {
                 val store = DirectBootAlarmStore(context)
                 resumeInterruptedSession(context)
                 val now = System.currentTimeMillis()
+                val deliveredIds = store.deliveredAlarmIds()
                 store.snapshots().forEach { snapshot ->
+                    if (shouldSkipLockedRestore(snapshot, deliveredIds, now)) {
+                        store.remove(snapshot.alarm.id)
+                        return@forEach
+                    }
                     when (
                         val result =
                             if (recalculateFromWallClock) {
@@ -192,12 +199,21 @@ class BootReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "BootReceiver"
 
+        internal fun shouldSkipLockedRestore(
+            snapshot: DirectBootAlarmSnapshot,
+            deliveredIds: Set<Int>,
+            nowMillis: Long
+        ): Boolean = !snapshot.alarm.isEnabled ||
+            snapshot.alarm.id in deliveredIds ||
+            (snapshot.alarm.repeatDays.isOneTime && snapshot.triggerAtMillis <= nowMillis)
+
         internal fun shouldReschedule(
             action: String?,
             canScheduleExactAlarms: Boolean
         ): Boolean = when (action) {
             Intent.ACTION_LOCKED_BOOT_COMPLETED,
             Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_USER_UNLOCKED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED

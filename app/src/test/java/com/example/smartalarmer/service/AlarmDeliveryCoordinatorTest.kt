@@ -17,12 +17,15 @@ class AlarmDeliveryCoordinatorTest {
     @Test
     fun oneTimeAlarmIsDisabledOnlyAfterSessionStartIsConfirmed() = runTest {
         val repository = DeliveryRepository(alarm(days = ""))
+        val scheduler = DeliveryScheduler()
 
-        AlarmDeliveryCoordinator(repository, DeliveryScheduler()).onAlarmSessionStarted(1)
+        AlarmDeliveryCoordinator(repository, scheduler).onAlarmSessionStarted(1)
 
         val updated = repository.items.value.single()
         assertFalse(updated.isEnabled)
         assertEquals(AlarmScheduleStatus.DISABLED.name, updated.scheduleStatus)
+        assertEquals(1, scheduler.cancelCalls)
+        assertEquals(1, scheduler.cancelledAlarm?.id)
     }
 
     @Test
@@ -82,12 +85,18 @@ private class DeliveryRepository(initial: Alarm) : AlarmRepository {
 
 private class DeliveryScheduler : AlarmSchedulingGateway {
     var scheduleCalls = 0
+    var cancelCalls = 0
     var scheduledAlarm: Alarm? = null
+    var cancelledAlarm: Alarm? = null
     override fun schedule(alarm: Alarm): AlarmScheduleResult {
         scheduleCalls++
         scheduledAlarm = alarm
         return AlarmScheduleResult.Scheduled(12_345L)
     }
 
-    override fun cancel(alarm: Alarm): AlarmCancelResult = AlarmCancelResult.Cancelled
+    override fun cancel(alarm: Alarm): AlarmCancelResult {
+        cancelCalls++
+        cancelledAlarm = alarm
+        return AlarmCancelResult.Cancelled
+    }
 }

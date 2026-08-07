@@ -413,7 +413,9 @@ class AlarmService : Service() {
         if (payload.launchType != AlarmLaunchType.MAIN) return
         if (getSystemService(UserManager::class.java).isUserUnlocked) {
             runCatching { directBootStore.remove(payload.alarmId) }
-            deliveryFollowUp?.start(payload.alarmId)
+            // Executed on main service thread during alarm delivery lifecycle
+            val followUp = deliveryFollowUp ?: AlarmDeliveryFollowUp(this).also { deliveryFollowUp = it }
+            followUp.start(payload.alarmId)
         } else {
             rollForwardDirectBootSchedule(payload)
             runCatching { directBootStore.markDeliveryForUnlock(payload.alarmId) }
