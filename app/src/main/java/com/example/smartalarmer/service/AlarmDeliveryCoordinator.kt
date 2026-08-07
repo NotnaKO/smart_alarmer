@@ -16,6 +16,7 @@ internal class AlarmDeliveryCoordinator(
         if (!alarm.isEnabled) return
 
         if (alarm.repeatDays.isOneTime) {
+            scheduler.cancel(alarm)
             repository.updateAlarm(
                 alarm.copy(
                     isEnabled = false,
